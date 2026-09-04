@@ -1,0 +1,42 @@
+project:
+  name: dual-rag-protein-function
+  seed: 42
+
+paths:
+  data_root: /external_ssd/dualrag
+  tmp_dir: /external_ssd/dualrag/tmp
+  results_dir: /external_ssd/dualrag/results
+  structures_dir: /external_ssd/dualrag/structures
+  literature_dir: /external_ssd/dualrag/literature
+
+sequence:
+  backend: external
+  fixture_results: null
+  eggnog_data_dir: /external_ssd/dualrag/databases/eggnog
+  mmseqs_db: null
+  database_name: eggNOG
+  database_version: "REQUIRED_VERIFIED_VERSION"
+  top_k: 10
+
+structure:
+  backend: external
+  fixture_results: null
+  foldseek_db: /external_ssd/dualrag/databases/foldseek/pdb
+  top_k: 10
+  alphafold_cache: /external_ssd/dualrag/structures/alphafold
+  database_name: Foldseek-PDB
+  database_version: "REQUIRED_VERIFIED_VERSION"
+
+normalization:
+  sequence_version: poc-sequence-v1
+  structure_version: poc-structure-v1
+
+literature:
+  enabled: false
+  pubmed_email: null
+  max_articles: 10
+
+llm:
+  enabled: false
+  provider: null
+  model: null

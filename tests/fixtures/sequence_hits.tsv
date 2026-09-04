@@ -1,0 +1,5 @@
+query_id	target_id	tool	tool_version	database	database_version	sequence_identity	alignment_coverage	evalue	bitscore	orthologous_group	protein_name	go_terms	ec_numbers	kegg_terms	interpro_ids	pfam_ids	source_accession
+Q_CONSENSUS	TEST_SEQ_001	fixture-sequence	1.0	synthetic-sequence-fixture	1	0.72	0.94	1e-80	310	TEST_COG_001	Synthetic ATPase	GO:0005524			IPR_TEST_ATPASE	PF_TEST_ATPASE	TEST_SEQ_001
+Q_CONSENSUS	TEST_SEQ_002	fixture-sequence	1.0	synthetic-sequence-fixture	1	0.41	0.76	2e-22	145	TEST_COG_001	Synthetic ATPase	GO:0005524			IPR_TEST_ATPASE	PF_TEST_ATPASE	TEST_SEQ_002
+Q_SEQ_ONLY	TEST_SEQ_003	fixture-sequence	1.0	synthetic-sequence-fixture	1	0.63	0.88	4e-55	260	TEST_COG_002	Synthetic transporter	GO:0005215			IPR_TEST_TRANSPORT	PF_TEST_TRANSPORT	TEST_SEQ_003
+Q_CONFLICT	TEST_SEQ_004	fixture-sequence	1.0	synthetic-sequence-fixture	1	0.48	0.81	8e-31	190	TEST_COG_003	Synthetic oxidoreductase	GO:0016491	TEST:1.1.1.1		IPR_TEST_OXIDO	PF_TEST_OXIDO	TEST_SEQ_004

@@ -1,0 +1,4 @@
+query_id	target_structure_id	target_uniprot_id	tool	tool_version	database	database_version	foldseek_evalue	foldseek_score	tm_score	alignment_length	query_coverage	target_coverage	sequence_identity	protein_name	interpro_ids	supfam_ids	structure_source	experimental_structure	source_accession
+Q_CONSENSUS	TEST_AF_001	TEST_UNIPROT_001	fixture-foldseek	1.0	synthetic-structure-fixture	1	2e-18	220	0.83	240	0.91	0.87	0.24	Synthetic ATPase	IPR_TEST_ATPASE	SF_TEST_PLOOP	AlphaFoldDB	false	TEST_AF_001
+Q_STRUCT_ONLY	TEST_PDB_001	TEST_UNIPROT_002	fixture-foldseek	1.0	synthetic-structure-fixture	1	7e-12	170	0.69	180	0.79	0.74	0.17	Synthetic beta propeller	IPR_TEST_PROPELLER	SF_TEST_PROPELLER	PDB	true	TEST_PDB_001
+Q_CONFLICT	TEST_PDB_002	TEST_UNIPROT_003	fixture-foldseek	1.0	synthetic-structure-fixture	1	3e-15	205	0.77	210	0.84	0.82	0.19	Synthetic membrane scaffold	IPR_TEST_SCAFFOLD	SF_TEST_SCAFFOLD	PDB	true	TEST_PDB_002

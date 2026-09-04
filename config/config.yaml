@@ -1,0 +1,37 @@
+project:
+  name: dual-rag-protein-function-poc
+  seed: 42
+
+paths:
+  data_root: ../tests/fixtures
+  tmp_dir: ../tmp
+  results_dir: ../results
+  structures_dir: ../tests/fixtures/structures
+
+sequence:
+  backend: fixture
+  fixture_results: ../tests/fixtures/sequence_hits.tsv
+  eggnog_data_dir: null
+  mmseqs_db: null
+  database_name: synthetic-sequence-fixture
+  database_version: "1"
+  top_k: 10
+
+structure:
+  backend: fixture
+  fixture_results: ../tests/fixtures/structure_hits.tsv
+  foldseek_db: null
+  top_k: 10
+  alphafold_cache: ../tests/fixtures/structures
+  database_name: synthetic-structure-fixture
+  database_version: "1"
+
+normalization:
+  sequence_version: poc-sequence-v1
+  structure_version: poc-structure-v1
+
+literature:
+  enabled: false
+
+llm:
+  enabled: false
