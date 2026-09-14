@@ -3,8 +3,8 @@
 ## Purpose
 This repository implements a research-grade Dual-Retrieval RAG system for protein function prediction. It combines two independent biological retrieval channels:
 
-1. **Sequence retrieval** — orthology/homology and domain evidence from tools such as eggNOG-mapper, MMseqs2, HMMER, BLAST/DIAMOND, UniProt, InterPro/Pfam.
-2. **Structure retrieval** — predicted/experimental structures retrieved from AlphaFoldDB/PDB and searched with Foldseek.
+1. **Sequence retrieval** — run eggNOG-mapper and optional MMseqs2/HMMER/BLAST/DIAMOND against databases stored on local external SSD/HPC storage.
+2. **Structure retrieval** — fetch only the required predicted model through the AlphaFold DB REST API, cache it locally, and search it with Foldseek against a locally stored structure database. Experimental PDB retrieval remains an optional, separately labelled path.
 
 The system keeps both channels separate long enough to measure agreement, disagreement, and modality-specific rescue. It then fuses evidence, optionally retrieves supporting literature from PubMed/PMC, and uses an LLM to generate a citation-grounded functional hypothesis with calibrated confidence.
 
@@ -45,12 +45,14 @@ The first working milestone is deliberately small:
 
 ```text
 FASTA / UniProt ID
-   ├── eggNOG/MMseqs2 -> sequence_results.tsv
-   └── AlphaFold/PDB + Foldseek -> structure_results.tsv
-                         ↓
-                  normalize + merge
-                         ↓
-                  merged_results.tsv
+   ├── local eggNOG/MMseqs2 database search -> sequence_results.tsv
+   └── AlphaFold DB REST API -> query model cache
+                                  └── local Foldseek database search
+                                             -> structure_results.tsv
+                                  ↓
+                           normalize + merge
+                                  ↓
+                           merged_results.tsv
 ```
 
 Do not add an LLM until this biological retrieval pipeline is reproducible and benchmarked.
@@ -79,11 +81,32 @@ Expected command-line dependencies include:
 
 Treat these as subprocess tools with explicit version checks. Do not reimplement their core algorithms in Python.
 
+The AlphaFold DB integration is an HTTP adapter, not a subprocess tool. It retrieves
+existing predicted models; it does not run AlphaFold or perform structural similarity
+search. Foldseek remains responsible for structure search.
+
 ## Database rules
 - Keep large databases outside the Conda environment and outside Git.
-- Use external SSD/HPC storage for eggNOG, Foldseek databases, AlphaFold cache, literature cache, indexes, and temporary files.
-- Do **not** mirror the entire AlphaFoldDB for the normal project workflow. Fetch only query/proteome structures needed for experiments and cache them.
+- Store the eggNOG and Foldseek target databases locally on external SSD/HPC storage.
+- Do **not** mirror AlphaFoldDB. Query its REST API by UniProt accession, download only
+  required models, and keep a bounded local cache for reproducibility and reuse.
+- The AlphaFold REST API supplies query models only. It does not replace the local
+  Foldseek target database or perform Foldseek similarity search.
 - Never commit large databases, structures, model weights, generated indexes, or experiment output to Git.
+
+## AlphaFold REST API rules
+
+- Use a configurable base URL; do not scatter endpoint strings through the code.
+- Prefer a supplied UniProt accession. For FASTA-only input, use an explicit accession
+  resolution step and record its provenance; never assume a FASTA header is valid.
+- Treat HTTP 404 as `model unavailable`, not as a negative function result.
+- Use timeouts, bounded retries with backoff, and respectful request pacing.
+- Preserve raw metadata responses separately from downloaded PDB/mmCIF files.
+- Record the requested accession, endpoint, AlphaFold entry/model version, retrieval
+  time, source URL, checksum, and cache path in an acquisition manifest.
+- Verify that the returned accession and sequence are compatible with the query.
+- Never label an AlphaFold model as experimental. If no model is available, retain the
+  sequence channel and record the structure channel as unavailable.
 
 Suggested environment variables:
 
@@ -91,6 +114,7 @@ Suggested environment variables:
 DUALRAG_DATA_ROOT=/external_ssd/dualrag
 EGGNOG_DATA_DIR=$DUALRAG_DATA_ROOT/databases/eggnog
 DUALRAG_FOLDSEEK_DB=$DUALRAG_DATA_ROOT/databases/foldseek/pdb
+DUALRAG_ALPHAFOLD_API_URL=https://alphafold.ebi.ac.uk/api
 DUALRAG_TMP=$DUALRAG_DATA_ROOT/tmp
 DUALRAG_RESULTS=$DUALRAG_DATA_ROOT/results
 ```
@@ -125,8 +149,9 @@ Before marking work complete:
 1. Run unit tests for changed Python modules.
 2. Run formatting/linting checks.
 3. Run a tiny smoke test on a small FASTA fixture where external tools are available.
-4. If an external database/tool is unavailable, mock only the boundary and clearly report what was not executed.
-5. Never claim an integration test passed if the actual bioinformatics executable/database was absent.
+4. Mock AlphaFold HTTP responses in unit tests; routine tests must not depend on the public service.
+5. If an external API/database/tool is unavailable, mock only the boundary and clearly report what was not executed.
+6. Never claim an integration test passed if the actual API, bioinformatics executable, or database was absent.
 
 Suggested commands once implemented:
 
@@ -176,4 +201,6 @@ For non-trivial architectural changes:
 5. If a previous durable decision is intentionally reversed, update `MEMORY.md` with the new decision and reason.
 
 ## Immediate priority
-Build Phase 1 first: deterministic sequence retrieval + structure retrieval + normalization + merge. The RAG/LLM layer comes after retrieval quality can be measured independently.
+Build Phase 1 first: local eggNOG sequence retrieval, AlphaFold REST model acquisition,
+local Foldseek structure retrieval, normalization, and merge. The RAG/LLM layer comes
+after retrieval quality can be measured independently.

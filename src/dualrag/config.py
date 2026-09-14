@@ -21,7 +21,7 @@ class PathsConfig(BaseModel):
 
 
 class SequenceConfig(BaseModel):
-    backend: Literal["fixture", "external"] = "fixture"
+    backend: Literal["fixture", "local"] = "fixture"
     fixture_results: Path | None = None
     eggnog_data_dir: Path | None = None
     mmseqs_db: Path | None = None
@@ -33,14 +33,26 @@ class SequenceConfig(BaseModel):
     def fixture_path_required(self) -> SequenceConfig:
         if self.backend == "fixture" and self.fixture_results is None:
             raise ValueError("sequence.fixture_results is required for fixture backend")
+        if self.backend == "local" and self.eggnog_data_dir is None:
+            raise ValueError("sequence.eggnog_data_dir is required for local backend")
         return self
 
 
+class AlphaFoldApiConfig(BaseModel):
+    enabled: bool = False
+    base_url: str = "https://alphafold.ebi.ac.uk/api"
+    timeout_seconds: float = Field(default=30.0, gt=0)
+    max_retries: int = Field(default=3, ge=0)
+    backoff_seconds: float = Field(default=1.0, ge=0)
+    structure_format: Literal["cif", "pdb"] = "cif"
+
+
 class StructureConfig(BaseModel):
-    backend: Literal["fixture", "external"] = "fixture"
+    backend: Literal["fixture", "hybrid"] = "fixture"
     fixture_results: Path | None = None
     foldseek_db: Path | None = None
     alphafold_cache: Path
+    alphafold_api: AlphaFoldApiConfig = Field(default_factory=AlphaFoldApiConfig)
     database_name: str
     database_version: str
     top_k: int = Field(default=10, ge=1)
@@ -49,6 +61,10 @@ class StructureConfig(BaseModel):
     def fixture_path_required(self) -> StructureConfig:
         if self.backend == "fixture" and self.fixture_results is None:
             raise ValueError("structure.fixture_results is required for fixture backend")
+        if self.backend == "hybrid" and self.foldseek_db is None:
+            raise ValueError("structure.foldseek_db is required for hybrid backend")
+        if self.backend == "hybrid" and not self.alphafold_api.enabled:
+            raise ValueError("structure.alphafold_api must be enabled for hybrid backend")
         return self
 
 
@@ -113,3 +129,12 @@ def _apply_environment(payload: dict[str, object]) -> None:
             if not isinstance(section_data, dict):
                 raise ValueError(f"configuration section {section!r} must be a mapping")
             section_data[key] = value
+
+    if value := os.getenv("DUALRAG_ALPHAFOLD_API_URL"):
+        structure_data = payload.setdefault("structure", {})
+        if not isinstance(structure_data, dict):
+            raise ValueError("configuration section 'structure' must be a mapping")
+        api_data = structure_data.setdefault("alphafold_api", {})
+        if not isinstance(api_data, dict):
+            raise ValueError("configuration field 'structure.alphafold_api' must be a mapping")
+        api_data["base_url"] = value

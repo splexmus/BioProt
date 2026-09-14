@@ -18,20 +18,22 @@ Exit criteria:
 
 ## Phase 1 — Biological dual retrieval (highest priority)
 
-Status: **data contracts and offline end-to-end smoke path complete; real eggNOG,
-MMseqs2, AlphaFold/PDB, and Foldseek adapters pending external data.**
+Status: **data contracts and offline end-to-end smoke path complete; local eggNOG,
+AlphaFold REST acquisition, and local Foldseek adapters pending.**
 
 ### 1A. Sequence branch
 - FASTA parsing
-- eggNOG-mapper wrapper
+- eggNOG-mapper wrapper using a locally stored eggNOG database
 - MMseqs2 support
 - raw result preservation
 - normalized sequence schema
 
 ### 1B. Structure branch
-- UniProt/AlphaFold structure retrieval and cache
+- UniProt accession resolution with explicit provenance
+- AlphaFold DB REST metadata lookup and on-demand model cache
+- AlphaFold acquisition manifest, checksum, timeout, retry, and 404 handling
 - optional PDB lookup
-- Foldseek wrapper
+- local Foldseek wrapper using a locally stored target database
 - raw result preservation
 - normalized structure schema
 

@@ -31,8 +31,9 @@ conda run -n bioinfo ruff check src tests
 ```
 
 `check-tools` is diagnostic: missing executables are reported, but fixture mode remains
-fully usable. Real eggNOG/MMseqs2/Foldseek execution is intentionally not enabled until
-databases and verified database-version manifests are configured.
+fully usable. The planned production boundary uses local eggNOG and Foldseek databases
+plus on-demand AlphaFold DB REST retrieval. It remains gated until the adapters and
+verified database-version manifests are configured.
 
 ## Scientific boundaries
 

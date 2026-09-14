@@ -3,7 +3,7 @@
 ## Principles
 1. Large databases do not live in Git.
 2. Large databases do not live inside Conda environments.
-3. External SSD/HPC/shared storage is the default for active databases.
+3. External SSD/HPC/shared storage is the default for local eggNOG and Foldseek databases.
 4. Raw downloads are immutable where practical; derived indexes are reproducible artifacts.
 5. Every result records the database/version/source that produced it.
 
@@ -14,7 +14,7 @@
 | Protein sequence | UniProt / project FASTA |
 | Orthology/function | eggNOG-mapper / eggNOG |
 | Sequence similarity | MMseqs2; optional HMMER/BLAST/DIAMOND |
-| Predicted structure | AlphaFoldDB |
+| Predicted query structure | AlphaFold DB REST API plus bounded local cache |
 | Experimental structure | PDB |
 | Structure search | Foldseek |
 | Domains/families | InterPro/Pfam/SUPFAM where available |
@@ -22,15 +22,24 @@
 | Literature | PubMed / PMC |
 
 ## AlphaFold policy
-Do not mirror all of AlphaFoldDB for the standard project workflow.
+Do not mirror AlphaFoldDB for the standard project workflow. Store eggNOG and Foldseek
+target databases locally, but retrieve AlphaFold query models on demand through the
+AlphaFold DB REST API.
 
 Preferred strategy:
 
 ```text
-query IDs -> fetch available AlphaFold models -> cache locally -> Foldseek search
+UniProt accession
+  -> AlphaFold DB REST metadata lookup
+  -> download one required PDB/mmCIF model
+  -> checksum + acquisition manifest + bounded cache
+  -> local Foldseek search against a local versioned database
 ```
 
-For proteome-scale experiments, cache the target proteome structures. Maintain a manifest with accession, model version/source, download timestamp, checksum where feasible, and local path.
+For ordinary and batch experiments, use an accession-keyed cache instead of mirroring
+the source database. Maintain a manifest with lookup status, accession, API endpoint,
+model version/source, download timestamp, checksum, and local path. Define cache
+retention separately from preservation of published-run artifacts.
 
 ## Proposed storage tree
 
@@ -42,7 +51,7 @@ $DUALRAG_DATA_ROOT/
 │   ├── mmseqs/
 │   └── metadata/
 ├── structures/
-│   ├── alphafold/
+│   ├── alphafold/        # on-demand query-model cache only
 │   └── pdb/
 ├── literature/
 │   ├── raw/
@@ -71,6 +80,10 @@ foldseek_pdb:
   downloaded_at: null
   path: databases/foldseek/pdb
   notes: "Fill after database creation/download"
+alphafold_api:
+  base_url: https://alphafold.ebi.ac.uk/api
+  accessed_at: null
+  notes: "Remote query-model source; not a locally mirrored database"
 ```
 
 Never invent version fields; leave null until verified.
@@ -109,6 +122,9 @@ If small fixtures are needed for tests, store them under `tests/fixtures/` and k
 
 ## Storage estimate
 Practical planning range for this project: **250–600 GB** active use.
+
+The on-demand AlphaFold cache reduces predicted-structure storage, but local eggNOG
+and Foldseek databases and indexes still dominate capacity planning.
 
 Recommended device:
 - 2 TB external SSD for normal multi-organism research

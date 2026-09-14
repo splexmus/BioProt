@@ -75,10 +75,13 @@ operations.
 External mode fails closed. Before enabling it:
 
 1. record real executable and database versions in a machine-readable manifest;
-2. implement eggNOG/MMseqs2 and Foldseek adapters using documented TSV formats;
-3. preserve their unmodified output beneath the run's `raw/` directory;
-4. mock only subprocess/network boundaries in unit tests;
-5. run the smoke fixture plus a small characterized-protein integration set.
+2. implement eggNOG against its local database using documented TSV formats;
+3. implement AlphaFold DB REST lookup, raw JSON preservation, bounded caching, and an
+   acquisition manifest;
+4. implement Foldseek against its local target database using documented TSV formats;
+5. preserve unmodified tool/API outputs beneath the run's `raw/` directory;
+6. mock subprocess and HTTP boundaries in unit tests;
+7. run the smoke fixture plus a small characterized-protein integration set.
 
 AlphaFold and PDB provenance must remain distinct, including the
 `experimental_structure` field. An external hit cannot be described as experimental

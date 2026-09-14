@@ -53,7 +53,7 @@ class ProteinQuery:
 ## 4. Sequence retrieval
 
 ### Responsibilities
-- run eggNOG-mapper / MMseqs2-based annotation
+- run eggNOG-mapper / MMseqs2-based annotation against locally stored databases
 - optionally run HMMER, BLAST, or DIAMOND baselines
 - retain raw evidence and normalized annotation identifiers
 
@@ -84,10 +84,41 @@ Not every tool supplies every field; missing values must be explicit nulls, not 
 ## 5. Structure retrieval
 
 ### Responsibilities
-1. locate an experimental PDB structure where appropriate, otherwise retrieve AlphaFoldDB model if available
-2. cache structure files
-3. execute Foldseek against configured structural database
-4. map structural hits to protein identifiers/functional metadata
+
+1. resolve a UniProt accession from the input or an explicit, provenance-bearing mapping step
+2. request AlphaFold DB metadata through its REST API
+3. download and cache only the required predicted PDB/mmCIF model
+4. execute Foldseek locally against the configured local structural database
+5. map structural hits to protein identifiers/functional metadata
+6. optionally retrieve experimental PDB structures through a separate, labelled adapter
+
+AlphaFold DB is the query-model acquisition service. It is not the structural search
+backend: Foldseek and its target database remain local.
+
+### AlphaFold acquisition manifest
+
+Keep one record per attempted model lookup, including unsuccessful lookups:
+
+```text
+query_id
+requested_uniprot_accession
+resolution_method
+api_base_url
+request_url
+http_status
+alphafold_entry_id
+model_version
+structure_format
+source_structure_url
+retrieved_at
+sha256
+cache_path
+status
+```
+
+Suggested status values are `CACHED`, `DOWNLOADED`, `NOT_FOUND`, `HTTP_ERROR`, and
+`ACCESSION_UNRESOLVED`. Preserve the raw JSON response separately. Do not fabricate a
+structure when the API has no model for the query.
 
 ### Minimum output schema
 
@@ -346,3 +377,6 @@ parsing, typed evidence schemas, separate versioned normalization, raw-output
 preservation, deterministic provenance, and evidence merge. External execution fails
 closed until verified database manifests and real adapters are available. See
 `docs/POC.md` for the exact contract and scientific limitations.
+
+The next structure adapter follows a hybrid boundary: AlphaFold DB REST for query-model
+acquisition, followed by local Foldseek execution against a versioned local database.

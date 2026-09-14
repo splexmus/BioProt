@@ -47,7 +47,9 @@ PubMed/PMC retrieval is used to support, verify, or contextualize candidate func
 GraphRAG is an advanced phase, not MVP. First prove that sequence + structure retrieval outperforms single-modality baselines.
 
 ### D8 — Storage strategy
-Large biological databases live outside Git and outside Conda, preferably on a fast external SSD or HPC/shared storage. Do not download the entire AlphaFoldDB for ordinary use; fetch/cache only required structures.
+The eggNOG and Foldseek target databases live locally outside Git and Conda, preferably
+on fast external SSD or HPC/shared storage. AlphaFoldDB is not mirrored: query models
+are retrieved through the AlphaFold DB REST API and cached on demand with provenance.
 
 ### D9 — Python environment
 Default target is Python 3.11 using Conda/Bioconda for scientific command-line tools and Python libraries for orchestration, normalization, ranking, RAG, and evaluation.
@@ -61,8 +63,9 @@ Sequence:
 - BLAST+/DIAMOND as optional comparators
 
 Structure:
-- AlphaFoldDB API / PDB retrieval
-- Foldseek
+- AlphaFold DB REST API for predicted query-model acquisition
+- local Foldseek executable and locally stored target database
+- optional, separately labelled PDB retrieval
 - Gemmi/Biopython for structure parsing
 
 Metadata / annotation:
@@ -162,3 +165,7 @@ When a durable decision changes, append a short entry below rather than silently
 - 2026-09-04: added an offline synthetic-fixture PoC so schemas, provenance,
   reproducibility, and merge behavior can be tested without downloading databases.
   Fixture annotations must never be interpreted as protein-function predictions.
+- 2026-09-14: fixed the Phase 1 deployment boundary: eggNOG and Foldseek databases are
+  local; AlphaFold DB is accessed through REST only for required query models, which
+  are cached with checksums and acquisition metadata. AlphaFold REST does not replace
+  local Foldseek similarity search.

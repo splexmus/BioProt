@@ -23,8 +23,8 @@ from dualrag.structure.fixture import retrieve as retrieve_structure_fixture
 def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[str, object]:
     if config.sequence.backend != "fixture" or config.structure.backend != "fixture":
         raise NotImplementedError(
-            "external execution is gated: configure verified databases and implement "
-            "the tool adapter first"
+            "local eggNOG + AlphaFold REST + local Foldseek execution is gated: "
+            "configure verified databases and implement the adapters first"
         )
     input_path = input_path.resolve()
     output_dir = output_dir.resolve()

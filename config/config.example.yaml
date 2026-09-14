@@ -10,7 +10,7 @@ paths:
   literature_dir: /external_ssd/dualrag/literature
 
 sequence:
-  backend: external
+  backend: local
   fixture_results: null
   eggnog_data_dir: /external_ssd/dualrag/databases/eggnog
   mmseqs_db: null
@@ -19,11 +19,18 @@ sequence:
   top_k: 10
 
 structure:
-  backend: external
+  backend: hybrid
   fixture_results: null
   foldseek_db: /external_ssd/dualrag/databases/foldseek/pdb
   top_k: 10
   alphafold_cache: /external_ssd/dualrag/structures/alphafold
+  alphafold_api:
+    enabled: true
+    base_url: https://alphafold.ebi.ac.uk/api
+    timeout_seconds: 30
+    max_retries: 3
+    backoff_seconds: 1
+    structure_format: cif
   database_name: Foldseek-PDB
   database_version: "REQUIRED_VERIFIED_VERSION"
 

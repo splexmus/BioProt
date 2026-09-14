@@ -128,10 +128,10 @@ Internal SSD
 
 External 2 TB+ SSD or HPC storage
 ├── databases/
-│   ├── eggnog/
-│   ├── foldseek/
+│   ├── eggnog/              # local annotation/search database
+│   ├── foldseek/            # local structure-search target database
 │   └── optional local sequence databases/
-├── alphafold_cache/
+├── alphafold_cache/         # only REST-fetched query models
 ├── literature_cache/
 ├── indexes/
 ├── tmp/
@@ -143,7 +143,7 @@ Approximate planning budget:
 - Conda + Python tools: 10–25 GB
 - eggNOG and indexes/extras: tens to >100 GB depending on selected components
 - Foldseek/PDB database: tens of GB depending on representation/version
-- AlphaFold query/proteome cache: from a few GB upward
+- AlphaFold on-demand query-model cache: normally small; bound it with a retention policy
 - literature cache/vector index: 10s of GB for moderate use
 - temporary/intermediate results: reserve 50–300 GB
 
@@ -155,6 +155,7 @@ Project planning target: **250–600 GB** active footprint; **2 TB SSD recommend
 export DUALRAG_DATA_ROOT=/external_ssd/dualrag
 export EGGNOG_DATA_DIR=$DUALRAG_DATA_ROOT/databases/eggnog
 export DUALRAG_FOLDSEEK_DB=$DUALRAG_DATA_ROOT/databases/foldseek/pdb
+export DUALRAG_ALPHAFOLD_API_URL=https://alphafold.ebi.ac.uk/api
 export DUALRAG_TMP=$DUALRAG_DATA_ROOT/tmp
 export DUALRAG_RESULTS=$DUALRAG_DATA_ROOT/results
 ```
