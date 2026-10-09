@@ -1,0 +1,54 @@
+project:
+  name: dual-rag-phase1-4tb-hdd
+  seed: 42
+
+paths:
+  data_root: /media/splexmus/4TB_HDD/dualrag
+  tmp_dir: /media/splexmus/4TB_HDD/dualrag/tmp
+  results_dir: /media/splexmus/4TB_HDD/dualrag/results
+  structures_dir: /media/splexmus/4TB_HDD/dualrag/structures
+
+sequence:
+  backend: local
+  fixture_results: null
+  eggnog_data_dir: /media/splexmus/4TB_HDD/dualrag/databases/eggnog
+  mmseqs_db: null
+  database_name: eggNOG
+  database_version: "5.0.2"
+  top_k: 10
+  executable: emapper.py
+  cpu: 8
+  search_mode: diamond
+  extra_args: []
+
+structure:
+  backend: hybrid
+  fixture_results: null
+  foldseek_db: /media/splexmus/4TB_HDD/dualrag/databases/foldseek/pdb
+  target_metadata: /media/splexmus/4TB_HDD/dualrag/databases/foldseek/pdb_metadata.tsv
+  top_k: 10
+  executable: foldseek
+  threads: 8
+  sensitivity: 7.5
+  extra_args: []
+  alphafold_cache: /media/splexmus/4TB_HDD/dualrag/structures/alphafold
+  alphafold_api:
+    enabled: true
+    base_url: https://alphafold.ebi.ac.uk/api
+    timeout_seconds: 30
+    max_retries: 3
+    backoff_seconds: 1
+    request_interval_seconds: 0.2
+    structure_format: cif
+  database_name: Foldseek-PDB
+  database_version: "PDB 2025-01-01 (Foldseek commit 1815f0d76d7b5807e63b13f9d446dcef43c1f3b1)"
+
+normalization:
+  sequence_version: poc-sequence-v1
+  structure_version: poc-structure-v1
+
+literature:
+  enabled: false
+
+llm:
+  enabled: false
