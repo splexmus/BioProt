@@ -150,12 +150,10 @@ Avoid naïve random splits that leak highly similar homologs between development
 - Does a graph/path evidence representation improve final groundedness enough to justify its complexity?
 
 ## Current implementation status
-A Phase 0/1 proof of concept is implemented with synthetic fixture adapters. It parses
-FASTA, preserves raw fixture outputs, normalizes sequence and structure hits separately,
-emits the three Phase 1 TSV tables, classifies transparent baseline agreement states,
-and records run provenance. This validates orchestration and data contracts only; real
-bioinformatics retrieval remains gated until external databases and adapters are
-configured and integration-tested.
+Phase 1 has both synthetic fixture adapters and real boundary adapters for local
+eggNOG-mapper, AlphaFold DB REST model acquisition/cache, and local Foldseek. Unit tests
+mock subprocess/HTTP boundaries. Real bioinformatics retrieval remains unvalidated until
+verified databases are configured and a characterized-protein integration set is run.
 
 ## Update policy
 When a durable decision changes, append a short entry below rather than silently rewriting history.
@@ -169,3 +167,20 @@ When a durable decision changes, append a short entry below rather than silently
   local; AlphaFold DB is accessed through REST only for required query models, which
   are cached with checksums and acquisition metadata. AlphaFold REST does not replace
   local Foldseek similarity search.
+- 2026-10-07: implemented the real Phase 1 adapters and a non-destructive 32 GB demo
+  storage profile at `/media/splexmus/Splexmus/dualrag-demo`. The device is intentionally
+  treated as adapter/demo storage, not a full research database deployment; database
+  versions must be verified before external execution.
+- 2026-10-08: selected `/media/splexmus/My Passport/dualrag` as the full Phase 1 data
+  root with a soft 2 TB project budget. The local targets remain eggNOG plus Foldseek
+  PDB; AlphaFoldDB is not mirrored. At selection time the NTFS volume was mounted
+  read-only, so downloads remain blocked until it is safely remounted writable.
+- 2026-10-08: moved the intended data root to the ext4 volume at
+  `/media/splexmus/4TB_HDD/dualrag`. It was also observed mounted read-only with
+  `errors=remount-ro`; three eggNOG archives left by mapper 2.1.13 were zero bytes.
+  Pin the final v2 mapper (2.1.15) for eggNOG 5.0.2 compatibility. The tested Bioconda
+  build still contained the retired URL, so use the repository's resumable installer
+  against `downloads.eggnogdb.org` after the filesystem is repaired and writable.
+- 2026-10-08: eggNOG-mapper 2.1.15 constrains DIAMOND to 2.0.x. The resolved Phase 1
+  environment therefore records DIAMOND 2.0.15, Foldseek 9.427df8a, and MMseqs2
+  16.747c6; executable and database versions remain mandatory run provenance.

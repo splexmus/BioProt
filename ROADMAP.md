@@ -1,7 +1,7 @@
 # ROADMAP.md
 
 ## Phase 0 — Repository and environment
-Status: **PoC complete with fixture backend; external-tool integration pending.**
+Status: **complete; external executables are detected and storage is configurable.**
 
 Deliverables:
 - Conda `environment.yml`
@@ -18,8 +18,8 @@ Exit criteria:
 
 ## Phase 1 — Biological dual retrieval (highest priority)
 
-Status: **data contracts and offline end-to-end smoke path complete; local eggNOG,
-AlphaFold REST acquisition, and local Foldseek adapters pending.**
+Status: **adapters and mocked boundary tests complete; real databases and a small
+characterized-protein integration run pending.**
 
 ### 1A. Sequence branch
 - FASTA parsing
@@ -34,6 +34,7 @@ AlphaFold REST acquisition, and local Foldseek adapters pending.**
 - AlphaFold acquisition manifest, checksum, timeout, retry, and 404 handling
 - optional PDB lookup
 - local Foldseek wrapper using a locally stored target database
+- optional target-metadata TSV for functional labels and source provenance
 - raw result preservation
 - normalized structure schema
 
@@ -43,7 +44,7 @@ AlphaFold REST acquisition, and local Foldseek adapters pending.**
 - emit `sequence_results.tsv`, `structure_results.tsv`, `merged_results.tsv`
 
 Exit criteria:
-- end-to-end smoke test on a small characterized protein set
+- end-to-end smoke test on a small characterized protein set **(pending real data)**
 - tool/database versions recorded
 - repeat run produces equivalent normalized output
 

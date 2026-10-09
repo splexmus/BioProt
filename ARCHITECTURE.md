@@ -39,15 +39,13 @@ Supported target inputs:
 - batch FASTA
 - future: natural-language question resolving to one or more proteins
 
-Internal query model:
+Implemented Phase 1 query model:
 
 ```python
 class ProteinQuery:
-    protein_id: str | None
+    query_id: str
     sequence: str
-    organism: str | None
-    tax_id: int | None
-    task: str = "protein_function_prediction"
+    description: str | None
 ```
 
 ## 4. Sequence retrieval
@@ -95,6 +93,11 @@ Not every tool supplies every field; missing values must be explicit nulls, not 
 AlphaFold DB is the query-model acquisition service. It is not the structural search
 backend: Foldseek and its target database remain local.
 
+The Phase 1 resolver accepts only a validated bare UniProt accession or a standard
+`sp|ACCESSION|...` / `tr|ACCESSION|...` FASTA identifier. Other identifiers produce an
+`ACCESSION_UNRESOLVED` acquisition row and do not disable the sequence branch. If the
+AlphaFold metadata includes `uniprotSequence`, it must exactly match the query sequence.
+
 ### AlphaFold acquisition manifest
 
 Keep one record per attempted model lookup, including unsuccessful lookups:
@@ -114,6 +117,7 @@ retrieved_at
 sha256
 cache_path
 status
+sequence_compatible
 ```
 
 Suggested status values are `CACHED`, `DOWNLOADED`, `NOT_FOUND`, `HTTP_ERROR`, and
@@ -145,6 +149,10 @@ raw_output_path
 ```
 
 If Foldseek output does not include a field directly, do not infer it unless a documented post-processing step computes it.
+
+Foldseek itself does not supply function labels. An optional target-metadata TSV joins
+`target_structure_id` to UniProt, protein name, InterPro/SUPFAM identifiers, source,
+experimental status, and source accession. Missing metadata stays null.
 
 ## 6. Evidence normalization
 Raw metrics have different scales and meanings. Keep both raw and normalized values.

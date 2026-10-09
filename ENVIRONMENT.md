@@ -149,6 +149,13 @@ Approximate planning budget:
 
 Project planning target: **250–600 GB** active footprint; **2 TB SSD recommended**.
 
+### Current external-HDD profile
+
+`config/4tb-hdd.yaml` targets `/media/splexmus/4TB_HDD/dualrag` with a soft 2 TB project
+budget. Initialize it with `python -m dualrag init-storage --config config/4tb-hdd.yaml`
+only after `findmnt` confirms the ext4 filesystem is mounted read-write. See
+`docs/PHASE1_DATA_INSTALL.md` for the version-matched, resumable database procedure.
+
 ## Environment variables
 
 ```bash

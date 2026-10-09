@@ -1,8 +1,10 @@
 # Dual-Retrieval RAG for Protein Function Research
 
-This repository currently contains a **Phase 1 proof of concept**: FASTA input is
+This repository contains a **Phase 1 dual-retrieval implementation**: FASTA input is
 resolved into two independent evidence channels, normalized separately, and merged
-without collapsing sequence and structure evidence into one score.
+without collapsing sequence and structure evidence into one score. Both an offline
+fixture backend and real eggNOG-mapper + AlphaFold DB REST + local Foldseek adapters
+are available.
 
 The default `fixture` backend requires no biological databases, downloads, or network
 access. Its records are synthetic and exist only to exercise schemas, provenance,
@@ -31,9 +33,12 @@ conda run -n bioinfo ruff check src tests
 ```
 
 `check-tools` is diagnostic: missing executables are reported, but fixture mode remains
-fully usable. The planned production boundary uses local eggNOG and Foldseek databases
-plus on-demand AlphaFold DB REST retrieval. It remains gated until the adapters and
-verified database-version manifests are configured.
+fully usable. External mode fails closed until real database versions replace the
+`UNVERIFIED` placeholders.
+
+Accepted structure accessions are explicit UniProt-style FASTA identifiers such as
+`P69905` or `sp|P69905|HBA_HUMAN`. Other headers are recorded as unresolved and retain
+the sequence channel without making an AlphaFold request.
 
 ## Scientific boundaries
 
@@ -42,5 +47,11 @@ verified database-version manifests are configured.
 - `CONFLICT` is retained as evidence; it is never averaged away.
 - Missing metrics are blank TSV cells and explicit `None` values internally.
 - No LLM or literature layer is present in this milestone.
+- An incomplete target database is not a research-complete search space.
 
 See `ARCHITECTURE.md`, `DATA.md`, and `docs/POC.md` for contracts and extension points.
+
+For the full external-HDD database setup, including the writable-mount preflight,
+eggNOG installation, Foldseek PDB download, provenance finalization, and validation,
+see [Phase 1 data installation](docs/PHASE1_DATA_INSTALL.md). The current production
+profile is [`config/4tb-hdd.yaml`](config/4tb-hdd.yaml).

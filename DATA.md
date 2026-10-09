@@ -133,6 +133,13 @@ Recommended device:
 
 Reserve substantial free space for Foldseek/MMseqs2 temporary work and index construction.
 
+### Small-volume demo policy
+
+A small-volume device is not a substitute for the research storage target. The current
+production profile is `config/4tb-hdd.yaml`; keep database labels and versions
+`UNVERIFIED` until their manifests have been populated from the actual data. The
+pipeline rejects those placeholders.
+
 ## Data provenance fields
 Every normalized row should be traceable through fields such as:
 

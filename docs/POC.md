@@ -70,17 +70,17 @@ normalized TSVs. `run_metadata.json` has runtime context and timestamp, while
 `config.snapshot.yaml` and `commands.log` capture the resolved settings and adapter
 operations.
 
-## External-data handoff
+## External-data path
 
-External mode fails closed. Before enabling it:
+External adapters are implemented and fail closed on unverified database versions.
+Before running them:
 
 1. record real executable and database versions in a machine-readable manifest;
-2. implement eggNOG against its local database using documented TSV formats;
-3. implement AlphaFold DB REST lookup, raw JSON preservation, bounded caching, and an
-   acquisition manifest;
-4. implement Foldseek against its local target database using documented TSV formats;
+2. install eggNOG data locally or point the config to a larger mounted data store;
+3. populate a local Foldseek target database and its optional functional metadata TSV;
+4. confirm AlphaFold DB network access or pre-populate the checksum-tracked cache;
 5. preserve unmodified tool/API outputs beneath the run's `raw/` directory;
-6. mock subprocess and HTTP boundaries in unit tests;
+6. retain the mocked subprocess and HTTP boundary tests;
 7. run the smoke fixture plus a small characterized-protein integration set.
 
 AlphaFold and PDB provenance must remain distinct, including the
