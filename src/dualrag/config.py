@@ -28,6 +28,10 @@ class SequenceConfig(BaseModel):
     database_name: str
     database_version: str
     top_k: int = Field(default=10, ge=1)
+    executable: str = "emapper.py"
+    cpu: int = Field(default=1, ge=1)
+    search_mode: Literal["diamond", "mmseqs"] = "diamond"
+    extra_args: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def fixture_path_required(self) -> SequenceConfig:
@@ -45,6 +49,7 @@ class AlphaFoldApiConfig(BaseModel):
     max_retries: int = Field(default=3, ge=0)
     backoff_seconds: float = Field(default=1.0, ge=0)
     structure_format: Literal["cif", "pdb"] = "cif"
+    request_interval_seconds: float = Field(default=0.2, ge=0)
 
 
 class StructureConfig(BaseModel):
@@ -56,6 +61,11 @@ class StructureConfig(BaseModel):
     database_name: str
     database_version: str
     top_k: int = Field(default=10, ge=1)
+    executable: str = "foldseek"
+    threads: int = Field(default=1, ge=1)
+    sensitivity: float = Field(default=7.5, gt=0)
+    target_metadata: Path | None = None
+    extra_args: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def fixture_path_required(self) -> StructureConfig:
@@ -97,7 +107,7 @@ class AppConfig(BaseModel):
 _PATH_FIELDS = {
     "paths": {"data_root", "tmp_dir", "results_dir", "structures_dir"},
     "sequence": {"fixture_results", "eggnog_data_dir", "mmseqs_db"},
-    "structure": {"fixture_results", "foldseek_db", "alphafold_cache"},
+    "structure": {"fixture_results", "foldseek_db", "alphafold_cache", "target_metadata"},
 }
 
 

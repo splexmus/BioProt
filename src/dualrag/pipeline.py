@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+import shlex
 import sys
 from dataclasses import fields as dataclass_fields
 from datetime import UTC, datetime
@@ -16,16 +17,14 @@ from dualrag.io import file_sha256, stable_hash, write_json, write_tsv
 from dualrag.models import SequenceEvidence, StructureEvidence
 from dualrag.normalization.sequence import normalize as normalize_sequence
 from dualrag.normalization.structure import normalize as normalize_structure
+from dualrag.sequence.eggnog import retrieve as retrieve_sequence_eggnog
 from dualrag.sequence.fixture import retrieve as retrieve_sequence_fixture
+from dualrag.structure.alphafold import AcquisitionRecord, acquire_models
 from dualrag.structure.fixture import retrieve as retrieve_structure_fixture
+from dualrag.structure.foldseek import retrieve as retrieve_structure_foldseek
 
 
 def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[str, object]:
-    if config.sequence.backend != "fixture" or config.structure.backend != "fixture":
-        raise NotImplementedError(
-            "local eggNOG + AlphaFold REST + local Foldseek execution is gated: "
-            "configure verified databases and implement the adapters first"
-        )
     input_path = input_path.resolve()
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -35,28 +34,63 @@ def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[
     parameters_hash = stable_hash(config_dump)
     run_id = stable_hash({"input_sha256": file_sha256(input_path), "config": config_dump})[:16]
 
-    sequence_raw = raw_dir / "sequence_hits.tsv"
-    structure_raw = raw_dir / "structure_hits.tsv"
-    assert config.sequence.fixture_results is not None
-    assert config.structure.fixture_results is not None
-    sequence_hits = retrieve_sequence_fixture(
-        queries, config.sequence.fixture_results, sequence_raw, config.sequence.top_k
-    )
-    structure_hits = retrieve_structure_fixture(
-        queries, config.structure.fixture_results, structure_raw, config.structure.top_k
-    )
-    _validate_database_provenance(
-        "sequence",
-        [(hit.database, hit.database_version) for hit in sequence_hits],
-        config.sequence.database_name,
-        config.sequence.database_version,
-    )
-    _validate_database_provenance(
-        "structure",
-        [(hit.database, hit.database_version) for hit in structure_hits],
-        config.structure.database_name,
-        config.structure.database_version,
-    )
+    commands: list[str] = []
+    acquisition_records: list[AcquisitionRecord] = []
+    if config.sequence.backend == "fixture":
+        assert config.sequence.fixture_results is not None
+        sequence_raw = raw_dir / "sequence_hits.tsv"
+        sequence_hits = retrieve_sequence_fixture(
+            queries, config.sequence.fixture_results, sequence_raw, config.sequence.top_k
+        )
+        commands.append(
+            f"fixture-sequence --input {input_path} --source {config.sequence.fixture_results}"
+        )
+        _validate_database_provenance(
+            "sequence",
+            [(hit.database, hit.database_version) for hit in sequence_hits],
+            config.sequence.database_name,
+            config.sequence.database_version,
+        )
+    else:
+        _validate_external_config(config.sequence.database_version, "sequence.database_version")
+        assert config.sequence.eggnog_data_dir is not None
+        if not config.sequence.eggnog_data_dir.is_dir():
+            raise FileNotFoundError(
+                f"eggNOG data directory does not exist: {config.sequence.eggnog_data_dir}"
+            )
+        sequence_hits, command = retrieve_sequence_eggnog(
+            queries, input_path, raw_dir / "eggnog", config.sequence
+        )
+        commands.append(shlex.join(command))
+
+    if config.structure.backend == "fixture":
+        assert config.structure.fixture_results is not None
+        structure_raw = raw_dir / "structure_hits.tsv"
+        structure_hits = retrieve_structure_fixture(
+            queries, config.structure.fixture_results, structure_raw, config.structure.top_k
+        )
+        commands.append(
+            f"fixture-structure --input {input_path} --source {config.structure.fixture_results}"
+        )
+        _validate_database_provenance(
+            "structure",
+            [(hit.database, hit.database_version) for hit in structure_hits],
+            config.structure.database_name,
+            config.structure.database_version,
+        )
+    else:
+        _validate_external_config(config.structure.database_version, "structure.database_version")
+        models, acquisition_records = acquire_models(
+            queries,
+            config.structure.alphafold_cache,
+            raw_dir / "alphafold",
+            config.structure.alphafold_api,
+        )
+        structure_hits, command = retrieve_structure_foldseek(
+            queries, models, raw_dir / "foldseek", config.paths.tmp_dir / run_id, config.structure
+        )
+        if command:
+            commands.append(shlex.join(command))
     for hit in sequence_hits:
         hit.parameters_hash = parameters_hash
         hit.run_id = run_id
@@ -83,13 +117,15 @@ def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[
         _fields(structure_rows, StructureEvidence),
     )
     write_tsv(output_dir / "merged_results.tsv", merged_rows, _fields(merged_rows))
+    if config.structure.backend == "hybrid":
+        write_tsv(
+            output_dir / "alphafold_acquisition.tsv",
+            [record.to_row() for record in acquisition_records],
+            [item.name for item in dataclass_fields(AcquisitionRecord)],
+        )
     (output_dir / "config.snapshot.yaml").write_text(
         yaml.safe_dump(config_dump, sort_keys=True), encoding="utf-8"
     )
-    commands = [
-        f"fixture-sequence --input {input_path} --source {config.sequence.fixture_results}",
-        f"fixture-structure --input {input_path} --source {config.structure.fixture_results}",
-    ]
     (output_dir / "commands.log").write_text("\n".join(commands) + "\n", encoding="utf-8")
     metadata: dict[str, object] = {
         "run_id": run_id,
@@ -102,11 +138,14 @@ def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[
         "parameters_hash": parameters_hash,
         "sequence_backend": config.sequence.backend,
         "structure_backend": config.structure.backend,
-        "synthetic_fixture_data": True,
+        "synthetic_fixture_data": (
+            config.sequence.backend == "fixture" or config.structure.backend == "fixture"
+        ),
         "query_count": len(queries),
         "sequence_hit_count": len(sequence_hits),
         "structure_hit_count": len(structure_hits),
         "merged_row_count": len(merged_rows),
+        "alphafold_acquisition_statuses": [record.status for record in acquisition_records],
     }
     write_json(output_dir / "run_metadata.json", metadata)
     return metadata
@@ -137,3 +176,8 @@ def _validate_database_provenance(
             f"{modality} fixture provenance does not match config: "
             f"expected {(expected_name, expected_version)!r}, observed {mismatches!r}"
         )
+
+
+def _validate_external_config(value: str, field: str) -> None:
+    if not value.strip() or value.startswith("REQUIRED_") or value == "UNVERIFIED":
+        raise ValueError(f"{field} must contain a verified database version before external runs")

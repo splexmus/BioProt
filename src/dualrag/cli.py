@@ -7,9 +7,10 @@ import typer
 
 from dualrag.config import load_config
 from dualrag.pipeline import run_pipeline
+from dualrag.storage import initialize_storage
 from dualrag.tools import check_tools
 
-app = typer.Typer(no_args_is_help=True, help="Dual-retrieval Phase 1 proof of concept.")
+app = typer.Typer(no_args_is_help=True, help="Dual-retrieval Phase 1 protein evidence pipeline.")
 
 
 @app.command("run")
@@ -18,7 +19,7 @@ def run_command(
     input_path: Annotated[Path, typer.Option("--input", "-i", exists=True, dir_okay=False)],
     output: Annotated[Path, typer.Option("--output", "-o")],
 ) -> None:
-    """Run both fixture retrieval channels, normalize them, and merge the evidence."""
+    """Run configured retrieval channels, normalize them, and merge the evidence."""
     metadata = run_pipeline(load_config(config), input_path, output)
     typer.echo(
         f"run {metadata['run_id']} complete: {metadata['query_count']} queries, "
@@ -36,3 +37,14 @@ def check_tools_command() -> None:
         typer.echo(f"{marker:7} {status.name}: {status.executable}{version}")
         if status.warning:
             typer.echo(f"        {status.warning}")
+
+
+@app.command("init-storage")
+def init_storage_command(
+    config: Annotated[Path, typer.Option("--config", "-c", exists=True, dir_okay=False)],
+) -> None:
+    """Create a configured storage tree and a non-destructive database manifest."""
+    result = initialize_storage(load_config(config))
+    free_gib = int(result["free_bytes"]) / (1024**3)
+    typer.echo(f"storage ready at {result['data_root']} ({free_gib:.1f} GiB free)")
+    typer.echo(f"database manifest: {result['manifest_path']}")
