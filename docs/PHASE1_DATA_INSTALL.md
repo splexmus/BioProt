@@ -184,6 +184,51 @@ Inspect `alphafold_acquisition.tsv`, both modality result tables, `merged_result
 `commands.log`, and `run_metadata.json`. A passing fixture test is not evidence that the
 real database integration passed.
 
+## 8. Download the recommended full Phase 1 bundle
+
+The repository provides a resumable downloader for the remaining recommended data:
+PDBe SIFTS mappings, reviewed UniProtKB/Swiss-Prot annotations, the eggNOG 5.0.2
+MMseqs2 and Pfam packages, and UniRef90. It deliberately excludes full AlphaFoldDB,
+TrEMBL, and literature mirrors.
+
+Review the transfer first:
+
+```bash
+scripts/download_phase1_full_data.sh \
+  --data-root "$DUALRAG_DATA_ROOT" \
+  --dry-run
+```
+
+Then start the resumable download and install the eggNOG extras:
+
+```bash
+scripts/download_phase1_full_data.sh \
+  --data-root "$DUALRAG_DATA_ROOT" \
+  --threads 8 \
+  --yes
+```
+
+The script requires at least 600 GB free by default, validates gzip/tar archives before
+promotion, retains partial downloads as `.part` files for resumption, writes local
+SHA-256 inventories, and appends acquisition records to
+`databases/metadata/download-events.tsv`.
+
+The standalone UniRef90 MMseqs2 index is opt-in because it can consume hundreds of
+gigabytes and the current Phase 1 adapter does not use that independent target yet:
+
+```bash
+conda run -n bioinfo bash scripts/download_phase1_full_data.sh \
+  --data-root "$DUALRAG_DATA_ROOT" \
+  --components uniref90 \
+  --build-uniref-index \
+  --threads 8 \
+  --yes
+```
+
+To download a smaller stage independently, pass for example
+`--components sifts,swissprot`. Existing valid files are reused; the script will not
+silently replace them.
+
 ## Space and safety policy
 
 - Keep at least 15% of the filesystem free during downloads and indexing.

@@ -55,3 +55,11 @@ For the full external-HDD database setup, including the writable-mount preflight
 eggNOG installation, Foldseek PDB download, provenance finalization, and validation,
 see [Phase 1 data installation](docs/PHASE1_DATA_INSTALL.md). The current production
 profile is [`config/4tb-hdd.yaml`](config/4tb-hdd.yaml).
+
+After the core eggNOG and Foldseek databases are installed, preview or run the
+resumable full-data downloader with:
+
+```bash
+scripts/download_phase1_full_data.sh --data-root "$DUALRAG_DATA_ROOT" --dry-run
+scripts/download_phase1_full_data.sh --data-root "$DUALRAG_DATA_ROOT" --yes
+```
