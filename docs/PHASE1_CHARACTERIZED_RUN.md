@@ -58,3 +58,17 @@ within each query, hit order and all scientific values remain exact comparison f
 Regression tests verify both sides of that rule. This satisfies the final Phase 1 exit
 criterion; function-level interpretation of the current pairwise labels belongs to
 Phase 2.
+
+## Pixi migration validation
+
+After Pixi became the supported environment manager, two additional real characterized
+runs completed with the same run ID and counts. `dualrag compare-runs` reported all
+seven Pixi-to-Pixi artifacts equivalent. The AlphaFold acquisition state was four
+`CACHED` models plus the expected P00720 `NOT_FOUND` result.
+
+The historical Conda-to-Pixi comparison intentionally reports non-equivalence in
+sequence-derived artifacts and run metadata: Pixi resolved Python 3.11.9 instead of
+3.11.6, and eggNOG-mapper 2.1.15 reported a different embedded build identifier. The
+retrieved eggNOG values, normalized scores, Foldseek results, AlphaFold identities, and
+row counts were unchanged. These provenance differences are preserved rather than
+silently normalized away.

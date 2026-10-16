@@ -197,3 +197,9 @@ When a durable decision changes, append a short entry below rather than silently
   explicit volatile-field normalization: output paths, timestamps, cache-vs-download
   state, and parallel cross-query block order do not affect equivalence; within-query
   hit order and scientific values do.
+- 2026-10-16: made Pixi the supported environment workflow. `pixi.toml` contains the
+  intentional Linux Phase 1 dependencies and tasks; `pixi.lock` fixes the full
+  Conda/PyPI solve. Two real characterized Pixi runs were equivalent across all seven
+  artifacts. Historical Conda-to-Pixi output remains provenance-distinct because Python
+  and the embedded eggNOG-mapper build identifier changed, while retrieved biological
+  values were unchanged. The exported Conda YAML files are retained as legacy snapshots.

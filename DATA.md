@@ -2,7 +2,7 @@
 
 ## Principles
 1. Large databases do not live in Git.
-2. Large databases do not live inside Conda environments.
+2. Large databases do not live inside Pixi/Conda environments.
 3. External SSD/HPC/shared storage is the default for local eggNOG and Foldseek databases.
 4. Raw downloads are immutable where practical; derived indexes are reproducible artifacts.
 5. Every result records the database/version/source that produced it.

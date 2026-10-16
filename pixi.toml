@@ -1,0 +1,29 @@
+[workspace]
+name = "dualrag"
+version = "0.1.0"
+description = "Dual-retrieval protein function research pipeline"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+channel-priority = "strict"
+
+[dependencies]
+python = "3.11.*"
+mmseqs2 = "16.747c6.*"
+foldseek = "9.427df8a.*"
+hmmer = "3.4.*"
+blast = ">=2.16,<2.18"
+diamond = "2.0.*"
+eggnog-mapper = "2.1.15.*"
+pytest = ">=8"
+ruff = ">=0.8"
+
+[pypi-dependencies]
+dualrag = { path = ".", editable = true }
+
+[tasks]
+test = "pytest -q"
+lint = "ruff check src tests"
+cli = "python -m dualrag --help"
+check-tools = "python -m dualrag check-tools"
+smoke-fixture = "python -m dualrag run --config config/config.yaml --input tests/fixtures/queries.fasta --output results/pixi-smoke"
+validate = { depends-on = ["test", "lint", "cli", "check-tools"] }

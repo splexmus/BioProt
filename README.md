@@ -15,10 +15,8 @@ real function.
 ## Quick start (no external data)
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag run \
-  --config config/config.yaml \
-  --input tests/fixtures/queries.fasta \
-  --output results/poc
+pixi install --locked
+pixi run smoke-fixture
 ```
 
 The output directory contains raw channel outputs, `sequence_results.tsv`,
@@ -28,7 +26,7 @@ run metadata, and a command log.
 Compare two completed runs while excluding only documented volatile fields:
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag compare-runs \
+pixi run python -m dualrag compare-runs \
   --first results/run1 \
   --second results/run2 \
   --output results/reproducibility.json
@@ -37,14 +35,16 @@ PYTHONPATH=src conda run -n bioinfo python -m dualrag compare-runs \
 Validation:
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag check-tools
-conda run -n bioinfo pytest -q
-conda run -n bioinfo ruff check src tests
+pixi run validate
 ```
 
 `check-tools` is diagnostic: missing executables are reported, but fixture mode remains
 fully usable. External mode fails closed until real database versions replace the
 `UNVERIFIED` placeholders.
+
+Pixi is the supported environment manager. `pixi.toml` declares intentional Phase 1
+dependencies and `pixi.lock` pins the complete solve. See `ENVIRONMENT.md` for setup,
+upgrade policy, and project-specific advantages and limitations.
 
 Accepted structure accessions are explicit UniProt-style FASTA identifiers such as
 `P69905` or `sp|P69905|HBA_HUMAN`. Other headers are recorded as unresolved and retain

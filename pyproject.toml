@@ -22,7 +22,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-# The host Conda environment exposes ROS pytest plugins built for another Python.
+# Some host environments expose ROS pytest plugins built for another Python.
 addopts = ["-p", "no:launch_testing", "-p", "no:launch_ros"]
 
 [tool.ruff]

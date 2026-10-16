@@ -4,7 +4,7 @@
 Status: **complete; external executables are detected and storage is configurable.**
 
 Deliverables:
-- Conda `environment.yml`
+- locked Pixi environment (`pixi.toml` + `pixi.lock`)
 - `config/config.yaml`
 - CLI skeleton
 - logging/version capture

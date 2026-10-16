@@ -24,16 +24,16 @@ The mount options must include `rw`. Stop if they include `ro`. Do not force-wri
 NTFS filesystem. Safely eject/reconnect it first; if it remains read-only, repair it
 from Windows with Fast Startup/hibernation disabled and a normal filesystem check.
 
-The ext4 drive was observed as `ro,errors=remount-ro` on 2026-10-08. This is the direct
-reason the database installation cannot complete. Inspect kernel logs and run an offline
-filesystem check from the host before retrying; never run `fsck` on a mounted filesystem.
+The ext4 drive was observed as `ro,errors=remount-ro` on 2026-10-08, but the verified
+database installation described below subsequently completed. Before any new download
+or index build, recheck the current mount state; never run `fsck` on a mounted filesystem.
 
 ## 2. Initialize the non-destructive layout
 
 From the repository root:
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag init-storage \
+pixi run python -m dualrag init-storage \
   --config config/4tb-hdd.yaml
 ```
 
@@ -57,8 +57,11 @@ eggNOG-mapper 2.1.13 uses a retired download hostname and can leave zero-byte `.
 files while still printing `Finished`. Upgrade to the final v2 release, which retains
 eggNOG v5 compatibility:
 
+eggNOG-mapper 2.1.15 is pinned by `pixi.toml` and `pixi.lock`. Install the project
+environment before downloading data:
+
 ```bash
-conda install -n bioinfo -c conda-forge -c bioconda eggnog-mapper=2.1.15
+pixi install --locked
 ```
 
 The currently available Bioconda 2.1.15 build was observed still carrying the old URL,
@@ -66,8 +69,8 @@ despite the upstream fix. Confirm that the mapper expects database version `5.0.
 use the repository's resumable installer against the official HTTPS download index:
 
 ```bash
-conda run -n bioinfo emapper.py --version
-conda run -n bioinfo bash scripts/install_eggnog_v5.sh "$EGGNOG_DATA_DIR"
+pixi run emapper.py --version
+pixi run bash scripts/install_eggnog_v5.sh "$EGGNOG_DATA_DIR"
 ```
 
 This installs and validates the annotation, taxonomy, and DIAMOND databases required by
@@ -95,7 +98,7 @@ Verify the installed files and capture the reported versions:
 ```bash
 test -s "$EGGNOG_DATA_DIR/eggnog.db"
 test -s "$EGGNOG_DATA_DIR/eggnog_proteins.dmnd"
-EGGNOG_DATA_DIR="$EGGNOG_DATA_DIR" conda run -n bioinfo emapper.py --version
+EGGNOG_DATA_DIR="$EGGNOG_DATA_DIR" pixi run emapper.py --version
 du -sh "$EGGNOG_DATA_DIR"
 ```
 
@@ -106,7 +109,7 @@ only the query-model source.
 
 ```bash
 mkdir -p "$DUALRAG_TMP/foldseek-pdb"
-conda run -n bioinfo foldseek databases \
+pixi run foldseek databases \
   PDB \
   "$DUALRAG_FOLDSEEK_DB" \
   "$DUALRAG_TMP/foldseek-pdb" \
@@ -121,7 +124,7 @@ Verify the database:
 ```bash
 test -s "${DUALRAG_FOLDSEEK_DB}.dbtype"
 test -s "${DUALRAG_FOLDSEEK_DB}.lookup"
-conda run -n bioinfo foldseek version
+pixi run foldseek version
 du -sh "$DUALRAG_DATA_ROOT/databases/foldseek"
 ```
 
@@ -147,7 +150,7 @@ function-level agreement will usually remain uninformative.
 After the SIFTS and Swiss-Prot files from section 8 are present, build the table with:
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag.structure.metadata \
+pixi run python -m dualrag.structure.metadata \
   --data-root "$DUALRAG_DATA_ROOT" \
   --work-dir "$DUALRAG_TMP"
 ```
@@ -195,16 +198,14 @@ df -h /media/splexmus/4TB_HDD1
 Repository checks:
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag check-tools
-conda run -n bioinfo pytest -q
-conda run -n bioinfo ruff check src tests
+pixi run validate
 ```
 
 Then run a small FASTA whose identifiers are validated UniProt accessions and whose
 sequences exactly match those accessions:
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag run \
+pixi run python -m dualrag run \
   --config config/4tb-hdd.yaml \
   --input proteins.fasta \
   --output "$DUALRAG_RESULTS/phase1-smoke"
@@ -218,7 +219,7 @@ The repository includes a five-protein reviewed Swiss-Prot integration set and a
 source-derived manifest:
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag run \
+pixi run python -m dualrag run \
   --config config/4tb-hdd.yaml \
   --input tests/fixtures/phase1_characterized.fasta \
   --output "$DUALRAG_RESULTS/phase1-characterized"
@@ -231,7 +232,7 @@ sequence SHA-256 values. It is an integration fixture, not a research benchmark.
 Repeat the run into a second output directory, then compare stable results:
 
 ```bash
-PYTHONPATH=src conda run -n bioinfo python -m dualrag compare-runs \
+pixi run python -m dualrag compare-runs \
   --first "$DUALRAG_RESULTS/phase1-characterized-run1" \
   --second "$DUALRAG_RESULTS/phase1-characterized-run2" \
   --output "$DUALRAG_RESULTS/phase1-reproducibility.json"
@@ -274,7 +275,7 @@ The standalone UniRef90 MMseqs2 index is opt-in because it can consume hundreds 
 gigabytes and the current Phase 1 adapter does not use that independent target yet:
 
 ```bash
-conda run -n bioinfo bash scripts/download_phase1_full_data.sh \
+pixi run bash scripts/download_phase1_full_data.sh \
   --data-root "$DUALRAG_DATA_ROOT" \
   --components uniref90 \
   --build-uniref-index \
@@ -291,6 +292,6 @@ silently replace them.
 - Keep at least 15% of the filesystem free during downloads and indexing.
 - Preserve raw tool outputs and published-run artifacts.
 - Temporary directories may be cleared only after the producing run has finished.
-- Do not install databases inside the Conda environment or Git repository.
+- Do not install databases inside the Pixi environment or Git repository.
 - Do not download a local AlphaFoldDB mirror for this project.
 - Do not label AlphaFold query models as experimental structures.
