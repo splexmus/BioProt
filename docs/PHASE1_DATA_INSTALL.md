@@ -3,7 +3,7 @@
 This guide installs the Phase 1 databases under:
 
 ```text
-/media/splexmus/4TB_HDD/dualrag
+/media/splexmus/4TB_HDD1/dualrag
 ```
 
 The drive currently provides about 3.6 TB of usable space. Treat 2 TB as a soft
@@ -16,8 +16,8 @@ through the AlphaFold REST API and caches them locally.
 Run:
 
 ```bash
-findmnt -T /media/splexmus/4TB_HDD -o SOURCE,FSTYPE,OPTIONS
-df -h /media/splexmus/4TB_HDD
+findmnt -T /media/splexmus/4TB_HDD1 -o SOURCE,FSTYPE,OPTIONS
+df -h /media/splexmus/4TB_HDD1
 ```
 
 The mount options must include `rw`. Stop if they include `ro`. Do not force-write an
@@ -44,7 +44,7 @@ For the shell commands below, define explicit quoted paths because the mount nam
 contains a space:
 
 ```bash
-export DUALRAG_DATA_ROOT=/media/splexmus/4TB_HDD/dualrag
+export DUALRAG_DATA_ROOT=/media/splexmus/4TB_HDD1/dualrag
 export EGGNOG_DATA_DIR="$DUALRAG_DATA_ROOT/databases/eggnog"
 export DUALRAG_FOLDSEEK_DB="$DUALRAG_DATA_ROOT/databases/foldseek/pdb"
 export DUALRAG_TMP="$DUALRAG_DATA_ROOT/tmp"
@@ -144,6 +144,27 @@ output identifiers. Record mapping source URLs, release dates, and checksums in 
 database manifest. Until this table is populated, structural similarities are valid but
 function-level agreement will usually remain uninformative.
 
+After the SIFTS and Swiss-Prot files from section 8 are present, build the table with:
+
+```bash
+PYTHONPATH=src conda run -n bioinfo python -m dualrag.structure.metadata \
+  --data-root "$DUALRAG_DATA_ROOT" \
+  --work-dir "$DUALRAG_TMP"
+```
+
+The builder reads the exact target names from `pdb.lookup`, maps their PDB entry and
+chain through SIFTS, and adds reviewed protein names from Swiss-Prot. It emits one row
+for every unique Foldseek target, including unmapped targets, so missing metadata
+remains visible rather than silently shrinking the search database. Duplicate lookup
+names are collapsed deterministically and counted in the manifest. Repeated biological-
+assembly copies such as `A-2` fall back to the SIFTS annotation for chain `A`.
+
+`supfam_ids` remains empty because the downloaded bundle does not contain a SUPFAM
+mapping; SCOP2 domain identifiers are not relabelled as SUPFAM identifiers. The builder
+also writes `pdb_metadata.tsv.manifest.json` with input/output SHA-256 checksums, SIFTS
+release headers, row counts, and annotation coverage. It stages joins in a temporary
+SQLite database under `--work-dir`, then atomically replaces the output table.
+
 ## 6. Finalize provenance
 
 Edit both `config/4tb-hdd.yaml` and
@@ -151,13 +172,22 @@ Edit both `config/4tb-hdd.yaml` and
 installed versions. Replace `UNVERIFIED` with the observed eggNOG and PDB snapshot
 versions/dates. Never invent a version from today's date.
 
+For the verified installation described by this repository, the complete replacement
+manifest is `config/databases.4tb-hdd.yaml`. Install it only when the paths and database
+files match the current machine:
+
+```bash
+cp config/databases.4tb-hdd.yaml \
+  "$DUALRAG_DATA_ROOT/databases/metadata/databases.yaml"
+```
+
 Record an inventory:
 
 ```bash
 find "$DUALRAG_DATA_ROOT/databases" -maxdepth 2 -type f \
   -printf '%p\t%s bytes\n' | sort \
   > "$DUALRAG_DATA_ROOT/databases/metadata/file_inventory.tsv"
-df -h /media/splexmus/4TB_HDD
+df -h /media/splexmus/4TB_HDD1
 ```
 
 ## 7. Run validation and a characterized-protein smoke test
@@ -183,6 +213,33 @@ PYTHONPATH=src conda run -n bioinfo python -m dualrag run \
 Inspect `alphafold_acquisition.tsv`, both modality result tables, `merged_results.tsv`,
 `commands.log`, and `run_metadata.json`. A passing fixture test is not evidence that the
 real database integration passed.
+
+The repository includes a five-protein reviewed Swiss-Prot integration set and a
+source-derived manifest:
+
+```bash
+PYTHONPATH=src conda run -n bioinfo python -m dualrag run \
+  --config config/4tb-hdd.yaml \
+  --input tests/fixtures/phase1_characterized.fasta \
+  --output "$DUALRAG_RESULTS/phase1-characterized"
+```
+
+The corresponding `tests/fixtures/phase1_characterized_manifest.tsv` contains source
+release, taxonomy, representative functional identifiers, sequence lengths, and
+sequence SHA-256 values. It is an integration fixture, not a research benchmark.
+
+Repeat the run into a second output directory, then compare stable results:
+
+```bash
+PYTHONPATH=src conda run -n bioinfo python -m dualrag compare-runs \
+  --first "$DUALRAG_RESULTS/phase1-characterized-run1" \
+  --second "$DUALRAG_RESULTS/phase1-characterized-run2" \
+  --output "$DUALRAG_RESULTS/phase1-reproducibility.json"
+```
+
+The command exits nonzero if any stable biological or provenance field differs. It
+allows cache-state and output-path differences and parallel cross-query block ordering,
+but preserves within-query hit order.
 
 ## 8. Download the recommended full Phase 1 bundle
 

@@ -150,10 +150,14 @@ Avoid naïve random splits that leak highly similar homologs between development
 - Does a graph/path evidence representation improve final groundedness enough to justify its complexity?
 
 ## Current implementation status
-Phase 1 has both synthetic fixture adapters and real boundary adapters for local
-eggNOG-mapper, AlphaFold DB REST model acquisition/cache, and local Foldseek. Unit tests
-mock subprocess/HTTP boundaries. Real bioinformatics retrieval remains unvalidated until
-verified databases are configured and a characterized-protein integration set is run.
+Phase 1 is complete. It has synthetic fixture adapters and validated real adapters for local
+eggNOG-mapper, AlphaFold DB REST model acquisition/cache, and local Foldseek. The full
+Foldseek target metadata contains 1,562,650 unique targets joined to SIFTS/Swiss-Prot.
+A five-protein characterized integration run completed on 2026-10-16 with five sequence
+hits, four compatible AlphaFold models, forty annotated Foldseek hits, and one correctly
+retained sequence-only query after AlphaFold HTTP 404. A second run produced equivalent
+stable query, sequence, structure, merge, acquisition, configuration, and run-provenance
+artifacts. Function-level reconciliation of the pairwise evidence begins in Phase 2.
 
 ## Update policy
 When a durable decision changes, append a short entry below rather than silently rewriting history.
@@ -184,3 +188,12 @@ When a durable decision changes, append a short entry below rather than silently
 - 2026-10-08: eggNOG-mapper 2.1.15 constrains DIAMOND to 2.0.x. The resolved Phase 1
   environment therefore records DIAMOND 2.0.15, Foldseek 9.427df8a, and MMseqs2
   16.747c6; executable and database versions remain mandatory run provenance.
+- 2026-10-16: built the SIFTS/Swiss-Prot Foldseek metadata table and added a reviewed
+  five-protein integration fixture. Real run `a23128c71537f105` completed all retrieval
+  boundaries; P00720 correctly recorded AlphaFold `NOT_FOUND`. Current pairwise conflict
+  labels are not biologically interpretable until Phase 2 function-level reconciliation.
+- 2026-10-16: closed Phase 1 after a second real run produced the same run ID and
+  equivalent stable outputs across seven artifacts. Added `dualrag compare-runs` with
+  explicit volatile-field normalization: output paths, timestamps, cache-vs-download
+  state, and parallel cross-query block order do not affect equivalence; within-query
+  hit order and scientific values do.

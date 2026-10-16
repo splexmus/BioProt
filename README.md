@@ -1,6 +1,7 @@
 # Dual-Retrieval RAG for Protein Function Research
 
-This repository contains a **Phase 1 dual-retrieval implementation**: FASTA input is
+This repository contains the **completed Phase 1 dual-retrieval implementation**:
+FASTA input is
 resolved into two independent evidence channels, normalized separately, and merged
 without collapsing sequence and structure evidence into one score. Both an offline
 fixture backend and real eggNOG-mapper + AlphaFold DB REST + local Foldseek adapters
@@ -23,6 +24,15 @@ PYTHONPATH=src conda run -n bioinfo python -m dualrag run \
 The output directory contains raw channel outputs, `sequence_results.tsv`,
 `structure_results.tsv`, `merged_results.tsv`, a query manifest, a config snapshot,
 run metadata, and a command log.
+
+Compare two completed runs while excluding only documented volatile fields:
+
+```bash
+PYTHONPATH=src conda run -n bioinfo python -m dualrag compare-runs \
+  --first results/run1 \
+  --second results/run2 \
+  --output results/reproducibility.json
+```
 
 Validation:
 
@@ -63,3 +73,9 @@ resumable full-data downloader with:
 scripts/download_phase1_full_data.sh --data-root "$DUALRAG_DATA_ROOT" --dry-run
 scripts/download_phase1_full_data.sh --data-root "$DUALRAG_DATA_ROOT" --yes
 ```
+
+A reviewed five-protein external integration fixture is available at
+`tests/fixtures/phase1_characterized.fasta`, with source labels and checksums in
+`tests/fixtures/phase1_characterized_manifest.tsv`. See the Phase 1 installation guide
+for the real-database invocation and `docs/PHASE1_CHARACTERIZED_RUN.md` for the
+validated result and repeat-run evidence.

@@ -18,8 +18,9 @@ Exit criteria:
 
 ## Phase 1 — Biological dual retrieval (highest priority)
 
-Status: **adapters and mocked boundary tests complete; real databases and a small
-characterized-protein integration run pending.**
+Status: **complete. Real adapters, finalized database provenance, Foldseek target
+metadata, a five-protein characterized integration run, and repeat-run equivalence
+were validated on 2026-10-16.**
 
 ### 1A. Sequence branch
 - FASTA parsing
@@ -44,9 +45,9 @@ characterized-protein integration run pending.**
 - emit `sequence_results.tsv`, `structure_results.tsv`, `merged_results.tsv`
 
 Exit criteria:
-- end-to-end smoke test on a small characterized protein set **(pending real data)**
+- end-to-end smoke test on a small characterized protein set **(complete: 2026-10-16)**
 - tool/database versions recorded
-- repeat run produces equivalent normalized output
+- repeat run produces equivalent normalized output **(complete: 2026-10-16)**
 
 ## Phase 2 — Function-level fusion
 - candidate-function grouping
