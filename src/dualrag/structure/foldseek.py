@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import csv
 import re
 import shutil
 import subprocess
 from pathlib import Path
 
 from dualrag.config import StructureConfig
-from dualrag.io import read_tsv
 from dualrag.models import ProteinQuery, StructureEvidence
 from dualrag.parsing import optional_float, optional_int, terms
 
@@ -57,9 +57,7 @@ def retrieve(
 def parse_results(
     path: Path, safe_to_query: dict[str, str], config: StructureConfig
 ) -> list[StructureEvidence]:
-    metadata = _metadata(config.target_metadata)
-    version = _tool_version(config.executable)
-    hits: list[StructureEvidence] = []
+    selected: list[tuple[str, dict[str, str]]] = []
     counts: dict[str, int] = {}
     if not path.is_file():
         raise RuntimeError(f"Foldseek did not create {path}")
@@ -76,43 +74,61 @@ def parse_results(
             if query_id is None or counts.get(query_id, 0) >= config.top_k:
                 continue
             counts[query_id] = counts.get(query_id, 0) + 1
-            target = row["target"]
-            target_meta = metadata.get(target, {})
-            hits.append(
-                StructureEvidence(
-                    query_id=query_id,
-                    target_structure_id=target,
-                    target_uniprot_id=target_meta.get("target_uniprot_id") or None,
-                    tool="Foldseek",
-                    tool_version=version,
-                    database=config.database_name,
-                    database_version=config.database_version,
-                    foldseek_evalue=optional_float(row["evalue"]),
-                    foldseek_score=optional_float(row["bits"]),
-                    tm_score=optional_float(row["alntmscore"]),
-                    alignment_length=optional_int(row["alnlen"]),
-                    query_coverage=optional_float(row["qcov"]),
-                    target_coverage=optional_float(row["tcov"]),
-                    sequence_identity=optional_float(row["fident"]),
-                    protein_name=target_meta.get("protein_name") or None,
-                    interpro_ids=terms(target_meta.get("interpro_ids")),
-                    supfam_ids=terms(target_meta.get("supfam_ids")),
-                    structure_source=target_meta.get("structure_source") or config.database_name,
-                    experimental_structure=_bool_or_none(target_meta.get("experimental_structure")),
-                    raw_output_path=str(path),
-                    source_accession=target_meta.get("source_accession") or target,
-                )
+            selected.append((query_id, row))
+
+    metadata = _metadata(config.target_metadata, {row["target"] for _, row in selected})
+    version = _tool_version(config.executable)
+    hits: list[StructureEvidence] = []
+    for query_id, row in selected:
+        target = row["target"]
+        target_meta = metadata.get(target, {})
+        hits.append(
+            StructureEvidence(
+                query_id=query_id,
+                target_structure_id=target,
+                target_uniprot_id=target_meta.get("target_uniprot_id") or None,
+                tool="Foldseek",
+                tool_version=version,
+                database=config.database_name,
+                database_version=config.database_version,
+                foldseek_evalue=optional_float(row["evalue"]),
+                foldseek_score=optional_float(row["bits"]),
+                tm_score=optional_float(row["alntmscore"]),
+                alignment_length=optional_int(row["alnlen"]),
+                query_coverage=optional_float(row["qcov"]),
+                target_coverage=optional_float(row["tcov"]),
+                sequence_identity=optional_float(row["fident"]),
+                protein_name=target_meta.get("protein_name") or None,
+                interpro_ids=terms(target_meta.get("interpro_ids")),
+                supfam_ids=terms(target_meta.get("supfam_ids")),
+                structure_source=target_meta.get("structure_source") or config.database_name,
+                experimental_structure=_bool_or_none(
+                    target_meta.get("experimental_structure")
+                ),
+                raw_output_path=str(path),
+                source_accession=target_meta.get("source_accession") or target,
             )
+        )
     return hits
 
 
-def _metadata(path: Path | None) -> dict[str, dict[str, str]]:
-    if path is None:
+def _metadata(
+    path: Path | None, selected_targets: set[str]
+) -> dict[str, dict[str, str]]:
+    if path is None or not selected_targets:
         return {}
-    rows = read_tsv(path)
-    if rows and "target_structure_id" not in rows[0]:
-        raise ValueError("Foldseek target metadata requires target_structure_id")
-    return {row["target_structure_id"]: row for row in rows}
+    metadata: dict[str, dict[str, str]] = {}
+    with path.open(encoding="utf-8", newline="") as handle:
+        rows = csv.DictReader(handle, delimiter="\t")
+        if not rows.fieldnames or "target_structure_id" not in rows.fieldnames:
+            raise ValueError("Foldseek target metadata requires target_structure_id")
+        for row in rows:
+            target = row["target_structure_id"]
+            if target in selected_targets:
+                metadata[target] = row
+                if len(metadata) == len(selected_targets):
+                    break
+    return metadata
 
 
 def _bool_or_none(value: str | None) -> bool | None:

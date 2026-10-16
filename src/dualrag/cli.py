@@ -6,7 +6,9 @@ from typing import Annotated
 import typer
 
 from dualrag.config import load_config
+from dualrag.io import write_json
 from dualrag.pipeline import run_pipeline
+from dualrag.reproducibility import compare_runs
 from dualrag.storage import initialize_storage
 from dualrag.tools import check_tools
 
@@ -48,3 +50,20 @@ def init_storage_command(
     free_gib = int(result["free_bytes"]) / (1024**3)
     typer.echo(f"storage ready at {result['data_root']} ({free_gib:.1f} GiB free)")
     typer.echo(f"database manifest: {result['manifest_path']}")
+
+
+@app.command("compare-runs")
+def compare_runs_command(
+    first: Annotated[Path, typer.Option("--first", exists=True, file_okay=False)],
+    second: Annotated[Path, typer.Option("--second", exists=True, file_okay=False)],
+    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+) -> None:
+    """Compare stable biological outputs from two completed pipeline runs."""
+    report = compare_runs(first, second)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        write_json(output, report)
+    status = "equivalent" if report["equivalent"] else "different"
+    typer.echo(f"runs are {status}: {first} vs {second}")
+    if not report["equivalent"]:
+        raise typer.Exit(code=1)
