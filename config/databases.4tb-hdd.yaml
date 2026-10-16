@@ -1,0 +1,78 @@
+schema_version: 1
+generated_at: "2026-10-16T06:07:30Z"
+data_root: /media/splexmus/4TB_HDD1/dualrag
+provenance_log: /media/splexmus/4TB_HDD1/dualrag/databases/metadata/download-events.tsv
+
+eggnog:
+  version: "5.0.2"
+  installed_at: "2026-10-08T03:11:56Z"
+  path: /media/splexmus/4TB_HDD1/dualrag/databases/eggnog
+  source_url: https://downloads.eggnogdb.org/emapper/emapperdb-5.0.2/
+  search_database: eggnog_proteins.dmnd
+  verified_with: "emapper-2.1.15-0d6957e"
+  diamond_version: "2.0.15"
+  mmseqs_version: "16.747c6"
+  core_archive_sha256:
+    eggnog.db.gz: 20fd3e57d96ab19f2094131e859cb0f2e634e10f594c01ef34335076317a8e0a
+    eggnog.taxa.tar.gz: ead5f9f1cb42a51a990c3980fcb272a2f6c07b41c75654739e799d96a190a7f3
+    eggnog_proteins.dmnd.gz: c74fe142c6d0f1c749a086f754f1658874c0a52d0927626b9d263098c136b320
+  extras:
+    mmseqs_installed: true
+    pfam_installed: true
+    retrieved_at: "2026-10-09T09:31:55Z"
+
+foldseek_pdb:
+  version: "PDB 2025-01-01"
+  pdb_date: "250101"
+  installed_at: "2026-10-08T06:35:24Z"
+  path: /media/splexmus/4TB_HDD1/dualrag/databases/foldseek/pdb
+  foldseek_version: "9.427df8a"
+  foldseek_database_commit: 1815f0d76d7b5807e63b13f9d446dcef43c1f3b1
+  source_archive_md5: aefd75e0a5d6acbe8a2b7791b53eb479
+  version_file_sha256: 45bd6274a9fb5174bdf9f4f87e9ba66533006f07eae52581234db78752b99a28
+
+foldseek_target_metadata:
+  version: "SIFTS 2026-10-04; UniProt 2026_03"
+  generated_at: "2026-10-16T05:30:52.393740Z"
+  path: /media/splexmus/4TB_HDD1/dualrag/databases/foldseek/pdb_metadata.tsv
+  manifest: /media/splexmus/4TB_HDD1/dualrag/databases/foldseek/pdb_metadata.tsv.manifest.json
+  sha256: 652dbe3e93bf50622f29c44e64675c78caddfefb81e8022885bc39215db123d6
+  target_count: 1562650
+  targets_with_uniprot: 1413676
+  targets_with_protein_name: 986811
+  targets_with_interpro: 1467150
+  supfam_mapping_available: false
+
+sifts:
+  version: "PDB 40.26; UniProt 2026.03"
+  release_date: "2026-10-04"
+  retrieved_at_start: "2026-10-09T09:12:04Z"
+  retrieved_at_end: "2026-10-09T09:18:52Z"
+  path: /media/splexmus/4TB_HDD1/dualrag/databases/metadata/sifts
+  checksum_inventory: /media/splexmus/4TB_HDD1/dualrag/databases/metadata/sifts/SHA256SUMS.local
+
+swissprot:
+  version: "2026_03"
+  release_date: "2026-09-02"
+  retrieved_at: "2026-10-09T09:21:02Z"
+  path: /media/splexmus/4TB_HDD1/dualrag/databases/uniprot/swissprot/current
+  fasta_sha256: a9c3496aa727e61d25d9e1291c9ba28d2c2ad19c0e26569dc083d53ec4169536
+  flat_file_sha256: c87208822a56e8ae0d6bf5072c287b35e42a8b9f25e8bd771389abc5b7a29c38
+  release_file_sha256: 733913b362b641ac2d8de42a6220e794abde0e47d57d6feb57e442c6bf3dac6e
+
+uniref90:
+  version: "2026_03"
+  release_date: "2026-09-02"
+  cluster_count: 121494192
+  retrieved_at: "2026-10-09T10:44:56Z"
+  path: /media/splexmus/4TB_HDD1/dualrag/databases/mmseqs/uniref90/current
+  fasta_sha256: f6fa665e27d14fa3dadcff39df6db0052f125ffcf40ba7806f0863c1f262b8dc
+  indexed: false
+  used_by_phase1_pipeline: false
+
+alphafold_api:
+  base_url: https://alphafold.ebi.ac.uk/api
+  mode: on_demand_query_models
+  local_mirror: false
+  cache_path: /media/splexmus/4TB_HDD1/dualrag/structures/alphafold
+  notes: Predicted query structures only; local Foldseek PDB remains the search target.
