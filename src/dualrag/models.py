@@ -14,6 +14,16 @@ class CrossModalStatus(StrEnum):
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
 
 
+class CandidateKind(StrEnum):
+    EC = "EC"
+    GO = "GO"
+    INTERPRO = "INTERPRO"
+    PFAM = "PFAM"
+    SUPFAM = "SUPFAM"
+    ORTHOLOGOUS_GROUP = "ORTHOLOGOUS_GROUP"
+    LABEL = "LABEL"
+
+
 @dataclass(frozen=True)
 class ProteinQuery:
     query_id: str
@@ -86,6 +96,48 @@ class StructureEvidence:
     run_id: str = ""
     normalized_score: float | None = None
     normalization_version: str = ""
+
+    def to_row(self) -> dict[str, Any]:
+        return _row(asdict(self))
+
+
+@dataclass(frozen=True)
+class CandidateContribution:
+    query_id: str
+    candidate_id: str
+    candidate_kind: CandidateKind
+    candidate_label: str
+    modality: str
+    source_id: str
+    provenance: str
+    normalized_score: float
+    informative: bool
+    informativeness_reason: str
+
+
+@dataclass
+class FunctionCandidate:
+    query_id: str
+    candidate_id: str
+    candidate_kind: CandidateKind
+    candidate_labels: list[str]
+    informative: bool
+    informativeness_reason: str
+    modalities: list[str]
+    sequence_score: float | None
+    structure_score: float | None
+    sequence_evidence_count: int
+    structure_evidence_count: int
+    sequence_source_ids: list[str]
+    structure_source_ids: list[str]
+    sequence_provenance: list[str]
+    structure_provenance: list[str]
+    cross_modal_status: CrossModalStatus
+    fused_score: float
+    fusion_version: str
+    rank: int = 0
+    run_id: str = ""
+    parameters_hash: str = ""
 
     def to_row(self) -> dict[str, Any]:
         return _row(asdict(self))

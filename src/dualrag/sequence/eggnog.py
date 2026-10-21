@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 
 from dualrag.config import SequenceConfig
@@ -122,7 +123,12 @@ def _none(value: str | None) -> str | None:
 
 def _tool_version(executable: str) -> str:
     completed = subprocess.run(
-        [executable, "--version"], capture_output=True, text=True, check=False, timeout=30
+        [executable, "--version"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+        cwd=tempfile.gettempdir(),
     )
     output = f"{completed.stdout}\n{completed.stderr}"
     match = re.search(r"emapper-[^\s/]+", output)

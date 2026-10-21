@@ -12,7 +12,7 @@ from dualrag.reproducibility import compare_runs
 from dualrag.storage import initialize_storage
 from dualrag.tools import check_tools
 
-app = typer.Typer(no_args_is_help=True, help="Dual-retrieval Phase 1 protein evidence pipeline.")
+app = typer.Typer(no_args_is_help=True, help="Dual-retrieval protein evidence and fusion pipeline.")
 
 
 @app.command("run")

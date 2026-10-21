@@ -25,6 +25,11 @@ METADATA_FIELDS = [
     "sequence_hit_count",
     "structure_hit_count",
     "merged_row_count",
+    "function_candidate_count",
+    "fusion_summary_count",
+    "conflict_count",
+    "fusion_version",
+    "fusion_statuses",
 ]
 ACQUISITION_FIELDS = [
     "query_id",
@@ -55,6 +60,21 @@ def compare_runs(first: Path, second: Path) -> dict[str, Any]:
         left = _stable_table(first / name, group_by_query=name != "queries.tsv")
         right = _stable_table(second / name, group_by_query=name != "queries.tsv")
         artifacts[name] = _comparison(left, right)
+
+    for name in ["function_candidates.tsv", "fusion_summary.tsv", "conflicts.tsv"]:
+        left_path = first / name
+        right_path = second / name
+        if left_path.exists() and right_path.exists():
+            artifacts[name] = _comparison(
+                _stable_table(left_path, group_by_query=True),
+                _stable_table(right_path, group_by_query=True),
+            )
+        elif left_path.exists() or right_path.exists():
+            artifacts[name] = {
+                "equivalent": False,
+                "first_digest": _digest("present" if left_path.exists() else "missing"),
+                "second_digest": _digest("present" if right_path.exists() else "missing"),
+            }
 
     left_config = yaml.safe_load((first / "config.snapshot.yaml").read_text(encoding="utf-8"))
     right_config = yaml.safe_load(

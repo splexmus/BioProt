@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import tempfile
 from dataclasses import asdict, dataclass
 
 
@@ -33,7 +34,14 @@ def check_tools() -> list[ToolStatus]:
         if resolved is None:
             statuses.append(ToolStatus(name, executable, False, None))
             continue
-        completed = subprocess.run(command, capture_output=True, text=True, check=False, timeout=15)
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=15,
+            cwd=tempfile.gettempdir() if name == "eggNOG-mapper" else None,
+        )
         combined = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
         output = [
             re.sub(r"\x1b\[[0-9;]*m", "", line).strip()

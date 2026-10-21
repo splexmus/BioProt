@@ -83,6 +83,22 @@ class NormalizationConfig(BaseModel):
     structure_version: str
 
 
+class FusionConfig(BaseModel):
+    enabled: bool = True
+    version: str = "fixed-weight-v1"
+    sequence_weight: float = Field(default=0.4, ge=0, le=1)
+    structure_weight: float = Field(default=0.4, ge=0, le=1)
+    agreement_weight: float = Field(default=0.2, ge=0, le=1)
+    conflict_report_top_k: int = Field(default=5, ge=1)
+
+    @model_validator(mode="after")
+    def weights_sum_to_one(self) -> FusionConfig:
+        total = self.sequence_weight + self.structure_weight + self.agreement_weight
+        if abs(total - 1.0) > 1e-9:
+            raise ValueError("fusion weights must sum to 1.0")
+        return self
+
+
 class DisabledLayerConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
     enabled: bool = False
@@ -94,13 +110,14 @@ class AppConfig(BaseModel):
     sequence: SequenceConfig
     structure: StructureConfig
     normalization: NormalizationConfig
+    fusion: FusionConfig = Field(default_factory=FusionConfig)
     literature: DisabledLayerConfig
     llm: DisabledLayerConfig
 
     @model_validator(mode="after")
     def forbid_future_layers(self) -> AppConfig:
         if self.literature.enabled or self.llm.enabled:
-            raise ValueError("literature and LLM layers are outside the Phase 1 proof of concept")
+            raise ValueError("literature and LLM layers are outside the Phase 2 baseline")
         return self
 
 

@@ -13,8 +13,9 @@ from dualrag import __version__
 from dualrag.config import AppConfig
 from dualrag.fasta import read_fasta
 from dualrag.fusion.merge import merge_evidence
+from dualrag.fusion.scoring import CONFLICT_FIELDS, fuse_candidates
 from dualrag.io import file_sha256, stable_hash, write_json, write_tsv
-from dualrag.models import SequenceEvidence, StructureEvidence
+from dualrag.models import FunctionCandidate, SequenceEvidence, StructureEvidence
 from dualrag.normalization.sequence import normalize as normalize_sequence
 from dualrag.normalization.structure import normalize as normalize_structure
 from dualrag.sequence.eggnog import retrieve as retrieve_sequence_eggnog
@@ -103,6 +104,18 @@ def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[
     sequence_rows = [hit.to_row() for hit in sequence_hits]
     structure_rows = [hit.to_row() for hit in structure_hits]
     merged_rows = merge_evidence(queries, sequence_hits, structure_hits)
+    fusion_result = (
+        fuse_candidates(
+            queries,
+            sequence_hits,
+            structure_hits,
+            config.fusion,
+            run_id=run_id,
+            parameters_hash=parameters_hash,
+        )
+        if config.fusion.enabled
+        else None
+    )
     write_tsv(
         output_dir / "queries.tsv", [query.to_row() for query in queries], list(queries[0].to_row())
     )
@@ -117,6 +130,23 @@ def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[
         _fields(structure_rows, StructureEvidence),
     )
     write_tsv(output_dir / "merged_results.tsv", merged_rows, _fields(merged_rows))
+    if fusion_result is not None:
+        candidate_rows = [candidate.to_row() for candidate in fusion_result.candidates]
+        write_tsv(
+            output_dir / "function_candidates.tsv",
+            candidate_rows,
+            _fields(candidate_rows, FunctionCandidate),
+        )
+        write_tsv(
+            output_dir / "fusion_summary.tsv",
+            fusion_result.summaries,
+            _fields(fusion_result.summaries),
+        )
+        write_tsv(
+            output_dir / "conflicts.tsv",
+            fusion_result.conflicts,
+            CONFLICT_FIELDS,
+        )
     if config.structure.backend == "hybrid":
         write_tsv(
             output_dir / "alphafold_acquisition.tsv",
@@ -145,6 +175,19 @@ def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[
         "sequence_hit_count": len(sequence_hits),
         "structure_hit_count": len(structure_hits),
         "merged_row_count": len(merged_rows),
+        "function_candidate_count": (
+            len(fusion_result.candidates) if fusion_result is not None else 0
+        ),
+        "fusion_summary_count": (
+            len(fusion_result.summaries) if fusion_result is not None else 0
+        ),
+        "conflict_count": len(fusion_result.conflicts) if fusion_result is not None else 0,
+        "fusion_version": config.fusion.version if config.fusion.enabled else None,
+        "fusion_statuses": (
+            [row["cross_modal_status"] for row in fusion_result.summaries]
+            if fusion_result is not None
+            else []
+        ),
         "alphafold_acquisition_statuses": [record.status for record in acquisition_records],
     }
     write_json(output_dir / "run_metadata.json", metadata)
