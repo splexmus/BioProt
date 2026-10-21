@@ -50,14 +50,26 @@ Exit criteria:
 - repeat run produces equivalent normalized output **(complete: 2026-10-16)**
 
 ## Phase 2 — Function-level fusion
-- candidate-function grouping
-- informative vs unclear annotation rules
-- cross-modal status classifier
-- first fixed-weight baseline
-- conflict report
+
+Status: **baseline complete on 2026-10-16; ontology/cross-namespace improvements move
+into benchmarking rather than being silently treated as agreement.**
+
+### 2.1 Candidate-function grouping
+- namespaced EC, GO, InterPro, Pfam, SUPFAM, orthologous-group, and label candidates **(complete)**
+- per-modality scores and source-hit provenance retained **(complete)**
+
+### 2.2 Annotation quality and cross-modal state
+- informative vs unclear annotation rules **(complete)**
+- query-level six-state classifier with explicit reasons **(complete)**
+
+### 2.3 Fixed baseline and disagreement output
+- configurable fixed-weight ranking baseline **(complete)**
+- compact conflict report with full candidate table retained **(complete)**
 
 Exit criteria:
-- reproduce interpretable categories such as agreement, unclear/partial agreement, disagreement, and modality-only retrieval
+- reproduce interpretable categories such as agreement, unclear/partial agreement,
+  disagreement, and modality-only retrieval **(complete in unit/fixture tests)**
+- real characterized run and repeatability check **(complete: 2026-10-16)**
 
 ## Phase 3 — Benchmarking
 - curate characterized benchmark proteins

@@ -52,7 +52,8 @@ on fast external SSD or HPC/shared storage. AlphaFoldDB is not mirrored: query m
 are retrieved through the AlphaFold DB REST API and cached on demand with provenance.
 
 ### D9 — Python environment
-Default target is Python 3.11 using Conda/Bioconda for scientific command-line tools and Python libraries for orchestration, normalization, ranking, RAG, and evaluation.
+Default target is Python 3.11 using the locked Pixi environment with conda-forge and
+Bioconda for scientific command-line tools plus PyPI for the editable local package.
 
 ## Current proposed tool stack
 
@@ -150,14 +151,19 @@ Avoid naïve random splits that leak highly similar homologs between development
 - Does a graph/path evidence representation improve final groundedness enough to justify its complexity?
 
 ## Current implementation status
-Phase 1 is complete. It has synthetic fixture adapters and validated real adapters for local
+Phases 1 and 2.1-2.3 are complete as reproducible baselines. Phase 1 has synthetic
+fixture adapters and validated real adapters for local
 eggNOG-mapper, AlphaFold DB REST model acquisition/cache, and local Foldseek. The full
 Foldseek target metadata contains 1,562,650 unique targets joined to SIFTS/Swiss-Prot.
 A five-protein characterized integration run completed on 2026-10-16 with five sequence
 hits, four compatible AlphaFold models, forty annotated Foldseek hits, and one correctly
 retained sequence-only query after AlphaFold HTTP 404. A second run produced equivalent
 stable query, sequence, structure, merge, acquisition, configuration, and run-provenance
-artifacts. Function-level reconciliation of the pairwise evidence begins in Phase 2.
+artifacts. Phase 2 adds namespaced candidate grouping, explicit annotation-quality
+rules, query-level six-state classification, a versioned fixed-weight ranker, and a
+conflict report. The real characterized Phase 2 run retained four computational
+conflicts and one sequence-only query; the conflicts are not biological conclusions
+without versioned cross-namespace/ontology mappings.
 
 ## Update policy
 When a durable decision changes, append a short entry below rather than silently rewriting history.
@@ -201,5 +207,17 @@ When a durable decision changes, append a short entry below rather than silently
   intentional Linux Phase 1 dependencies and tasks; `pixi.lock` fixes the full
   Conda/PyPI solve. Two real characterized Pixi runs were equivalent across all seven
   artifacts. Historical Conda-to-Pixi output remains provenance-distinct because Python
-  and the embedded eggNOG-mapper build identifier changed, while retrieved biological
-  values were unchanged. The exported Conda YAML files are retained as legacy snapshots.
+  changed and historical eggNOG version capture accidentally included the current
+  checkout Git hash, while retrieved biological values were unchanged. Version capture
+  now runs outside the checkout. The exported Conda YAML files remain legacy snapshots.
+- 2026-10-16: completed Phase 2.1-2.3 as a transparent baseline. Candidate assertions
+  are grouped by controlled namespace or normalized label; generic annotations remain
+  visible but unclear. Query classification uses exact shared candidates, and
+  `fixed-weight-v1` preserves modality scores while adding an explicit agreement bonus.
+  Real run `c58a7106523c471c` emitted 628 candidates, four computational conflicts, and
+  one sequence-only result. No semantic equivalence or biological resolution is claimed
+  until controlled cross-namespace mappings are added and benchmarked.
+- 2026-10-16: corrected eggNOG-mapper provenance capture. Its version command consulted
+  the current working Git repository, so suffixes previously interpreted as mapper build
+  identifiers were actually DualRAG commits. Version checks now run outside the checkout
+  and record the stable package version `emapper-2.1.15`.

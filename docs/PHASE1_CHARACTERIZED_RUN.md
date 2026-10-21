@@ -68,7 +68,8 @@ seven Pixi-to-Pixi artifacts equivalent. The AlphaFold acquisition state was fou
 
 The historical Conda-to-Pixi comparison intentionally reports non-equivalence in
 sequence-derived artifacts and run metadata: Pixi resolved Python 3.11.9 instead of
-3.11.6, and eggNOG-mapper 2.1.15 reported a different embedded build identifier. The
-retrieved eggNOG values, normalized scores, Foldseek results, AlphaFold identities, and
-row counts were unchanged. These provenance differences are preserved rather than
-silently normalized away.
+3.11.6, and historical eggNOG-mapper version capture included the current checkout's
+Git hash when invoked inside a Git repository. The retrieved eggNOG values, normalized
+scores, Foldseek results, AlphaFold identities, and row counts were unchanged. Version
+capture now runs outside the checkout so the recorded mapper version is correctly
+`emapper-2.1.15`; genuine provenance differences remain preserved.

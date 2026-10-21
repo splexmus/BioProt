@@ -1,11 +1,10 @@
 # Dual-Retrieval RAG for Protein Function Research
 
-This repository contains the **completed Phase 1 dual-retrieval implementation**:
-FASTA input is
-resolved into two independent evidence channels, normalized separately, and merged
-without collapsing sequence and structure evidence into one score. Both an offline
-fixture backend and real eggNOG-mapper + AlphaFold DB REST + local Foldseek adapters
-are available.
+This repository contains the **completed Phase 1 dual-retrieval implementation and
+Phase 2 function-fusion baseline**. FASTA input is resolved into two independent
+evidence channels, normalized separately, grouped into function candidates, classified,
+and ranked without hiding modality-specific evidence. Both an offline fixture backend
+and real eggNOG-mapper + AlphaFold DB REST + local Foldseek adapters are available.
 
 The default `fixture` backend requires no biological databases, downloads, or network
 access. Its records are synthetic and exist only to exercise schemas, provenance,
@@ -20,8 +19,9 @@ pixi run smoke-fixture
 ```
 
 The output directory contains raw channel outputs, `sequence_results.tsv`,
-`structure_results.tsv`, `merged_results.tsv`, a query manifest, a config snapshot,
-run metadata, and a command log.
+`structure_results.tsv`, the Phase 1 `merged_results.tsv`, Phase 2
+`function_candidates.tsv`, `fusion_summary.tsv`, and `conflicts.tsv`, a query manifest,
+a config snapshot, run metadata, and a command log.
 
 Compare two completed runs while excluding only documented volatile fields:
 
@@ -60,6 +60,8 @@ the sequence channel without making an AlphaFold request.
 - An incomplete target database is not a research-complete search space.
 
 See `ARCHITECTURE.md`, `DATA.md`, and `docs/POC.md` for contracts and extension points.
+The Phase 2 rules, fixed-weight formula, outputs, validation, and scientific limitations
+are documented in `docs/PHASE2_FUSION.md`.
 
 For the full external-HDD database setup, including the writable-mount preflight,
 eggNOG installation, Foldseek PDB download, provenance finalization, and validation,

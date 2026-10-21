@@ -195,6 +195,10 @@ Preferred identifiers, from strongest structured representation to weaker free t
 
 Do not treat two free-text descriptions as equivalent solely because an LLM says they are similar. Use controlled identifiers/ontology relations when possible, semantic similarity only as supplemental evidence.
 
+Implemented Phase 2.1 writes `function_candidates.tsv`. Candidate rows retain separate
+best sequence and structure scores, source-hit IDs/counts, informativeness decisions,
+candidate-level status, deterministic rank, fusion version, and run provenance.
+
 ## 8. Cross-modal comparison
 Required status enum:
 
@@ -220,6 +224,11 @@ informative seq + informative struct + incompatible -> CONFLICT
 neither informative -> INSUFFICIENT_EVIDENCE
 ```
 
+Implemented Phase 2.2 writes one query-level decision and reason to
+`fusion_summary.tsv`. Root GO terms and explicitly generic free-text labels are retained
+as unclear candidates instead of being discarded. Exact label normalization is a
+deterministic fallback; ontology and cross-namespace mappings are not inferred.
+
 ## 9. Fusion / reranking
 A simple development score may be used only as a baseline:
 
@@ -238,6 +247,11 @@ Weights are hyperparameters to be calibrated on validation data. The project sho
 - learning-to-rank / logistic calibration
 - pairwise reranker
 - ontology-aware consensus score
+
+Implemented Phase 2.3 uses the versioned baseline
+`0.4 * sequence + 0.4 * structure + 0.2 * agreement`, where exact function agreement
+has bonus 1.0 and shared family evidence has bonus 0.5. It emits `conflicts.tsv` for
+disjoint informative modalities. The fused value is a ranking feature, not confidence.
 
 ## 10. Literature retrieval
 Literature retrieval is downstream of candidate function creation.

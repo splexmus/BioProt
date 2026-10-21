@@ -59,8 +59,10 @@ research use. They are not weights for a fused biological prediction.
 - hits in both channels without shared label/domain: `CONFLICT`;
 - no hits: `INSUFFICIENT_EVIDENCE`.
 
-This is a transparent baseline. Production comparison should add GO/EC/ontology
-relations and must benchmark thresholds on curated validation data.
+This was the Phase 1 hit-pair baseline. Phase 2 now adds GO/EC candidates, explicit
+annotation-quality rules, query-level classification, and a fixed-weight ranking
+baseline as documented in `docs/PHASE2_FUSION.md`. Ontology relationships and
+cross-namespace mappings still require curated benchmarking.
 
 ## Reproducibility artifacts
 
