@@ -38,6 +38,14 @@ normalization:
   sequence_version: poc-sequence-v1
   structure_version: poc-structure-v1
 
+fusion:
+  enabled: true
+  version: fixed-weight-v1
+  sequence_weight: 0.4
+  structure_weight: 0.4
+  agreement_weight: 0.2
+  conflict_report_top_k: 5
+
 literature:
   enabled: false
   pubmed_email: null

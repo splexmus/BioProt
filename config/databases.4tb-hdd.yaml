@@ -9,7 +9,7 @@ eggnog:
   path: /media/splexmus/4TB_HDD1/dualrag/databases/eggnog
   source_url: https://downloads.eggnogdb.org/emapper/emapperdb-5.0.2/
   search_database: eggnog_proteins.dmnd
-  verified_with: "emapper-2.1.15-0d6957e"
+  verified_with: "emapper-2.1.15"
   diamond_version: "2.0.15"
   mmseqs_version: "16.747c6"
   core_archive_sha256:
