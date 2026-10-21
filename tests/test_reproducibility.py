@@ -143,3 +143,33 @@ def test_compare_runs_preserves_within_query_rank_order(tmp_path: Path) -> None:
     report = compare_runs(first, second)
 
     assert report["artifacts"]["structure_results.tsv"]["equivalent"] is False
+
+
+def test_compare_runs_includes_phase2_artifacts(tmp_path: Path) -> None:
+    first, second = tmp_path / "first", tmp_path / "second"
+    _make_run(first, "/first/raw")
+    _make_run(second, "/second/raw")
+    for run in (first, second):
+        _write_tsv(
+            run / "function_candidates.tsv",
+            [{"query_id": "P1", "candidate_id": "EC:1.2.3.4", "fused_score": "0.8"}],
+        )
+        _write_tsv(
+            run / "fusion_summary.tsv",
+            [{"query_id": "P1", "cross_modal_status": "CONSENSUS"}],
+        )
+        _write_tsv(
+            run / "conflicts.tsv",
+            [{"query_id": "P1", "cross_modal_status": "CONFLICT"}],
+        )
+    candidate_path = second / "function_candidates.tsv"
+    candidate_path.write_text(
+        candidate_path.read_text(encoding="utf-8").replace("0.8", "0.7"),
+        encoding="utf-8",
+    )
+
+    report = compare_runs(first, second)
+
+    assert report["equivalent"] is False
+    assert report["artifacts"]["function_candidates.tsv"]["equivalent"] is False
+    assert report["artifacts"]["fusion_summary.tsv"]["equivalent"] is True

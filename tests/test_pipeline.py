@@ -37,8 +37,14 @@ def test_fixture_pipeline_end_to_end(tmp_path: Path) -> None:
     sequence_rows = read_rows(output / "sequence_results.tsv")
     assert all(0 <= float(row["normalized_score"]) <= 1 for row in sequence_rows)
     assert all(row["normalization_version"] == "poc-sequence-v1" for row in sequence_rows)
+    fusion_rows = read_rows(output / "fusion_summary.tsv")
+    assert {row["cross_modal_status"] for row in fusion_rows} == statuses
+    assert read_rows(output / "conflicts.tsv")[0]["query_id"] == "Q_CONFLICT"
+    assert read_rows(output / "function_candidates.tsv")
     persisted = json.loads((output / "run_metadata.json").read_text(encoding="utf-8"))
     assert persisted["synthetic_fixture_data"] is True
+    assert persisted["fusion_summary_count"] == 5
+    assert persisted["conflict_count"] == 1
 
 
 def test_normalized_outputs_are_repeatable(tmp_path: Path) -> None:
@@ -47,7 +53,14 @@ def test_normalized_outputs_are_repeatable(tmp_path: Path) -> None:
     first, second = tmp_path / "first", tmp_path / "second"
     run_pipeline(config, input_path, first)
     run_pipeline(config, input_path, second)
-    for name in ("sequence_results.tsv", "structure_results.tsv", "merged_results.tsv"):
+    for name in (
+        "sequence_results.tsv",
+        "structure_results.tsv",
+        "merged_results.tsv",
+        "function_candidates.tsv",
+        "fusion_summary.tsv",
+        "conflicts.tsv",
+    ):
         first_text = (first / name).read_text(encoding="utf-8").replace(str(first), "RUN")
         second_text = (second / name).read_text(encoding="utf-8").replace(str(second), "RUN")
         assert first_text == second_text

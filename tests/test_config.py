@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from dualrag.config import load_config
+import pytest
+from pydantic import ValidationError
+
+from dualrag.config import FusionConfig, load_config
 
 ROOT = Path(__file__).parents[1]
 
@@ -40,3 +43,9 @@ def test_4tb_hdd_profile_uses_ext4_mount() -> None:
     assert config.structure.foldseek_db == Path(
         "/media/splexmus/4TB_HDD1/dualrag/databases/foldseek/pdb"
     )
+    assert config.fusion.version == "fixed-weight-v1"
+
+
+def test_fusion_weights_must_sum_to_one() -> None:
+    with pytest.raises(ValidationError, match="must sum to 1.0"):
+        FusionConfig(sequence_weight=0.5, structure_weight=0.5, agreement_weight=0.5)
