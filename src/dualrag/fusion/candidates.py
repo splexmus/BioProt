@@ -117,6 +117,7 @@ def _from_values(
                 normalized_score=score or 0.0,
                 informative=informative,
                 informativeness_reason=reason,
+                original_candidate_id=candidate_id,
             )
         )
     return contributions

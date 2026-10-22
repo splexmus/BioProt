@@ -89,13 +89,23 @@ class FusionConfig(BaseModel):
     sequence_weight: float = Field(default=0.4, ge=0, le=1)
     structure_weight: float = Field(default=0.4, ge=0, le=1)
     agreement_weight: float = Field(default=0.2, ge=0, le=1)
+    mapping_path: Path | None = None
+    synonym_path: Path | None = None
+    rerank_version: str = "evidence-quality-v1"
+    base_score_weight: float = Field(default=0.8, ge=0, le=1)
+    quality_weight: float = Field(default=0.2, ge=0, le=1)
     conflict_report_top_k: int = Field(default=5, ge=1)
+    alternatives_top_k: int = Field(default=5, ge=1)
+    ambiguity_margin: float = Field(default=0.05, ge=0, le=1)
 
     @model_validator(mode="after")
     def weights_sum_to_one(self) -> FusionConfig:
         total = self.sequence_weight + self.structure_weight + self.agreement_weight
         if abs(total - 1.0) > 1e-9:
             raise ValueError("fusion weights must sum to 1.0")
+        rerank_total = self.base_score_weight + self.quality_weight
+        if abs(rerank_total - 1.0) > 1e-9:
+            raise ValueError("fusion rerank weights must sum to 1.0")
         return self
 
 
@@ -125,6 +135,7 @@ _PATH_FIELDS = {
     "paths": {"data_root", "tmp_dir", "results_dir", "structures_dir"},
     "sequence": {"fixture_results", "eggnog_data_dir", "mmseqs_db"},
     "structure": {"fixture_results", "foldseek_db", "alphafold_cache", "target_metadata"},
+    "fusion": {"mapping_path", "synonym_path"},
 }
 
 

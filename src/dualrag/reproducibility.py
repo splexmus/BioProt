@@ -28,7 +28,9 @@ METADATA_FIELDS = [
     "function_candidate_count",
     "fusion_summary_count",
     "conflict_count",
+    "alternative_count",
     "fusion_version",
+    "rerank_version",
     "fusion_statuses",
 ]
 ACQUISITION_FIELDS = [
@@ -61,7 +63,12 @@ def compare_runs(first: Path, second: Path) -> dict[str, Any]:
         right = _stable_table(second / name, group_by_query=name != "queries.tsv")
         artifacts[name] = _comparison(left, right)
 
-    for name in ["function_candidates.tsv", "fusion_summary.tsv", "conflicts.tsv"]:
+    for name in [
+        "function_candidates.tsv",
+        "fusion_summary.tsv",
+        "conflicts.tsv",
+        "alternatives.tsv",
+    ]:
         left_path = first / name
         right_path = second / name
         if left_path.exists() and right_path.exists():
@@ -76,10 +83,22 @@ def compare_runs(first: Path, second: Path) -> dict[str, Any]:
                 "second_digest": _digest("present" if right_path.exists() else "missing"),
             }
 
+    left_audit = first / "fusion_audit.json"
+    right_audit = second / "fusion_audit.json"
+    if left_audit.exists() and right_audit.exists():
+        artifacts["fusion_audit.json"] = _comparison(
+            json.loads(left_audit.read_text(encoding="utf-8")),
+            json.loads(right_audit.read_text(encoding="utf-8")),
+        )
+    elif left_audit.exists() or right_audit.exists():
+        artifacts["fusion_audit.json"] = {
+            "equivalent": False,
+            "first_digest": _digest("present" if left_audit.exists() else "missing"),
+            "second_digest": _digest("present" if right_audit.exists() else "missing"),
+        }
+
     left_config = yaml.safe_load((first / "config.snapshot.yaml").read_text(encoding="utf-8"))
-    right_config = yaml.safe_load(
-        (second / "config.snapshot.yaml").read_text(encoding="utf-8")
-    )
+    right_config = yaml.safe_load((second / "config.snapshot.yaml").read_text(encoding="utf-8"))
     artifacts["config.snapshot.yaml"] = _comparison(left_config, right_config)
 
     left_metadata = json.loads((first / "run_metadata.json").read_text(encoding="utf-8"))
@@ -91,9 +110,7 @@ def compare_runs(first: Path, second: Path) -> dict[str, Any]:
 
     left_acquisition = _stable_acquisitions(first / "alphafold_acquisition.tsv")
     right_acquisition = _stable_acquisitions(second / "alphafold_acquisition.tsv")
-    artifacts["alphafold_acquisition.tsv"] = _comparison(
-        left_acquisition, right_acquisition
-    )
+    artifacts["alphafold_acquisition.tsv"] = _comparison(left_acquisition, right_acquisition)
 
     return {
         "schema_version": 1,

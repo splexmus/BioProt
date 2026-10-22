@@ -13,7 +13,7 @@ from dualrag import __version__
 from dualrag.config import AppConfig
 from dualrag.fasta import read_fasta
 from dualrag.fusion.merge import merge_evidence
-from dualrag.fusion.scoring import CONFLICT_FIELDS, fuse_candidates
+from dualrag.fusion.scoring import ALTERNATIVE_FIELDS, CONFLICT_FIELDS, fuse_candidates
 from dualrag.io import file_sha256, stable_hash, write_json, write_tsv
 from dualrag.models import FunctionCandidate, SequenceEvidence, StructureEvidence
 from dualrag.normalization.sequence import normalize as normalize_sequence
@@ -147,6 +147,12 @@ def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[
             fusion_result.conflicts,
             CONFLICT_FIELDS,
         )
+        write_tsv(
+            output_dir / "alternatives.tsv",
+            fusion_result.alternatives,
+            ALTERNATIVE_FIELDS,
+        )
+        write_json(output_dir / "fusion_audit.json", fusion_result.audit)
     if config.structure.backend == "hybrid":
         write_tsv(
             output_dir / "alphafold_acquisition.tsv",
@@ -178,11 +184,11 @@ def run_pipeline(config: AppConfig, input_path: Path, output_dir: Path) -> dict[
         "function_candidate_count": (
             len(fusion_result.candidates) if fusion_result is not None else 0
         ),
-        "fusion_summary_count": (
-            len(fusion_result.summaries) if fusion_result is not None else 0
-        ),
+        "fusion_summary_count": (len(fusion_result.summaries) if fusion_result is not None else 0),
         "conflict_count": len(fusion_result.conflicts) if fusion_result is not None else 0,
+        "alternative_count": (len(fusion_result.alternatives) if fusion_result is not None else 0),
         "fusion_version": config.fusion.version if config.fusion.enabled else None,
+        "rerank_version": config.fusion.rerank_version if config.fusion.enabled else None,
         "fusion_statuses": (
             [row["cross_modal_status"] for row in fusion_result.summaries]
             if fusion_result is not None

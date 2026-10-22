@@ -113,6 +113,8 @@ class CandidateContribution:
     normalized_score: float
     informative: bool
     informativeness_reason: str
+    original_candidate_id: str = ""
+    mapping_provenance: str = ""
 
 
 @dataclass
@@ -132,9 +134,17 @@ class FunctionCandidate:
     structure_source_ids: list[str]
     sequence_provenance: list[str]
     structure_provenance: list[str]
+    candidate_aliases: list[str]
+    mapping_provenance: list[str]
     cross_modal_status: CrossModalStatus
     fused_score: float
+    identifier_quality: float
+    modality_support: float
+    hit_support: float
+    evidence_quality_score: float
+    rerank_score: float
     fusion_version: str
+    rerank_version: str
     rank: int = 0
     run_id: str = ""
     parameters_hash: str = ""
