@@ -36,7 +36,14 @@ fusion:
   sequence_weight: 0.4
   structure_weight: 0.4
   agreement_weight: 0.2
+  mapping_path: ../dist/dualrag-phase2-mapping-bundle-2026-10-22/mappings.tsv
+  synonym_path: ../dist/dualrag-phase2-mapping-bundle-2026-10-22/synonyms.tsv
+  rerank_version: evidence-quality-v1
+  base_score_weight: 0.8
+  quality_weight: 0.2
   conflict_report_top_k: 5
+  alternatives_top_k: 5
+  ambiguity_margin: 0.05
 
 literature:
   enabled: false
