@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from dualrag.config import FusionConfig
 from dualrag.fusion.candidates import extract_contributions
 from dualrag.fusion.scoring import fuse_candidates
@@ -117,3 +119,94 @@ def test_only_generic_labels_are_insufficient() -> None:
     assert result.summaries[0]["cross_modal_status"] == "INSUFFICIENT_EVIDENCE"
     assert result.summaries[0]["informative_candidate_count"] == 0
     assert result.summaries[0]["unclear_candidate_count"] == 2
+
+
+def test_exact_cross_namespace_mapping_consolidates_and_keeps_provenance(
+    tmp_path: Path,
+) -> None:
+    mapping = tmp_path / "mapping.tsv"
+    mapping.write_text(
+        "source_candidate_id\tcanonical_candidate_id\trelation\tsource\tsource_version\n"
+        "PFAM:PF1\tINTERPRO:IPR1\tEXACT\ttest-map\t2026-01\n",
+        encoding="utf-8",
+    )
+    result = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [sequence(pfam_ids=["PF1"])],
+        [structure(interpro_ids=["IPR1"])],
+        FusionConfig(mapping_path=mapping),
+        run_id="run",
+        parameters_hash="parameters",
+    )
+
+    candidate = result.candidates[0]
+    assert candidate.candidate_id == "INTERPRO:IPR1"
+    assert candidate.candidate_aliases == ["INTERPRO:IPR1", "PFAM:PF1"]
+    assert candidate.mapping_provenance == ["test-map@2026-01:EXACT"]
+    assert result.summaries[0]["cross_modal_status"] == "PARTIAL_CONSENSUS"
+    assert result.audit["mapped_contribution_count"] == 1
+    assert result.audit["mapping_inputs"][0]["sha256"]
+    assert result.audit["mapping_sources"] == [
+        {"source": "test-map", "source_version": "2026-01", "relation": "EXACT"}
+    ]
+
+
+def test_curated_synonym_can_create_exact_function_consensus(tmp_path: Path) -> None:
+    synonyms = tmp_path / "synonyms.tsv"
+    synonyms.write_text(
+        "normalized_label\tcanonical_candidate_id\tsource\tsource_version\n"
+        "Alcohol dehydrogenase\tEC:1.1.1.1\tcurated-test\tv1\n",
+        encoding="utf-8",
+    )
+    result = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [sequence(ec_numbers=["1.1.1.1"])],
+        [structure(protein_name="alcohol dehydrogenase")],
+        FusionConfig(synonym_path=synonyms),
+        run_id="run",
+        parameters_hash="parameters",
+    )
+
+    assert result.summaries[0]["cross_modal_status"] == "CONSENSUS"
+    assert result.candidates[0].candidate_id == "EC:1.1.1.1"
+
+
+def test_related_mapping_yields_partial_not_exact_consensus(tmp_path: Path) -> None:
+    mapping = tmp_path / "mapping.tsv"
+    mapping.write_text(
+        "source_candidate_id\tcanonical_candidate_id\trelation\tsource\tsource_version\n"
+        "PFAM:PF1\tINTERPRO:IPR1\tRELATED\ttest-map\tv1\n",
+        encoding="utf-8",
+    )
+    result = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [sequence(pfam_ids=["PF1"])],
+        [structure(interpro_ids=["IPR1"])],
+        FusionConfig(mapping_path=mapping),
+        run_id="run",
+        parameters_hash="parameters",
+    )
+
+    assert result.summaries[0]["cross_modal_status"] == "PARTIAL_CONSENSUS"
+    assert result.audit["compatible_cross_modal_pair_count"] == 1
+    assert {item.candidate_id for item in result.candidates} == {
+        "PFAM:PF1",
+        "INTERPRO:IPR1",
+    }
+    assert all(item.cross_modal_status.value == "PARTIAL_CONSENSUS" for item in result.candidates)
+
+
+def test_reranking_and_alternative_margin_are_explicit() -> None:
+    result = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [sequence(ec_numbers=["1.1.1.1"], go_terms=["GO:0005524"])],
+        [],
+        FusionConfig(alternatives_top_k=2, ambiguity_margin=1.0),
+        run_id="run",
+        parameters_hash="parameters",
+    )
+
+    assert len(result.alternatives) == 2
+    assert result.alternatives[0]["score_delta_from_top"] == 0
+    assert result.alternatives[1]["ambiguous_with_top"] is True
+    assert result.candidates[0].rerank_score != result.candidates[0].fused_score

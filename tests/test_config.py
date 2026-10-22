@@ -49,3 +49,8 @@ def test_4tb_hdd_profile_uses_ext4_mount() -> None:
 def test_fusion_weights_must_sum_to_one() -> None:
     with pytest.raises(ValidationError, match="must sum to 1.0"):
         FusionConfig(sequence_weight=0.5, structure_weight=0.5, agreement_weight=0.5)
+
+
+def test_fusion_rerank_weights_must_sum_to_one() -> None:
+    with pytest.raises(ValidationError, match="rerank weights must sum to 1.0"):
+        FusionConfig(base_score_weight=0.5, quality_weight=0.6)

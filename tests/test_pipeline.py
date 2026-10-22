@@ -41,6 +41,10 @@ def test_fixture_pipeline_end_to_end(tmp_path: Path) -> None:
     assert {row["cross_modal_status"] for row in fusion_rows} == statuses
     assert read_rows(output / "conflicts.tsv")[0]["query_id"] == "Q_CONFLICT"
     assert read_rows(output / "function_candidates.tsv")
+    assert read_rows(output / "alternatives.tsv")
+    audit = json.loads((output / "fusion_audit.json").read_text(encoding="utf-8"))
+    assert audit["query_count"] == 5
+    assert "ranking scores are uncalibrated" in audit["limitations"][0]
     persisted = json.loads((output / "run_metadata.json").read_text(encoding="utf-8"))
     assert persisted["synthetic_fixture_data"] is True
     assert persisted["fusion_summary_count"] == 5
@@ -60,6 +64,8 @@ def test_normalized_outputs_are_repeatable(tmp_path: Path) -> None:
         "function_candidates.tsv",
         "fusion_summary.tsv",
         "conflicts.tsv",
+        "alternatives.tsv",
+        "fusion_audit.json",
     ):
         first_text = (first / name).read_text(encoding="utf-8").replace(str(first), "RUN")
         second_text = (second / name).read_text(encoding="utf-8").replace(str(second), "RUN")
