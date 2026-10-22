@@ -51,8 +51,8 @@ Exit criteria:
 
 ## Phase 2 — Function-level fusion
 
-Status: **baseline complete on 2026-10-16; ontology/cross-namespace improvements move
-into benchmarking rather than being silently treated as agreement.**
+Status: **steps 2.1-2.10 implemented on 2026-10-21; controlled mappings are optional
+inputs and unconfigured namespace gaps remain explicit.**
 
 ### 2.1 Candidate-function grouping
 - namespaced EC, GO, InterPro, Pfam, SUPFAM, orthologous-group, and label candidates **(complete)**
@@ -66,10 +66,40 @@ into benchmarking rather than being silently treated as agreement.**
 - configurable fixed-weight ranking baseline **(complete)**
 - compact conflict report with full candidate table retained **(complete)**
 
+### 2.4 Versioned cross-namespace mappings
+- optional TSV with `EXACT`, `BROADER`, `NARROWER`, or `RELATED` relations **(complete)**
+- file checksum and mapping source/version retained in the audit **(complete)**
+
+### 2.5 Curated synonyms
+- optional, versioned label-to-controlled-ID synonym TSV **(complete)**
+- no inferred or LLM-generated synonym equivalence **(complete)**
+
+### 2.6 Candidate consolidation
+- exact mappings consolidate aliases while preserving original IDs and provenance **(complete)**
+- non-exact relations produce partial compatibility without merging IDs **(complete)**
+
+### 2.7 Evidence-quality features
+- identifier specificity, modality support, and independent-hit support exposed separately **(complete)**
+- quality feature is explicitly uncalibrated **(complete)**
+
+### 2.8 Deterministic reranking
+- configurable base/quality combination with stable tie-breaking **(complete)**
+- original fixed-weight score remains available beside rerank score **(complete)**
+
+### 2.9 Alternatives and ambiguity
+- top alternatives, score deltas, and configurable near-tie flag **(complete)**
+- ambiguity is not reported as confidence **(complete)**
+
+### 2.10 Validation and audit
+- deterministic `fusion_audit.json` with mapping checksums, counts, and limitations **(complete)**
+- Phase 2 artifacts included in repeat-run comparison **(complete)**
+
 Exit criteria:
 - reproduce interpretable categories such as agreement, unclear/partial agreement,
   disagreement, and modality-only retrieval **(complete in unit/fixture tests)**
-- real characterized run and repeatability check **(complete: 2026-10-16)**
+- real characterized run and 12-artifact repeatability check **(complete: 2026-10-21)**
+- mapping, synonym, relation, reranking, alternatives, and audit unit tests **(complete)**
+- official Pfam 38.2/InterPro 110.0 mapping bundle and repeat run **(complete: 2026-10-22)**
 
 ## Phase 3 — Benchmarking
 - curate characterized benchmark proteins

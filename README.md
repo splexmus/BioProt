@@ -20,7 +20,8 @@ pixi run smoke-fixture
 
 The output directory contains raw channel outputs, `sequence_results.tsv`,
 `structure_results.tsv`, the Phase 1 `merged_results.tsv`, Phase 2
-`function_candidates.tsv`, `fusion_summary.tsv`, and `conflicts.tsv`, a query manifest,
+`function_candidates.tsv`, `fusion_summary.tsv`, `conflicts.tsv`, `alternatives.tsv`,
+and `fusion_audit.json`, a query manifest,
 a config snapshot, run metadata, and a command log.
 
 Compare two completed runs while excluding only documented volatile fields:
@@ -60,8 +61,13 @@ the sequence channel without making an AlphaFold request.
 - An incomplete target database is not a research-complete search space.
 
 See `ARCHITECTURE.md`, `DATA.md`, and `docs/POC.md` for contracts and extension points.
-The Phase 2 rules, fixed-weight formula, outputs, validation, and scientific limitations
+The complete Phase 2.1-2.10 rules, mapping schemas, reranking formula, outputs,
+validation, and scientific limitations
 are documented in `docs/PHASE2_FUSION.md`.
+
+Build a portable, checksummed mapping bundle from official InterPro/Pfam and reviewed
+UniProt records with `scripts/build_phase2_mapping_bundle.py`. The characterized bundle
+validated on 2026-10-22 is packaged under `dist/` for copying to external storage.
 
 For the full external-HDD database setup, including the writable-mount preflight,
 eggNOG installation, Foldseek PDB download, provenance finalization, and validation,

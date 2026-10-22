@@ -76,6 +76,72 @@ structure candidate IDs, total candidate counts, reason, run ID, and parameters 
 The configurable `conflict_report_top_k` limits only the compact report; the complete
 candidate table is retained.
 
+## 2.4 Versioned cross-namespace mappings
+
+`fusion.mapping_path` may point to a TSV with this required schema:
+
+```text
+source_candidate_id  canonical_candidate_id  relation  source  source_version
+```
+
+`relation` is one of `EXACT`, `BROADER`, `NARROWER`, or `RELATED`. Only `EXACT`
+changes the candidate ID. The other relations support partial compatibility without
+claiming identity. The file path and SHA-256 digest are written to the audit.
+
+## 2.5 Curated synonyms
+
+`fusion.synonym_path` may point to a versioned TSV:
+
+```text
+normalized_label  canonical_candidate_id  source  source_version
+```
+
+Each row is treated as a curated exact mapping from a normalized `LABEL` candidate.
+No fuzzy match, embedding similarity, or LLM-generated synonym is accepted.
+
+## 2.6 Candidate consolidation
+
+Exact mapping chains resolve to their declared canonical target. Consolidated rows keep
+all original IDs in `candidate_aliases` and all mapping sources in
+`mapping_provenance`. Cycles and conflicting exact targets fail the run. Non-exact
+relations retain two distinct candidate rows and may change the query state only to
+`PARTIAL_CONSENSUS` when the two modalities support the related pair.
+
+## 2.7 Evidence-quality features
+
+Three inspectable features are emitted for each candidate:
+
+- `identifier_quality`: fixed specificity by namespace;
+- `modality_support`: one modality is 0.5 and both are 1.0;
+- `hit_support`: distinct supporting modality/hit pairs, saturated at three.
+
+The version-1 quality score is `0.5 * identifier_quality + 0.3 * modality_support +
+0.2 * hit_support`. It is a ranking feature, not calibrated confidence.
+
+## 2.8 Deterministic reranking
+
+`evidence-quality-v1` retains the Phase 2.3 score as `fused_score` and computes:
+
+```text
+rerank_score = 0.8 * fused_score + 0.2 * evidence_quality_score
+```
+
+Both weights are configurable and must sum to one. Stable namespace priority and
+candidate ID break ties.
+
+## 2.9 Alternatives and ambiguity
+
+`alternatives.tsv` contains the configurable top candidates per query, the score delta
+from rank one, and `ambiguous_with_top` when that delta is within
+`fusion.ambiguity_margin`. This is a near-tie indicator, not a correctness probability.
+
+## 2.10 Validation and audit
+
+`fusion_audit.json` is deterministic and records mapping input checksums, mapping and
+compatibility coverage, status and namespace counts, conflict and alternative counts,
+the run/parameter IDs, and limitations. The comparison command includes all Phase 2
+tables and the audit in repeat-run equivalence.
+
 ## Output files
 
 | File | Granularity | Purpose |
@@ -83,6 +149,8 @@ candidate table is retained.
 | `function_candidates.tsv` | candidate per query | grouped evidence, separate modality scores, rank |
 | `fusion_summary.tsv` | query | status, reason, counts, top candidate |
 | `conflicts.tsv` | conflicting query | compact disagreement report |
+| `alternatives.tsv` | ranked candidate subset | score deltas and near-tie flag |
+| `fusion_audit.json` | run | counts, mapping checksums, versions, limitations |
 
 The existing `merged_results.tsv` remains the Phase 1 hit-pair table and is not silently
 redefined as a function-level result.
@@ -91,30 +159,54 @@ redefined as a function-level result.
 
 The synthetic fixture produces all required states: `CONSENSUS`, `PARTIAL_CONSENSUS`
 in focused unit tests, `SEQUENCE_ONLY`, `STRUCTURE_ONLY`, `CONFLICT`, and
-`INSUFFICIENT_EVIDENCE`. The complete fixture pipeline emits 23 candidate rows, five
-query summaries, and one conflict row.
+`INSUFFICIENT_EVIDENCE`. Focused tests also exercise exact mappings, curated synonyms,
+non-exact relations, reranking, alternatives, and mapping audit checksums. The complete
+fixture pipeline emits 23 candidate rows, five query summaries, one conflict row, and
+18 alternative rows.
 
-The 2026-10-16 characterized integration run (`c58a7106523c471c`) used real eggNOG,
+The final 2026-10-21 characterized integration run (`27665c3b0f2402db`) used real eggNOG,
 AlphaFold acquisition/cache, Foldseek PDB search, and SIFTS/Swiss-Prot target metadata:
 
 - 5 queries
 - 5 sequence hits
 - 40 structure hits
 - 628 grouped candidate rows
+- 25 ranked alternative rows
 - 4 computational `CONFLICT` summaries
 - 1 `SEQUENCE_ONLY` summary for P00720 after AlphaFold `NOT_FOUND`
 
-Two final runs under package version 0.2.0 were equivalent across all ten stable Phase 1
-and Phase 2 artifacts. The new derived-table digests were:
+No mapping or synonym TSV was configured for this run, so its audit correctly records
+zero mapped contributions rather than silently inferring cross-namespace agreement.
+Two final runs under package version 0.2.0 were equivalent across all twelve stable
+Phase 1 and Phase 2 artifacts. File SHA-256 digests for the final Phase 2 artifacts were:
 
-- `function_candidates.tsv`: `802dc60c6a98bf396a39eead8e378dda17f2e1972fcd387383ef8dea9f0890e0`
-- `fusion_summary.tsv`: `616f1aba2755a8c458818b5ba813b32b91f024205c32811158c414e1539f9a7d`
-- `conflicts.tsv`: `29115077fff4952fc15b90f39ce69cc6e5601da656b75561db2db83ba27a479e`
+- `function_candidates.tsv`: `109ae55c945606dc1f8a50a511ae169b969a849964c1e766fbb186040fb24b42`
+- `fusion_summary.tsv`: `9feb5afcaaf280910662ea81894b6d90538ef32b78f164b10df7a235e494ca98`
+- `conflicts.tsv`: `05a5dbf45d231908e085175e3fbee586c228ccecf9efb9c3a02db592f83758ab`
+- `alternatives.tsv`: `584d515a969aef204a0eef979e4c73c5c0bd2659b1fd5123588fa2624fd0e030`
+- `fusion_audit.json`: `421f76d2ef9e3e7f3fcec01bbc507bae09327ae6269f156be76085fcf0afc2ef`
 
-The four conflict labels are not confirmed biological disagreements. The sequence
+The four baseline conflict labels are not confirmed biological disagreements. The sequence
 adapter currently exposes large GO sets, EC, Pfam, orthologous groups, and labels, while
-the structure metadata exposes InterPro and labels. This version does not include a
-versioned Pfam-to-InterPro mapping, GO ontology relationships, EC hierarchy, or curated
-synonym mapping. Consequently, compatible functions expressed in different namespaces
-remain disjoint. Adding and benchmarking those mappings is the next scientific
-improvement, not a reason to hide the present conflicts.
+the structure metadata exposes InterPro and labels. Without a configured mapping bundle,
+compatible functions expressed in different namespaces remain disjoint. GO ontology
+relationships and EC hierarchy are still outside this characterized mapping bundle.
+
+## Characterized mapping bundle
+
+On 2026-10-22, `scripts/build_phase2_mapping_bundle.py` resolved the five observed
+eggNOG Pfam names against the official Pfam 38.2 name table and verified their integrated
+entries through InterPro 110.0. The bundle contains both name and accession forms, ten
+conservative full-name synonyms from reviewed UniProtKB/Swiss-Prot 2026_03, exact source
+snapshots, review decisions, checksums, and validation outputs.
+
+With the bundle enabled, five Pfam contributions consolidated into InterPro candidates.
+The four computational conflicts became `PARTIAL_CONSENSUS`; P00720 remained
+`SEQUENCE_ONLY`. No query became `CONSENSUS`. A repeat run with the same configuration
+was equivalent across all 12 compared artifacts. The synonym rows were loaded and
+audited but none matched this run's observed labels, so the measured status changes came
+exclusively from official Pfam-to-InterPro integration mappings.
+
+The bundle is scoped to this characterized smoke set. Its synonym subset is derived
+from those reviewed proteins and must not be treated as independent Phase 3 benchmark
+truth. Build a benchmark-independent frozen release before evaluation.

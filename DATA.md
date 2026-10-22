@@ -120,6 +120,20 @@ __pycache__/
 
 If small fixtures are needed for tests, store them under `tests/fixtures/` and keep them intentionally tiny.
 
+## Fusion mapping policy
+
+Cross-namespace mappings and curated label synonyms are small, versioned scientific
+inputs rather than hidden code constants. A run must record their source, source
+version, path, and SHA-256 digest. Exact mappings may consolidate candidates;
+broader, narrower, and related mappings may support only partial compatibility.
+Missing mappings remain an explicit limitation and must not be interpreted as
+biological conflict.
+
+`scripts/build_phase2_mapping_bundle.py` snapshots the exact InterPro release notes,
+Pfam name table, queried InterPro records, reviewed UniProt records, observed candidate
+table, and fixture manifest. Its output includes a source manifest and SHA-256 inventory
+so the complete small mapping bundle can be moved outside Git to SSD/HPC storage.
+
 ## Storage estimate
 Practical planning range for this project: **250–600 GB** active use.
 

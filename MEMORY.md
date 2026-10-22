@@ -151,7 +151,7 @@ Avoid naïve random splits that leak highly similar homologs between development
 - Does a graph/path evidence representation improve final groundedness enough to justify its complexity?
 
 ## Current implementation status
-Phases 1 and 2.1-2.3 are complete as reproducible baselines. Phase 1 has synthetic
+Phases 1 and 2.1-2.10 are complete as reproducible baselines. Phase 1 has synthetic
 fixture adapters and validated real adapters for local
 eggNOG-mapper, AlphaFold DB REST model acquisition/cache, and local Foldseek. The full
 Foldseek target metadata contains 1,562,650 unique targets joined to SIFTS/Swiss-Prot.
@@ -160,10 +160,10 @@ hits, four compatible AlphaFold models, forty annotated Foldseek hits, and one c
 retained sequence-only query after AlphaFold HTTP 404. A second run produced equivalent
 stable query, sequence, structure, merge, acquisition, configuration, and run-provenance
 artifacts. Phase 2 adds namespaced candidate grouping, explicit annotation-quality
-rules, query-level six-state classification, a versioned fixed-weight ranker, and a
-conflict report. The real characterized Phase 2 run retained four computational
-conflicts and one sequence-only query; the conflicts are not biological conclusions
-without versioned cross-namespace/ontology mappings.
+rules, query-level six-state classification, optional versioned mapping and synonym
+inputs, explicit evidence-quality reranking, alternatives, and an audit report. The
+real characterized Phase 2 baseline retained four computational conflicts and one
+sequence-only query; unconfigured namespace gaps are not biological conclusions.
 
 ## Update policy
 When a durable decision changes, append a short entry below rather than silently rewriting history.
@@ -221,3 +221,20 @@ When a durable decision changes, append a short entry below rather than silently
   the current working Git repository, so suffixes previously interpreted as mapper build
   identifiers were actually DualRAG commits. Version checks now run outside the checkout
   and record the stable package version `emapper-2.1.15`.
+- 2026-10-21: completed Phase 2.4-2.10 without introducing an LLM. Versioned mapping
+  and synonym TSVs are optional; exact mappings consolidate aliases, while broader,
+  narrower, and related mappings yield only partial compatibility. The fixed-weight
+  score remains visible beside explicit evidence-quality features and deterministic
+  reranking. `alternatives.tsv` reports near ties, and `fusion_audit.json` records
+  mapping checksums, counts, and limitations. These scores are ranking features, not
+  confidence or experimental validation. Real run `27665c3b0f2402db` emitted 628
+  candidates and 25 alternatives; two identical-config runs were equivalent across
+  all 12 compared artifacts. With no mapping files configured, four conflicts remain
+  explicitly computational and the audit records zero mapped contributions.
+- 2026-10-22: built a portable characterized mapping bundle from Pfam 38.2,
+  InterPro 110.0, and reviewed UniProtKB/Swiss-Prot 2026_03 records. Five official
+  Pfam integrations changed four computational conflicts to `PARTIAL_CONSENSUS` while
+  P00720 remained `SEQUENCE_ONLY`; no query became full consensus. The synonym subset
+  is source-curated but smoke-set-derived, did not affect this run, and must not be used
+  as independent Phase 3 benchmark truth. Identical mapped runs were equivalent across
+  12 artifacts.

@@ -227,7 +227,13 @@ neither informative -> INSUFFICIENT_EVIDENCE
 Implemented Phase 2.2 writes one query-level decision and reason to
 `fusion_summary.tsv`. Root GO terms and explicitly generic free-text labels are retained
 as unclear candidates instead of being discarded. Exact label normalization is a
-deterministic fallback; ontology and cross-namespace mappings are not inferred.
+deterministic fallback; ontology and cross-namespace mappings are never inferred.
+
+Phase 2.4-2.6 optionally load versioned mapping and synonym TSVs. `EXACT` relations
+consolidate candidates under the declared canonical ID while retaining aliases and
+mapping provenance. `BROADER`, `NARROWER`, and `RELATED` relations can establish
+partial compatibility but never exact consensus or candidate merging. Every input is
+checksummed in `fusion_audit.json`.
 
 ## 9. Fusion / reranking
 A simple development score may be used only as a baseline:
@@ -240,6 +246,17 @@ S(function) =
 + w_agree * S_agreement
 + w_lit * S_literature
 ```
+
+Implemented Phase 2.7-2.8 keeps the fixed-weight score and exposes three separate
+quality features: identifier specificity, modality support, and independent-hit
+support. `evidence-quality-v1` reranks with `0.8 * fixed score + 0.2 * quality score`.
+Both components and all features remain in `function_candidates.tsv`; none is a
+probability or calibrated confidence.
+
+Phase 2.9 writes `alternatives.tsv` with deterministic top candidates, score deltas,
+and a configurable near-tie flag. Phase 2.10 writes `fusion_audit.json` with status and
+candidate counts, mapping checksums, mapping coverage, and explicit limitations. Both
+files participate in repeat-run comparison.
 
 Weights are hyperparameters to be calibrated on validation data. The project should compare:
 
