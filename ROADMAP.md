@@ -102,15 +102,45 @@ Exit criteria:
 - official Pfam 38.2/InterPro 110.0 mapping bundle and repeat run **(complete: 2026-10-22)**
 
 ## Phase 3 — Benchmarking
-- curate characterized benchmark proteins
-- cluster-aware train/validation/test split
-- create sequence-identity strata
-- implement retrieval metrics
-- implement function-level metrics
-- run sequence-only vs structure-only vs dual retrieval
+
+Status: **3.1-3.9 development pilot complete on 2026-10-25.**
+
+### 3.1 Benchmark contract
+- exact correctness and gold-evidence policy **(complete)**
+- primary endpoint, hierarchy rules, inclusion/exclusion, and leakage thresholds **(complete)**
+- claim rules and required reproducibility outputs **(complete)**
+
+### 3.2 Characterized dataset
+- curate versioned reviewed-protein manifest **(pilot complete: 60 queries)**
+
+### 3.3 Leakage-controlled splits
+- MMseqs2 cluster assignment and reference prohibited-target manifest **(pilot complete)**
+- resolve benchmark targets and PDB chains through the exclusion catalog **(complete in 3.6)**
+
+### 3.4 Difficulty strata
+- closest-allowed Swiss-Prot reference identity bins **(pilot complete)**
+- preserve retrieval-specific target resolution and exclusions **(complete in 3.6)**
+
+### 3.5 Metrics
+- retrieval, dual-retrieval, function, confidence-interval implementation **(complete)**
+- subgroup paired randomization and Holm adjustment **(complete)**
+
+### 3.6 Principal baselines
+- B2 sequence-only, B3 structure-only, B4 deterministic dual retrieval **(complete)**
+
+### 3.7 Mapping ablations
+- no mapping, InterPro2GO, EC2GO, GO synonyms, all combined **(complete)**
+
+### 3.8 Biological error analysis
+- rescue, failure, incorrect agreement, metadata gaps, unavailable models **(complete)**
+
+### 3.9 Reproducible benchmark package
+- manifests, versions, commands, raw results, per-query and aggregate metrics **(complete)**
 
 Exit criteria:
-- quantified evidence that dual retrieval adds value, or a clear negative result explaining when it does not
+- development-pilot result: no measurable overall B4 benefit over B2; paired test-set
+  FR@10 difference +0.0556, 95% CI 0.0000-0.1667 **(complete)**
+- statistically powered final benchmark remains future work
 
 ## Phase 4 — Literature RAG
 - PubMed/PMC retrieval

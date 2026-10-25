@@ -21,6 +21,11 @@
 | Ontology/function | GO / EC / pathway annotations |
 | Literature | PubMed / PMC |
 
+Phase 3 pins independent GO mapping resources separately from benchmark gold labels:
+InterPro2GO, EC2GO, and `go-basic.obo`. PDB-chain GO/EC/InterPro and UniProt resolution
+come from the same SIFTS release used to build Foldseek target metadata. Mapping
+projections are annotation rules, not experimental evidence or identifier equivalence.
+
 ## AlphaFold policy
 Do not mirror AlphaFoldDB for the standard project workflow. Store eggNOG and Foldseek
 target databases locally, but retrieve AlphaFold query models on demand through the

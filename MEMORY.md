@@ -238,3 +238,25 @@ When a durable decision changes, append a short entry below rather than silently
   is source-curated but smoke-set-derived, did not affect this run, and must not be used
   as independent Phase 3 benchmark truth. Identical mapped runs were equivalent across
   12 artifacts.
+- 2026-10-22: froze Phase 3.1 contract `phase3-benchmark-v1`. The primary endpoint is
+  macro exact EC/GO-MF Function Recall@10 with paired 10,000-replicate bootstrap for
+  B4-minus-B2. InterPro/Pfam are secondary consistency endpoints, never complete-function
+  correctness. Tier A requires experimental function evidence. Splits keep 30%-identity,
+  80%-coverage MMseqs2 clusters intact; primary retrieval excludes exact queries and
+  targets at least 90% identical with at least 80% bidirectional coverage. Smoke-derived
+  synonyms are prohibited from the primary benchmark, and test labels remain hidden
+  until configuration freeze.
+- 2026-10-25: completed the Phase 3.2-3.4 development pilot `phase3-pilot-v1` from
+  checksummed UniProtKB/Swiss-Prot 2026_03. It contains 60 canonical Tier-A queries,
+  60 intact MMseqs2 clusters split 42/9/9, 138 Swiss-Prot reference exclusions, and
+  frozen closest-allowed-reference difficulty strata. This pilot develops and tests the
+  benchmark machinery; it is not statistically powered. Phase 3.6 must resolve actual
+  eggNOG targets and SIFTS/PDB chains and enrich GO publication provenance before a
+  final benchmark claim.
+- 2026-10-25: completed the Phase 3.5-3.9 development benchmark. The real run used
+  leakage-filtered MMseqs2/Swiss-Prot for B2 and AlphaFold plus local Foldseek/SIFTS for
+  B3, with 46 models available and 14 unavailable. On the untouched nine-query test
+  split, FR@10 was B2 0.722, B3 0.250, and B4 0.778. The paired B4-minus-B2 estimate
+  was +0.0556 with 95% CI 0.0000-0.1667, so the frozen claim rule yields
+  `NO_MEASURABLE_OVERALL_BENEFIT`. This is a small development result, not a powered
+  final scientific benchmark.

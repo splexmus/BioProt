@@ -141,6 +141,8 @@ query_coverage
 target_coverage
 sequence_identity
 protein_name
+go_terms
+ec_numbers
 interpro_ids
 supfam_ids
 structure_source
@@ -151,8 +153,10 @@ raw_output_path
 If Foldseek output does not include a field directly, do not infer it unless a documented post-processing step computes it.
 
 Foldseek itself does not supply function labels. An optional target-metadata TSV joins
-`target_structure_id` to UniProt, protein name, InterPro/SUPFAM identifiers, source,
-experimental status, and source accession. Missing metadata stays null.
+`target_structure_id` to chain-level SIFTS UniProt, GO, EC and InterPro annotations,
+plus protein name, SUPFAM identifiers, source, experimental status, and source
+accession. Missing metadata stays null. Phase 3 uses the SIFTS-resolved UniProt sequence
+catalog—not Foldseek `fident`—for strict close-homolog exclusions.
 
 ## 6. Evidence normalization
 Raw metrics have different scales and meanings. Keep both raw and normalized values.

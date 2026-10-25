@@ -69,6 +69,19 @@ Build a portable, checksummed mapping bundle from official InterPro/Pfam and rev
 UniProt records with `scripts/build_phase2_mapping_bundle.py`. The characterized bundle
 validated on 2026-10-22 is packaged under `dist/` for copying to external storage.
 
+Phase 3.1 is frozen in `docs/BENCHMARK_CONTRACT.md` with a machine-readable counterpart
+at `config/benchmark-contract-v1.yaml`. It defines exact correctness, the primary
+EC/GO-MF endpoint, gold evidence, leakage exclusions, statistical reporting, and claim
+rules before benchmark proteins are collected.
+
+The Phase 3.2-3.4 development pilot, including its 60-protein dataset,
+leakage-controlled splits and difficulty strata, is explained in
+`docs/PHASE3_DATASET.md` and stored under `benchmark/phase3-pilot-v1/`.
+
+The completed Phase 3 development benchmark, including B2/B3/B4 results, mapping
+ablations, error analysis and reproducibility artifacts, is reported in
+`docs/PHASE3_REPORT.md` and stored under `benchmark/phase3-run-v1/`.
+
 For the full external-HDD database setup, including the writable-mount preflight,
 eggNOG installation, Foldseek PDB download, provenance finalization, and validation,
 see [Phase 1 data installation](docs/PHASE1_DATA_INSTALL.md). The current production

@@ -1,5 +1,6 @@
 .env
 *.log
+!benchmark/**/commands.log
 __pycache__/
 .pytest_cache/
 .ruff_cache/
@@ -15,6 +16,8 @@ build/
 /tmp/
 /results/
 /experiments/
+benchmark/**/tmp-cluster/
+benchmark/**/tmp-search/
 *.pdb
 *.cif
 *.mmcif

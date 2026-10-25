@@ -1,5 +1,22 @@
 # EVALUATION.md
 
+The normative Phase 3 decisions are frozen in
+[`docs/BENCHMARK_CONTRACT.md`](docs/BENCHMARK_CONTRACT.md) and
+`config/benchmark-contract-v1.yaml`. If this overview conflicts with that contract, the
+versioned contract controls.
+
+The Phase 3.2-3.4 development dataset and leakage/difficulty artifacts are documented
+in `docs/PHASE3_DATASET.md`. `phase3-pilot-v1` is suitable for pipeline development and
+dry-run baseline evaluation, but its 60 queries are not a statistically powered final
+benchmark. Phase 3.6 resolved strict structure targets through SIFTS and used a
+leakage-filterable MMseqs2/Swiss-Prot B2 baseline because eggNOG-mapper does not expose
+the ranked target information required by the frozen contract.
+
+The executed pilot result is in `docs/PHASE3_REPORT.md`. On the nine-query untouched
+test split, B4 dual FR@10 was 0.778 versus 0.722 for B2 sequence-only, but the paired
+95% interval for the difference was 0.000-0.167. The contract conclusion is therefore
+`NO_MEASURABLE_OVERALL_BENEFIT`, not an improvement claim.
+
 ## 1. Research questions
 
 - RQ1: Does dual sequence+structure retrieval increase functional recall over sequence-only retrieval?
@@ -62,6 +79,9 @@ Possible split: 70/15/15, but the final choice is experimental.
 
 MVP research should reach at least B2–B4 before implementing B5+.
 
+Phase 3 evaluates B2, B3, and B4 only. B0/B1 and B5+ remain future-layer labels and
+must not be mixed into the Phase 3 primary analysis.
+
 ## 5. Retrieval metrics
 Evaluate each retriever independently:
 
@@ -89,6 +109,11 @@ Cross-modal metrics:
 - top-K function recall
 
 Use hierarchical metrics so a broadly correct family prediction is not treated exactly like an unrelated prediction.
+
+The primary endpoint is macro exact EC/GO-MF Function Recall@10. InterPro and Pfam are
+secondary family/domain consistency endpoints and cannot by themselves establish exact
+function correctness. See the contract for evidence eligibility, hierarchy, missingness,
+bootstrap, and claim rules.
 
 ## 7. Generation metrics
 For LLM-generated reports:
