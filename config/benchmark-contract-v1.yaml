@@ -1,0 +1,204 @@
+schema_version: 1
+contract_id: phase3-benchmark-v1
+status: frozen_for_phase_3_2
+random_seed: 42
+
+scope:
+  baselines: [B2_SEQUENCE_ONLY, B3_STRUCTURE_ONLY, B4_DUAL_DETERMINISTIC]
+  excluded_layers: [literature, llm, graph, confidence_calibration]
+  unit_of_evaluation: canonical_protein
+  prediction_type: multi_label
+
+primary_endpoint:
+  name: macro_function_recall_at_10
+  abbreviation: FR@10
+  namespaces: [EC, GO_MF]
+  exact_identifiers_only: true
+  rank_within_namespace: true
+  per_query_rule: >-
+    Compute exact Recall@10 separately for each available EC and GO_MF gold set,
+    then average the available namespace scores for the query.
+  aggregation: macro_average_over_queries
+  primary_contrast: B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY
+  confidence_interval:
+    method: paired_query_bootstrap
+    replicates: 10000
+    level: 0.95
+    seed: 42
+
+correctness:
+  exact:
+    rule: normalized predicted identifier is present in the frozen admissible gold set
+    mapping_derived_predictions_allowed: true
+    mapping_must_be_frozen_before_test: true
+    free_text_allowed: false
+  ec:
+    exact_levels_required: 4
+    incomplete_gold_excluded_from_exact_endpoint: true
+    partial_credit:
+      metric: common_leading_ec_levels_divided_by_4
+      secondary_only: true
+  go_mf:
+    namespace_root: GO:0003674
+    root_is_not_a_gold_label: true
+    ontology_relations: [is_a]
+    obsolete_term_rule: replace_only_with_single_replaced_by_else_exclude
+    semantic_metric:
+      name: lin_best_match_average
+      information_content_source: frozen_reviewed_uniprot_go_mf_corpus
+      secondary_only: true
+  interpro:
+    exact_match: true
+    ancestor_consistency: secondary_only
+    counts_as_exact_function_correctness: false
+  pfam:
+    exact_match: true
+    clan_consistency: secondary_only
+    counts_as_exact_function_correctness: false
+  labels:
+    automated_scoring: false
+    use: manual_error_analysis_only
+
+gold_standard:
+  source: UniProtKB_Swiss-Prot
+  sequence: canonical_only
+  tier_a_primary:
+    protein_existence: evidence_at_protein_level
+    go_evidence_codes: [EXP, IDA, IPI, IMP, IGI, IEP, HTP, HDA, HMP, HGI, HEP]
+    ec_rule: reviewed_full_ec_with_experimental_catalytic_support
+  tier_b_sensitivity:
+    rule: reviewed_curator_inference_not_accepted_in_tier_a
+    primary_claims_allowed: false
+  inclusion:
+    minimum_length: 40
+    maximum_length: 2000
+    require_at_least_one_tier_a_label_in: [EC, GO_MF]
+    require_sequence_sha256: true
+    require_database_release: true
+  exclusion:
+    fragments: true
+    ambiguous_or_nonstandard_sequence: true
+    obsolete_or_merged_accession_without_unique_replacement: true
+    unresolved_gold_identifier: true
+    uncharacterized_proteins: separate_coverage_study
+  do_not_exclude_for:
+    - alphafold_model_unavailable
+    - absence_of_one_nonprimary_namespace
+    - multiple_admissible_functions
+  missing_namespace_rule: exclude_query_only_from_that_namespace_denominator
+
+leakage_control:
+  split_clusters:
+    tool: MMseqs2
+    minimum_sequence_identity: 0.30
+    minimum_bidirectional_coverage: 0.80
+    assign_whole_cluster_to_one_split: true
+    intended_split: {development: 0.70, validation: 0.15, test: 0.15}
+  retrieval_target_exclusion:
+    exact_accession: true
+    exact_sequence_sha256: true
+    close_homolog_identity_at_least: 0.90
+    close_homolog_bidirectional_coverage_at_least: 0.80
+    sequence_and_structure_targets: true
+    structure_accession_resolution: SIFTS
+    unresolved_structure_target_in_primary_track: exclude
+    retrieve_before_filter_k: 100
+    score_after_filter_k: [1, 5, 10]
+    identity_definition: identical_aligned_residue_pairs_divided_by_aligned_residue_pairs
+    coverage_definition: aligned_residues_divided_by_full_length_for_each_sequence
+    structure_homology_source: SIFTS_resolved_target_protein_sequence
+  annotation_leakage:
+    query_gold_must_not_enter_fusion_packet: true
+    mappings_must_be_benchmark_independent: true
+    smoke_set_derived_synonyms_allowed_in_primary: false
+    test_labels_hidden_until_configuration_freeze: true
+
+secondary_endpoints:
+  retrieval: [recall_at_1, recall_at_5, recall_at_10, precision_at_k, mrr, ndcg, coverage]
+  cross_modal:
+    - union_recall
+    - intersection_coverage
+    - structure_rescue_rate
+    - sequence_rescue_rate
+    - conflict_rate
+    - incorrect_consensus_rate
+  function:
+    - exact_ec_recall
+    - hierarchical_ec_score
+    - exact_go_mf_recall
+    - go_mf_semantic_similarity
+    - interpro_exact_consistency
+    - interpro_ancestor_consistency
+    - pfam_exact_consistency
+    - pfam_clan_consistency
+    - top_k_function_recall
+
+difficulty_strata:
+  measure: closest_allowed_reference_alignment_identity
+  identity_definition: identical_aligned_residue_pairs_divided_by_aligned_residue_pairs
+  coverage_requirement: 0.70
+  bins:
+    - {name: GT_70, lower_exclusive: 0.70, upper_inclusive: 1.00}
+    - {name: FROM_50_TO_70, lower_exclusive: 0.50, upper_inclusive: 0.70}
+    - {name: FROM_30_TO_50, lower_exclusive: 0.30, upper_inclusive: 0.50}
+    - {name: FROM_20_TO_30, lower_exclusive: 0.20, upper_inclusive: 0.30}
+    - {name: LT_OR_EQ_20, lower_inclusive: 0.00, upper_inclusive: 0.20}
+    - {name: NO_ALLOWED_HIT, no_allowed_hit: true}
+
+reporting:
+  always_report:
+    - point_estimate
+    - confidence_interval
+    - numerator
+    - denominator
+    - query_count
+    - missingness
+    - per_query_results
+  subgroup_results: [difficulty_stratum, taxonomy_superkingdom, enzyme_vs_non_enzyme]
+  multiplicity: subgroup_and_mapping_ablations_are_exploratory_with_holm_adjusted_p_values
+  scores_are_confidence: false
+
+manifest_requirements:
+  query:
+    - accession
+    - canonical_sequence
+    - sequence_sha256
+    - sequence_length
+    - organism
+    - taxonomy_id
+    - protein_existence
+    - source_database
+    - source_release
+    - inclusion_status
+    - inclusion_or_exclusion_reason
+  gold_label:
+    - accession
+    - namespace
+    - identifier
+    - evidence_tier
+    - evidence_code
+    - supporting_reference
+    - source_database
+    - source_release
+    - admissible_for_primary
+    - decision_reason
+  prohibited_target:
+    - query_accession
+    - target_identifier
+    - target_modality
+    - exclusion_reason
+    - sequence_identity
+    - query_coverage
+    - target_coverage
+    - resolution_source
+
+claim_rules:
+  overall_dual_improvement: >-
+    Claim only when the paired 95% confidence interval for B4 minus B2 on FR@10
+    is entirely above zero on the untouched test set.
+  stratum_specific_benefit: >-
+    Report effect size and interval as a qualified subgroup result; do not generalize
+    it to the full benchmark.
+  no_measurable_benefit: >-
+    Report when the primary interval includes zero, together with secondary endpoints
+    and biological error analysis.
