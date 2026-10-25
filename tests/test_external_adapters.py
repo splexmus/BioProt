@@ -111,8 +111,9 @@ def test_parse_foldseek_results_with_metadata(tmp_path: Path, monkeypatch) -> No
     metadata = tmp_path / "metadata.tsv"
     metadata.write_text(
         "target_structure_id\ttarget_uniprot_id\tprotein_name\tinterpro_ids\t"
-        "supfam_ids\tstructure_source\texperimental_structure\tsource_accession\n"
-        "1abc_A\tP1\tDemo enzyme\tIPR1\tSSF1\tPDB\ttrue\t1abc\n"
+        "go_terms\tec_numbers\tsupfam_ids\tstructure_source\texperimental_structure\t"
+        "source_accession\n"
+        "1abc_A\tP1\tDemo enzyme\tIPR1\tGO:0000001\t1.2.3.4\tSSF1\tPDB\ttrue\t1abc\n"
     )
     monkeypatch.setattr(foldseek, "_tool_version", lambda executable: "foldseek-test")
     config = StructureConfig(
@@ -129,3 +130,5 @@ def test_parse_foldseek_results_with_metadata(tmp_path: Path, monkeypatch) -> No
     assert hits[0].tm_score == 0.72
     assert hits[0].experimental_structure is True
     assert hits[0].structure_source == "PDB"
+    assert hits[0].go_terms == ["GO:0000001"]
+    assert hits[0].ec_numbers == ["1.2.3.4"]

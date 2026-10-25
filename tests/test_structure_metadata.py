@@ -42,6 +42,20 @@ def test_build_metadata_preserves_foldseek_targets_and_joins_annotations(
         "1abc\tA\tIPR000002\n"
         "1abc\tA\tIPR000001\n",
     )
+    sifts_go = tmp_path / "pdb_chain_go.tsv.gz"
+    _gzip(
+        sifts_go,
+        "# 2026/10/04 | PDB: 40.26 | UniProt: 2026.03\n"
+        "PDB\tCHAIN\tSP_PRIMARY\tGO_ID\n"
+        "1abc\tA\tP00001\tGO:0000001\n",
+    )
+    sifts_enzyme = tmp_path / "pdb_chain_enzyme.tsv.gz"
+    _gzip(
+        sifts_enzyme,
+        "# 2026/10/04 | PDB: 40.26 | UniProt: 2026.03\n"
+        "PDB\tCHAIN\tACCESSION\tEC_NUMBER\n"
+        "1abc\tA\tP00001\t1.2.3.4\n",
+    )
     swissprot = tmp_path / "uniprot_sprot.fasta.gz"
     _gzip(
         swissprot,
@@ -53,6 +67,8 @@ def test_build_metadata_preserves_foldseek_targets_and_joins_annotations(
     result = build_metadata(
         foldseek_lookup=lookup,
         sifts_uniprot=sifts_uniprot,
+        sifts_go=sifts_go,
+        sifts_enzyme=sifts_enzyme,
         sifts_interpro=sifts_interpro,
         swissprot_fasta=swissprot,
         output=output,
@@ -66,6 +82,8 @@ def test_build_metadata_preserves_foldseek_targets_and_joins_annotations(
         "target_structure_id": "1abc-assembly1_A",
         "target_uniprot_id": "P00001;P00002",
         "protein_name": "First protein;Second protein",
+        "go_terms": "GO:0000001",
+        "ec_numbers": "1.2.3.4",
         "interpro_ids": "IPR000001;IPR000002",
         "supfam_ids": "",
         "structure_source": "PDB",
@@ -82,6 +100,8 @@ def test_build_metadata_preserves_foldseek_targets_and_joins_annotations(
     assert result.duplicate_target_count == 1
     manifest = json.loads(result.manifest.read_text(encoding="utf-8"))
     assert manifest["counts"]["targets_with_interpro"] == 2
+    assert manifest["counts"]["targets_with_go"] == 2
+    assert manifest["counts"]["targets_with_ec"] == 2
     assert manifest["source_release_headers"]["pdb_chain_uniprot"].startswith(
         "2026/10/04"
     )
