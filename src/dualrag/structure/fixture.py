@@ -50,6 +50,8 @@ def retrieve(
                 target_coverage=optional_float(row.get("target_coverage")),
                 sequence_identity=optional_float(row.get("sequence_identity")),
                 protein_name=row.get("protein_name") or None,
+                go_terms=terms(row.get("go_terms")),
+                ec_numbers=terms(row.get("ec_numbers")),
                 interpro_ids=terms(row.get("interpro_ids")),
                 supfam_ids=terms(row.get("supfam_ids")),
                 structure_source=row.get("structure_source") or None,

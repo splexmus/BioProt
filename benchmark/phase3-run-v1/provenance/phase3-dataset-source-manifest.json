@@ -1,0 +1,24 @@
+{
+  "contract": {
+    "path": "config/benchmark-contract-v1.yaml",
+    "sha256": "b8fd30bc569a946726c5c7c3b711412b396bace6f599f3b05afee6dd35e916f1"
+  },
+  "dataset_id": "phase3-pilot-v1",
+  "mmseqs": {
+    "commands_log": "commands.log",
+    "version": "16.747c6"
+  },
+  "selection": {
+    "method": "round-robin superkingdom-balanced deterministic selection",
+    "seed": 42,
+    "size": 60
+  },
+  "source": {
+    "database": "UniProtKB/Swiss-Prot",
+    "fasta_file": "/media/splexmus/4TB_HDD1/dualrag/databases/uniprot/swissprot/current/uniprot_sprot.fasta.gz",
+    "fasta_file_sha256": "a9c3496aa727e61d25d9e1291c9ba28d2c2ad19c0e26569dc083d53ec4169536",
+    "flat_file": "/media/splexmus/4TB_HDD1/dualrag/databases/uniprot/swissprot/current/uniprot_sprot.dat.gz",
+    "flat_file_sha256": "c87208822a56e8ae0d6bf5072c287b35e42a8b9f25e8bd771389abc5b7a29c38",
+    "release": "2026_03"
+  }
+}

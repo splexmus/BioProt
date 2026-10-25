@@ -86,6 +86,8 @@ class StructureEvidence:
     target_coverage: float | None = None
     sequence_identity: float | None = None
     protein_name: str | None = None
+    go_terms: list[str] = field(default_factory=list)
+    ec_numbers: list[str] = field(default_factory=list)
     interpro_ids: list[str] = field(default_factory=list)
     supfam_ids: list[str] = field(default_factory=list)
     structure_source: str | None = None

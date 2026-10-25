@@ -1,0 +1,40 @@
+{
+  "cluster_count": 60,
+  "contract_id": "phase3-benchmark-v1",
+  "dataset_id": "phase3-pilot-v1",
+  "difficulty_counts": {
+    "FROM_20_TO_30": 1,
+    "FROM_30_TO_50": 18,
+    "FROM_50_TO_70": 11,
+    "GT_70": 24,
+    "NO_ALLOWED_HIT": 6
+  },
+  "eligible_candidate_count": 45247,
+  "limitations": [
+    "This is a development pilot, not a statistically powered final benchmark.",
+    "Reference difficulty uses Swiss-Prot, not the eggNOG or PDB target universe.",
+    "Structure-target SIFTS exclusions must be materialized when Phase 3.6 retrieval runs.",
+    "GO flat-file evidence preserves its source but not a direct publication identifier."
+  ],
+  "primary_label_counts": {
+    "EC": 43,
+    "GO_MF": 83
+  },
+  "prohibited_pair_count": 138,
+  "query_count": 60,
+  "source_database": "UniProtKB/Swiss-Prot",
+  "source_flat_file_sha256": "c87208822a56e8ae0d6bf5072c287b35e42a8b9f25e8bd771389abc5b7a29c38",
+  "source_release": "2026_03",
+  "split_query_counts": {
+    "development": 42,
+    "test": 9,
+    "validation": 9
+  },
+  "taxonomy_counts": {
+    "Archaea": 14,
+    "Bacteria": 15,
+    "Eukaryota": 15,
+    "Other": 2,
+    "Viruses": 14
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "created_at": "2026-10-25T14:56:35.718109+00:00",
+  "go_version": "releases/2026-07-26",
+  "inputs": [
+    {
+      "path": "benchmark/phase3-mappings-v1/sources/interpro2go",
+      "sha256": "197d15cfe09d0831af4dbd19a69a191ee15aecbe1152144148a0ff62771a90ad",
+      "size_bytes": 3077134
+    },
+    {
+      "path": "benchmark/phase3-mappings-v1/sources/ec2go",
+      "sha256": "1df1674cdc5547d4d25e6a744f628710daa89c52f406374e9174c4f5c4fe6aed",
+      "size_bytes": 355797
+    },
+    {
+      "path": "benchmark/phase3-mappings-v1/sources/go-basic.obo",
+      "sha256": "b08d45b268b8c24ccb2513dbbbc7d4df9f6521c099b413f79eb31e06e0fa3bcc",
+      "size_bytes": 32227785
+    }
+  ],
+  "limitations": [
+    "InterPro2GO and EC2GO are safe annotation projections, not identifier equivalence.",
+    "GO names and EXACT synonyms affect free-text consolidation only.",
+    "Mapping-derived predictions remain separate from experimental gold provenance."
+  ],
+  "projection_count": 34953,
+  "schema_version": 1,
+  "synonym_count": 15898
+}

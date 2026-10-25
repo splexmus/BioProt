@@ -64,6 +64,8 @@ def extract_contributions(
 
     for hit in structure_hits:
         values = []
+        values.extend((CandidateKind.EC, value) for value in hit.ec_numbers)
+        values.extend((CandidateKind.GO, value) for value in hit.go_terms)
         values.extend((CandidateKind.INTERPRO, value) for value in hit.interpro_ids)
         values.extend((CandidateKind.SUPFAM, value) for value in hit.supfam_ids)
         if hit.protein_name:

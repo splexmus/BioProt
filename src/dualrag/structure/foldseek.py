@@ -99,6 +99,8 @@ def parse_results(
                 target_coverage=optional_float(row["tcov"]),
                 sequence_identity=optional_float(row["fident"]),
                 protein_name=target_meta.get("protein_name") or None,
+                go_terms=terms(target_meta.get("go_terms")),
+                ec_numbers=terms(target_meta.get("ec_numbers")),
                 interpro_ids=terms(target_meta.get("interpro_ids")),
                 supfam_ids=terms(target_meta.get("supfam_ids")),
                 structure_source=target_meta.get("structure_source") or config.database_name,

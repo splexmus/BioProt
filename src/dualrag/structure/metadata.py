@@ -18,6 +18,8 @@ HEADER = [
     "target_structure_id",
     "target_uniprot_id",
     "protein_name",
+    "go_terms",
+    "ec_numbers",
     "interpro_ids",
     "supfam_ids",
     "structure_source",
@@ -37,6 +39,8 @@ class BuildResult:
     target_count: int
     uniprot_mapped_count: int
     protein_name_mapped_count: int
+    go_mapped_count: int
+    ec_mapped_count: int
     interpro_mapped_count: int
     malformed_target_count: int
     duplicate_target_count: int
@@ -46,13 +50,22 @@ def build_metadata(
     *,
     foldseek_lookup: Path,
     sifts_uniprot: Path,
+    sifts_go: Path,
+    sifts_enzyme: Path,
     sifts_interpro: Path,
     swissprot_fasta: Path,
     output: Path,
     work_dir: Path | None = None,
 ) -> BuildResult:
     """Build target metadata for a Foldseek PDB database from SIFTS and Swiss-Prot."""
-    inputs = [foldseek_lookup, sifts_uniprot, sifts_interpro, swissprot_fasta]
+    inputs = [
+        foldseek_lookup,
+        sifts_uniprot,
+        sifts_go,
+        sifts_enzyme,
+        sifts_interpro,
+        swissprot_fasta,
+    ]
     for path in inputs:
         if not path.is_file() or path.stat().st_size == 0:
             raise FileNotFoundError(f"required non-empty input is missing: {path}")
@@ -79,6 +92,20 @@ def build_metadata(
                     expected_value_column="INTERPRO_ID",
                     table="interpro_mapping",
                     value_column="interpro_id",
+                ),
+                "pdb_chain_go": _load_sifts(
+                    connection,
+                    sifts_go,
+                    expected_value_column="GO_ID",
+                    table="go_mapping",
+                    value_column="go_id",
+                ),
+                "pdb_chain_enzyme": _load_sifts(
+                    connection,
+                    sifts_enzyme,
+                    expected_value_column="EC_NUMBER",
+                    table="ec_mapping",
+                    value_column="ec_number",
                 ),
             }
             _load_swissprot_names(connection, swissprot_fasta)
@@ -113,6 +140,18 @@ def _configure_database(connection: sqlite3.Connection) -> None:
             chain TEXT NOT NULL,
             interpro_id TEXT NOT NULL,
             PRIMARY KEY (pdb, chain, interpro_id)
+        ) WITHOUT ROWID;
+        CREATE TABLE go_mapping (
+            pdb TEXT NOT NULL,
+            chain TEXT NOT NULL,
+            go_id TEXT NOT NULL,
+            PRIMARY KEY (pdb, chain, go_id)
+        ) WITHOUT ROWID;
+        CREATE TABLE ec_mapping (
+            pdb TEXT NOT NULL,
+            chain TEXT NOT NULL,
+            ec_number TEXT NOT NULL,
+            PRIMARY KEY (pdb, chain, ec_number)
         ) WITHOUT ROWID;
         CREATE TABLE protein_name (
             accession TEXT PRIMARY KEY,
@@ -270,6 +309,18 @@ def _aggregate_chain_metadata(connection: sqlite3.Connection) -> None:
         )
         GROUP BY pdb, chain;
         CREATE UNIQUE INDEX interpro_agg_key ON interpro_agg (pdb, chain);
+
+        CREATE TABLE go_agg AS
+        SELECT pdb, chain, group_concat(go_id, ';') AS go_terms
+        FROM (SELECT pdb, chain, go_id FROM go_mapping ORDER BY pdb, chain, go_id)
+        GROUP BY pdb, chain;
+        CREATE UNIQUE INDEX go_agg_key ON go_agg (pdb, chain);
+
+        CREATE TABLE ec_agg AS
+        SELECT pdb, chain, group_concat(ec_number, ';') AS ec_numbers
+        FROM (SELECT pdb, chain, ec_number FROM ec_mapping ORDER BY pdb, chain, ec_number)
+        GROUP BY pdb, chain;
+        CREATE UNIQUE INDEX ec_agg_key ON ec_agg (pdb, chain);
         """
     )
 
@@ -278,13 +329,15 @@ def _write_output(
     connection: sqlite3.Connection, output: Path, malformed: int, duplicates: int
 ) -> BuildResult:
     temporary = output.with_name(f".{output.name}.tmp")
-    counts = {"target": 0, "uniprot": 0, "name": 0, "interpro": 0}
+    counts = {"target": 0, "uniprot": 0, "name": 0, "go": 0, "ec": 0, "interpro": 0}
     query = """
         SELECT
             targets.target,
             targets.pdb,
             COALESCE(uniprot_exact.accessions, uniprot_base.accessions, ''),
             COALESCE(name_exact.names, name_base.names, ''),
+            COALESCE(go_exact.go_terms, go_base.go_terms, ''),
+            COALESCE(ec_exact.ec_numbers, ec_base.ec_numbers, ''),
             COALESCE(interpro_exact.interpro_ids, interpro_base.interpro_ids, '')
         FROM foldseek_target AS targets
         LEFT JOIN uniprot_agg AS uniprot_exact
@@ -299,18 +352,36 @@ def _write_output(
           ON interpro_exact.pdb = targets.pdb AND interpro_exact.chain = targets.chain_exact
         LEFT JOIN interpro_agg AS interpro_base
           ON interpro_base.pdb = targets.pdb AND interpro_base.chain = targets.chain_base
+        LEFT JOIN go_agg AS go_exact
+          ON go_exact.pdb = targets.pdb AND go_exact.chain = targets.chain_exact
+        LEFT JOIN go_agg AS go_base
+          ON go_base.pdb = targets.pdb AND go_base.chain = targets.chain_base
+        LEFT JOIN ec_agg AS ec_exact
+          ON ec_exact.pdb = targets.pdb AND ec_exact.chain = targets.chain_exact
+        LEFT JOIN ec_agg AS ec_base
+          ON ec_base.pdb = targets.pdb AND ec_base.chain = targets.chain_base
         ORDER BY targets.ordinal
     """
     try:
         with temporary.open("w", encoding="utf-8", newline="") as handle:
             writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
             writer.writerow(HEADER)
-            for target, pdb, accessions, names, interpro_ids in connection.execute(query):
+            for (
+                target,
+                pdb,
+                accessions,
+                names,
+                go_terms,
+                ec_numbers,
+                interpro_ids,
+            ) in connection.execute(query):
                 writer.writerow(
                     [
                         target,
                         _clean_output_field(accessions),
                         _clean_output_field(names),
+                        _clean_output_field(go_terms),
+                        _clean_output_field(ec_numbers),
                         _clean_output_field(interpro_ids),
                         "",
                         "PDB",
@@ -321,6 +392,8 @@ def _write_output(
                 counts["target"] += 1
                 counts["uniprot"] += bool(accessions)
                 counts["name"] += bool(names)
+                counts["go"] += bool(go_terms)
+                counts["ec"] += bool(ec_numbers)
                 counts["interpro"] += bool(interpro_ids)
         temporary.replace(output)
     finally:
@@ -333,6 +406,8 @@ def _write_output(
         target_count=counts["target"],
         uniprot_mapped_count=counts["uniprot"],
         protein_name_mapped_count=counts["name"],
+        go_mapped_count=counts["go"],
+        ec_mapped_count=counts["ec"],
         interpro_mapped_count=counts["interpro"],
         malformed_target_count=malformed,
         duplicate_target_count=duplicates,
@@ -371,6 +446,8 @@ def _write_manifest(
             "targets": result.target_count,
             "targets_with_uniprot": result.uniprot_mapped_count,
             "targets_with_protein_name": result.protein_name_mapped_count,
+            "targets_with_go": result.go_mapped_count,
+            "targets_with_ec": result.ec_mapped_count,
             "targets_with_interpro": result.interpro_mapped_count,
             "malformed_target_ids": result.malformed_target_count,
             "duplicate_lookup_rows_collapsed": result.duplicate_target_count,
@@ -384,6 +461,7 @@ def _write_manifest(
             "Foldseek target IDs are preserved exactly from the lookup file.",
             "UniProt and InterPro mappings are chain-level SIFTS annotations.",
             "Protein names are available only for reviewed Swiss-Prot accessions.",
+            "GO and EC annotations are chain-level SIFTS mappings.",
             "supfam_ids is blank because no SUPFAM mapping source was supplied.",
         ],
     }
@@ -416,6 +494,8 @@ def main(argv: list[str] | None = None) -> int:
             sifts_uniprot=(
                 data_root / "databases/metadata/sifts/pdb_chain_uniprot.tsv.gz"
             ),
+            sifts_go=data_root / "databases/metadata/sifts/pdb_chain_go.tsv.gz",
+            sifts_enzyme=data_root / "databases/metadata/sifts/pdb_chain_enzyme.tsv.gz",
             sifts_interpro=(
                 data_root / "databases/metadata/sifts/pdb_chain_interpro.tsv.gz"
             ),

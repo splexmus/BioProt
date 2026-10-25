@@ -1,0 +1,35 @@
+{
+  "claim_scope": "Development pilot only. The untouched test split has nine queries and is not a statistically powered release benchmark.",
+  "commands": [
+    "scripts/build_phase3_dataset.py",
+    "scripts/build_phase3_mapping_resources.py",
+    "python -m dualrag.structure.metadata",
+    "scripts/run_phase3_benchmark.py",
+    "scripts/evaluate_phase3.py",
+    "scripts/finalize_phase3.py"
+  ],
+  "contract_id": "phase3-benchmark-v1",
+  "created_at": "2026-10-25T15:12:58.065540+00:00",
+  "dataset_id": "phase3-pilot-v1",
+  "environment": {
+    "dualrag": "0.2.0",
+    "foldseek": "9.427df8a",
+    "mmseqs2": "16.747c6",
+    "pixi_lock_sha256": "7b4dc617f8734e8a123ce6d030625948ca7a0faec594431188d9cb17dc7f9215",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "python": "3.11.9"
+  },
+  "git": {
+    "commit": "c1cd7c5a5ef3169b4ac2b20dff483f27960b027b",
+    "status": "M .gitignore\n M ARCHITECTURE.md\n M DATA.md\n M EVALUATION.md\n M MEMORY.md\n M README.md\n M ROADMAP.md\n M src/dualrag/fusion/candidates.py\n M src/dualrag/models.py\n M src/dualrag/structure/fixture.py\n M src/dualrag/structure/foldseek.py\n M src/dualrag/structure/metadata.py\n M tests/test_external_adapters.py\n M tests/test_structure_metadata.py\n?? benchmark/\n?? config/benchmark-contract-v1.yaml\n?? docs/BENCHMARK_CONTRACT.md\n?? docs/PHASE3_DATASET.md\n?? docs/PHASE3_REPORT.md\n?? scripts/build_phase3_dataset.py\n?? scripts/build_phase3_go_ic.py\n?? scripts/build_phase3_mapping_resources.py\n?? scripts/evaluate_phase3.py\n?? scripts/finalize_phase3.py\n?? scripts/run_phase3_benchmark.py\n?? src/dualrag/benchmark/\n?? tests/test_benchmark_contract.py\n?? tests/test_benchmark_dataset.py\n?? tests/test_benchmark_metrics.py\n?? tests/test_phase3_pilot.py\n?? tests/test_phase3_results.py"
+  },
+  "inputs": {
+    "dataset_manifest_sha256": "4df98555a9b35300cf0d0016d34e5b3c4c8b2d421a6908fdffda2f4547c93ef9",
+    "go_ic_manifest_sha256": "540133e9b4d98594d696197937dc648ffdf12ef0e7f2757e6e640344733b9168",
+    "mapping_manifest_sha256": "6089d15d48e0b4c1dca2fca7796abd32dda0178bf8b1fc919d34704f013426f8",
+    "pdb_metadata_manifest_sha256": "11447f442c458872a95c375b69f7fb8ad01b274442fa5506efea51612c34c0cf"
+  },
+  "phase": "3.1-3.9",
+  "random_seed": 42,
+  "schema_version": 1
+}
