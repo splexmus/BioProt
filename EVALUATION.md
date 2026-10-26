@@ -17,6 +17,13 @@ test split, B4 dual FR@10 was 0.778 versus 0.722 for B2 sequence-only, but the p
 95% interval for the difference was 0.000-0.167. The contract conclusion is therefore
 `NO_MEASURABLE_OVERALL_BENEFIT`, not an improvement claim.
 
+An independently labelled candidate-panel case was added on 2026-10-26 without
+changing the frozen pilot splits. Of 60 supplied accessions, 47 passed frozen-release,
+Tier-A gold-label and pilot-cluster screening. External-case FR@10 was 0.743 for B2,
+0.444 for B3 and 0.745 for B4; paired B4-minus-B2 was 0.0015 with a 95% interval of
+-0.0590 to 0.0532. See `docs/PHASE3_EXTERNAL_PANEL_REPORT.md`. This is exploratory,
+not a replacement confirmatory test set.
+
 ## 1. Research questions
 
 - RQ1: Does dual sequence+structure retrieval increase functional recall over sequence-only retrieval?

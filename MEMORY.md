@@ -260,3 +260,12 @@ When a durable decision changes, append a short entry below rather than silently
   was +0.0556 with 95% CI 0.0000-0.1667, so the frozen claim rule yields
   `NO_MEASURABLE_OVERALL_BENEFIT`. This is a small development result, not a powered
   final scientific benchmark.
+- 2026-10-26: screened the supplied 60-protein panel as the separate external case
+  `phase3-external-panel-v1`, without changing the frozen pilot splits. Forty-seven
+  proteins passed frozen Swiss-Prot 2026_03 Tier-A and pilot-cluster rules; twelve
+  lacked admissible EC/GO-MF gold and F9VMT6 overlapped an exposed pilot cluster. Only
+  P25583 and P28321 met the <=30% closest-allowed-identity rule. The real rerun obtained
+  43 AlphaFold models and 412 allowed Foldseek hits. FR@10 was B2 0.743, B3 0.444 and
+  B4 0.745; paired B4-minus-B2 was +0.0015 with 95% CI -0.0590 to 0.0532, again yielding
+  `NO_MEASURABLE_OVERALL_BENEFIT`. Architecture labels remain provisional because no
+  positional InterProScan source was available.

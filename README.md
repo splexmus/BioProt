@@ -82,6 +82,12 @@ The completed Phase 3 development benchmark, including B2/B3/B4 results, mapping
 ablations, error analysis and reproducibility artifacts, is reported in
 `docs/PHASE3_REPORT.md` and stored under `benchmark/phase3-run-v1/`.
 
+The supplied 60-protein candidate panel was screened and rerun as an independent
+external case without modifying the original test split. Screening retained 47
+proteins, and the complete result is in `docs/PHASE3_EXTERNAL_PANEL_REPORT.md`, with
+dataset and run artifacts under `benchmark/phase3-external-panel-v1/` and
+`benchmark/phase3-external-panel-run-v1/`.
+
 For the full external-HDD database setup, including the writable-mount preflight,
 eggNOG installation, Foldseek PDB download, provenance finalization, and validation,
 see [Phase 1 data installation](docs/PHASE1_DATA_INSTALL.md). The current production
