@@ -9,6 +9,7 @@ from dualrag.benchmark.dataset import (
     is_eligible,
     parse_swissprot,
 )
+from dualrag.benchmark.panel import parse_panel_markdown
 
 
 def test_parse_swissprot_preserves_experimental_label_provenance(tmp_path: Path) -> None:
@@ -27,6 +28,8 @@ OX   NCBI_TaxID=9606;
 DR   GO; GO:0003824; F:catalytic activity; IDA:UniProtKB.
 DR   InterPro; IPR000001; Test_domain.
 DR   Pfam; PF00001; Test; 1.
+FT   ACT_SITE       12
+FT                   /evidence="ECO:0000269|PubMed:123456"
 PE   1: Evidence at protein level;
 SQ   SEQUENCE   40 AA;  4000 MW;  0000000000000000 CRC64;
      ACDEFGHIKL MNPQRSTVWY ACDEFGHIKL MNPQRSTVWY
@@ -49,6 +52,27 @@ SQ   SEQUENCE   40 AA;  4000 MW;  0000000000000000 CRC64;
     assert entry.labels[0].admissible_for_primary is True
     assert entry.interpro_ids == ["IPR000001"]
     assert entry.pfam_ids == ["PF00001"]
+    assert entry.active_site_count == 1
+
+
+def test_parse_panel_markdown_preserves_supplied_groups(tmp_path: Path) -> None:
+    panel = tmp_path / "panel.md"
+    panel.write_text(
+        """## Archaea
+
+| Accession | Protein | Biological role | Site | Architecture |
+|---|---|---|---|---|
+| `Q5JIZ8` | Example protein | Example role | Low-site | Single* |
+""",
+        encoding="utf-8",
+    )
+
+    candidates = parse_panel_markdown(panel)
+
+    assert len(candidates) == 1
+    assert candidates[0].accession == "Q5JIZ8"
+    assert candidates[0].supplied_taxonomy_group == "Archaea"
+    assert candidates[0].supplied_architecture == "Single"
 
 
 def test_cluster_split_keeps_every_cluster_intact_and_is_deterministic() -> None:

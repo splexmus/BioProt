@@ -49,6 +49,7 @@ class SwissProtEntry:
     labels: list[GoldLabel] = field(default_factory=list)
     interpro_ids: list[str] = field(default_factory=list)
     pfam_ids: list[str] = field(default_factory=list)
+    active_site_count: int = 0
 
     @property
     def sequence_sha256(self) -> str:
@@ -125,6 +126,9 @@ def _entry_from_fields(fields: dict[str, list[str]], sequence: str) -> SwissProt
 
     interpro_ids: list[str] = []
     pfam_ids: list[str] = []
+    active_site_count = sum(
+        1 for row in fields["FT"] if re.match(r"^\s*ACT_SITE\s+", row)
+    )
     for row in fields["DR"]:
         parts = [part.strip() for part in row.split(";")]
         if len(parts) < 2:
@@ -168,6 +172,7 @@ def _entry_from_fields(fields: dict[str, list[str]], sequence: str) -> SwissProt
         labels=labels,
         interpro_ids=sorted(set(interpro_ids)),
         pfam_ids=sorted(set(pfam_ids)),
+        active_site_count=active_site_count,
     )
 
 

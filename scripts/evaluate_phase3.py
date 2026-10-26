@@ -26,6 +26,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--go-obo", type=Path, required=True)
     parser.add_argument("--go-ic", type=Path, required=True)
+    parser.add_argument(
+        "--evaluation-split",
+        default="test",
+        help="Split used for the primary report, such as test or external_case.",
+    )
     return parser.parse_args()
 
 
@@ -37,12 +42,16 @@ def main() -> None:
     predictions = read_tsv(args.run / "predictions.tsv")
     accessions = [row["accession"] for row in queries]
     split = {row["accession"]: row["split"] for row in read_tsv(args.dataset / "splits.tsv")}
-    test_accessions = [accession for accession in accessions if split[accession] == "test"]
+    evaluation_accessions = [
+        accession for accession in accessions if split[accession] == args.evaluation_split
+    ]
+    if not evaluation_accessions:
+        raise ValueError(f"dataset contains no queries in split {args.evaluation_split!r}")
     per_query_all, aggregate_all, _comparison_all = evaluate_function_predictions(
         predictions, gold, accessions, bootstrap_replicates=10_000, seed=42
     )
     per_query, aggregate, comparison = evaluate_function_predictions(
-        predictions, gold, test_accessions, bootstrap_replicates=10_000, seed=42
+        predictions, gold, evaluation_accessions, bootstrap_replicates=10_000, seed=42
     )
     difficulty = {
         row["accession"]: row["difficulty_stratum"]
@@ -54,18 +63,26 @@ def main() -> None:
         for row in gold
         if row["namespace"] == "EC" and row["admissible_for_primary"] == "true"
     }
+    case_metadata_path = args.dataset / "case_metadata.tsv"
+    case_metadata = (
+        {row["accession"]: row for row in read_tsv(case_metadata_path)}
+        if case_metadata_path.is_file()
+        else {}
+    )
     for row in per_query_all:
         accession = str(row["query_accession"])
         row["split"] = split[accession]
         row["difficulty_stratum"] = difficulty[accession]
         row["taxonomy_superkingdom"] = taxonomy[accession]
         row["enzyme_group"] = "enzyme" if accession in enzyme_accessions else "non_enzyme"
+        _add_case_metadata(row, case_metadata.get(accession))
     for row in per_query:
         accession = str(row["query_accession"])
         row["split"] = split[accession]
         row["difficulty_stratum"] = difficulty[accession]
         row["taxonomy_superkingdom"] = taxonomy[accession]
         row["enzyme_group"] = "enzyme" if accession in enzyme_accessions else "non_enzyme"
+        _add_case_metadata(row, case_metadata.get(accession))
     cross_summary, error_rows = cross_modal_metrics(predictions, gold, accessions)
     acquisition = {
         _accession(row["query_id"]): row["status"]
@@ -77,15 +94,12 @@ def main() -> None:
         row["difficulty_stratum"] = difficulty[accession]
         row["taxonomy_superkingdom"] = taxonomy[accession]
         row["alphafold_status"] = acquisition.get(accession, "NOT_ATTEMPTED")
+        _add_case_metadata(row, case_metadata.get(accession))
 
     write_tsv(args.output / "per_query_metrics.tsv", per_query, list(per_query[0]))
     write_tsv(args.output / "aggregate_metrics.tsv", aggregate, list(aggregate[0]))
-    write_tsv(
-        args.output / "per_query_metrics_all.tsv", per_query_all, list(per_query_all[0])
-    )
-    write_tsv(
-        args.output / "aggregate_metrics_all.tsv", aggregate_all, list(aggregate_all[0])
-    )
+    write_tsv(args.output / "per_query_metrics_all.tsv", per_query_all, list(per_query_all[0]))
+    write_tsv(args.output / "aggregate_metrics_all.tsv", aggregate_all, list(aggregate_all[0]))
     write_tsv(args.output / "biological_error_analysis.tsv", error_rows, list(error_rows[0]))
     write_json(args.output / "primary_comparison.json", comparison)
     write_json(args.output / "cross_modal_metrics.json", cross_summary)
@@ -93,11 +107,9 @@ def main() -> None:
     go_parents = parse_go_is_a(args.go_obo)
     go_ic = load_go_information_content(args.go_ic)
     secondary_test = _secondary_function_metrics(
-        predictions, gold, test_accessions, go_parents, go_ic
+        predictions, gold, evaluation_accessions, go_parents, go_ic
     )
-    secondary_all = _secondary_function_metrics(
-        predictions, gold, accessions, go_parents, go_ic
-    )
+    secondary_all = _secondary_function_metrics(predictions, gold, accessions, go_parents, go_ic)
     write_tsv(
         args.output / "secondary_function_metrics.tsv",
         secondary_test,
@@ -112,7 +124,7 @@ def main() -> None:
     domain_metrics = _domain_metrics(
         read_tsv(args.run / "ablation_candidates.tsv"),
         read_tsv(args.dataset / "domain_labels.tsv"),
-        test_accessions,
+        evaluation_accessions,
     )
     write_tsv(args.output / "domain_metrics.tsv", domain_metrics, list(domain_metrics[0]))
 
@@ -124,7 +136,7 @@ def main() -> None:
     ablation_query_scores: dict[str, dict[str, float]] = {}
     for ablation, rows in sorted(by_ablation.items()):
         current_per_query, current_aggregate, _comparison = evaluate_function_predictions(
-            rows, gold, test_accessions, bootstrap_replicates=10_000, seed=42
+            rows, gold, evaluation_accessions, bootstrap_replicates=10_000, seed=42
         )
         ablation_query_scores[ablation] = {
             str(row["query_accession"]): float(row["function_recall_at_10"])
@@ -148,8 +160,8 @@ def main() -> None:
     summary = {
         "primary_comparison": comparison,
         "cross_modal": cross_summary,
-        "primary_split": "test",
-        "primary_query_count": len(test_accessions),
+        "primary_split": args.evaluation_split,
+        "primary_query_count": len(evaluation_accessions),
         "files": sorted(path.name for path in args.output.iterdir() if path.is_file()),
     }
     write_json(args.output / "evaluation_summary.json", summary)
@@ -158,11 +170,19 @@ def main() -> None:
 
 def _subgroup_metrics(per_query: list[dict[str, object]]) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
-    for group_type, field in (
+    group_fields = [
         ("difficulty_stratum", "difficulty_stratum"),
         ("taxonomy_superkingdom", "taxonomy_superkingdom"),
         ("enzyme_group", "enzyme_group"),
+    ]
+    for optional_field in (
+        "low_identity_group",
+        "active_site_group",
+        "supplied_architecture_group",
     ):
+        if per_query and optional_field in per_query[0]:
+            group_fields.append((optional_field, optional_field))
+    for group_type, field in group_fields:
         groups = sorted({str(row[field]) for row in per_query})
         baselines = sorted({str(row["baseline"]) for row in per_query})
         for group in groups:
@@ -187,11 +207,7 @@ def _subgroup_metrics(per_query: list[dict[str, object]]) -> list[dict[str, obje
                     }
                 )
     contrasts: list[dict[str, object]] = []
-    for group_type, field in (
-        ("difficulty_stratum", "difficulty_stratum"),
-        ("taxonomy_superkingdom", "taxonomy_superkingdom"),
-        ("enzyme_group", "enzyme_group"),
-    ):
+    for group_type, field in group_fields:
         groups = sorted({str(row[field]) for row in per_query})
         for group in groups:
             by_query: dict[str, dict[str, float]] = defaultdict(dict)
@@ -231,6 +247,16 @@ def _subgroup_metrics(per_query: list[dict[str, object]]) -> list[dict[str, obje
     return [*rows, *contrasts]
 
 
+def _add_case_metadata(row: dict[str, object], metadata: dict[str, str] | None) -> None:
+    if metadata is None:
+        return
+    row["low_identity_group"] = (
+        "LOW_IDENTITY_ELIGIBLE" if metadata["low_identity_eligible"] == "true" else "OTHER_IDENTITY"
+    )
+    row["active_site_group"] = metadata["active_site_group"]
+    row["supplied_architecture_group"] = metadata["supplied_architecture_group"]
+
+
 def _ablation_contrasts(
     scores: dict[str, dict[str, float]],
 ) -> list[dict[str, object]]:
@@ -238,8 +264,7 @@ def _ablation_contrasts(
     rows: list[dict[str, object]] = []
     for ablation in sorted(set(scores) - {"NO_MAPPING"}):
         differences = [
-            scores[ablation][accession] - reference[accession]
-            for accession in sorted(reference)
+            scores[ablation][accession] - reference[accession] for accession in sorted(reference)
         ]
         interval = bootstrap_mean_interval(differences, 10_000, 42)
         rows.append(
