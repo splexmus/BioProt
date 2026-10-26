@@ -1,0 +1,28 @@
+{
+  "ablation_prediction_count": 9881,
+  "alphafold_status_counts": {
+    "DOWNLOADED": 43,
+    "NOT_FOUND": 4
+  },
+  "created_at": "2026-10-26T01:59:00.100846+00:00",
+  "dataset_id": "phase3-external-panel-v1",
+  "mapping_projection": {
+    "path": "benchmark/phase3-mappings-v1/mapping_projections.tsv",
+    "sha256": "c5a5f38a8fa823b3a48e4834b3fcdfb0ca2d4958241fd1b9c928ad97981602bc"
+  },
+  "principal_prediction_count": 1993,
+  "query_count": 47,
+  "schema_version": 1,
+  "sequence_allowed_hit_count": 384,
+  "strict_primary_limitations": [
+    "B2 uses MMseqs2 against frozen Swiss-Prot rather than eggNOG seed-ortholog output, because eggNOG-mapper does not expose a rankable leakage-filterable hit list.",
+    "B3 excludes PDB chains without SIFTS-resolved UniProt accessions.",
+    "Structure homology exclusions use the precomputed Swiss-Prot sequence catalog, not Foldseek fident."
+  ],
+  "structure_allowed_hit_count": 412,
+  "structure_exclusion_count": 150,
+  "synonyms": {
+    "path": "benchmark/phase3-mappings-v1/synonyms.tsv",
+    "sha256": "ecef8b75ea2f9b717c3a2404f3920d9374947c208422ce15e41d8168f56aa85f"
+  }
+}

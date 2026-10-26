@@ -1,0 +1,61 @@
+accession	supplied_taxonomy_group	supplied_protein_name	supplied_biological_role	supplied_site_group	supplied_architecture
+Q5JIZ8	Archaea	4-phosphopantoate–beta-alanine ligase	Coenzyme A biosynthesis	Low-site	Single
+O29370	Archaea	F420-dependent NADP reductase	Cofactor-F420-dependent redox metabolism	Low-site	Single
+O59425	Archaea	Ribonuclease P component 1	tRNA maturation	Low-site	Single
+Q8U1Y4	Archaea	Desampylase	Removes archaeal ubiquitin-like SAMP modifications	Annotated-site	Single
+F9VMT6	Archaea	Fructose-1,6-bisphosphate aldolase/phosphatase	Central carbohydrate metabolism	Annotated-site	Single
+F0NF15	Archaea	MCM protein	Replicative DNA helicase	Low-site	Multi
+P77933	Archaea	DNA polymerase	Archaeal DNA replication	Low-site	Multi
+A4YDR9	Archaea	4-hydroxybutyrate–CoA ligase 2	Activates 4-hydroxybutyrate in carbon metabolism	Low-site	Multi
+D4GY98	Archaea	DNA ligase	Joins DNA strands during replication and repair	Annotated-site	Multi
+P74759	Archaea	Reverse gyrase	Produces positive DNA supercoiling at high temperature	Annotated-site	Multi
+O31616	Bacteria	Glycine oxidase	Glycine oxidation	Low-site	Single
+O31590	Bacteria	tRNA wobble-base 2′-O-methyltransferase	tRNA modification	Low-site	Single
+P02925	Bacteria	Ribose-binding protein RbsB	Ribose recognition during transport	Low-site	Single
+P04982	Bacteria	D-ribose pyranase	Interconverts ribose ring forms	Annotated-site	Single
+P0A6A3	Bacteria	Acetate kinase	Acetate and ATP metabolism	Annotated-site	Single
+P0A9M8	Bacteria	Phosphate acetyltransferase	Acetyl-CoA and acetate metabolism	Low-site	Multi
+P0ADY1	Bacteria	Periplasmic chaperone PpiD	Membrane-protein folding	Low-site	Multi
+O08394	Bacteria	Bifunctional cytochrome P450/reductase	Oxidation with internal electron transfer	Low-site	Multi
+P0A9Q7	Bacteria	Bifunctional aldehyde-alcohol dehydrogenase AdhE	Fermentative alcohol production	Annotated-site	Multi
+P08839	Bacteria	Phosphoenolpyruvate-protein phosphotransferase	Phosphotransferase-system sugar uptake	Annotated-site	Multi
+P32338	Fungi	Zinc-finger protein RME1	Transcriptional regulation of meiosis	Low-site	Single
+P32607	Fungi	Retrograde regulation protein 1	Mitochondria-to-nucleus transcriptional signaling	Low-site	Single
+P25583	Fungi	Karyogamy protein KAR4	Mating and nuclear-fusion regulation	Low-site	Single
+P28321	Fungi	Monoglyceride lipase	Lipid hydrolysis	Annotated-site	Single
+P16622	Fungi	Mitochondrial ferrochelatase	Final iron-insertion step of heme synthesis	Annotated-site	Single
+P25382	Fungi	Ribosome assembly protein 4	Ribosome biogenesis	Low-site	Multi
+P32465	Fungi	Glucose transporter HXT1	Low-affinity glucose transport	Low-site	Multi
+P20424	Fungi	Signal-recognition particle SRP54	Targets nascent proteins to membranes	Low-site	Multi
+P06782	Fungi	Carbon catabolite-derepressing kinase	Energy and carbon-source signaling	Annotated-site	Multi
+P13099	Fungi	DNA topoisomerase 3	DNA topology and recombination	Annotated-site	Multi
+O43529	Metazoa	Carbohydrate sulfotransferase 10	Sulfates carbohydrate groups	Low-site	Single
+O15162	Metazoa	Phospholipid scramblase 1	Bidirectional membrane-lipid movement and signaling	Low-site	Single
+O14843	Metazoa	Free fatty acid receptor 3	Senses short-chain fatty acids	Low-site	Single
+C9JRZ8	Metazoa	Aldo-keto reductase AKR1B15	Reduces steroids, aldehydes and related compounds	Annotated-site	Single
+O14933	Metazoa	Ubiquitin/ISG15-conjugating enzyme E2 L6	Protein ubiquitin-like modification	Annotated-site	Single
+O15389	Metazoa	Sialic-acid-binding lectin 5	Immune-cell recognition and inhibitory signaling	Low-site	Multi
+O00268	Metazoa	TFIID subunit 4	RNA polymerase II transcription initiation	Low-site	Multi
+O00159	Metazoa	Unconventional myosin-Ic	Actin-based movement and membrane trafficking	Low-site	Multi
+O15067	Metazoa	Phosphoribosylformylglycinamidine synthase	Purine-nucleotide biosynthesis	Annotated-site	Multi
+O00444	Metazoa	Serine/threonine kinase PLK4	Controls centriole duplication	Annotated-site	Multi
+O65508	Plants	NAC transcription factor 76	Plant transcriptional regulation	Low-site	Single
+P31166	Plants	Chloroplastic adenine phosphoribosyltransferase 1	Purine salvage	Low-site	Single
+O23715	Plants	Proteasome alpha subunit 3	Protein degradation	Low-site	Single
+F4KBF5	Plants	Thymidine kinase b	Pyrimidine-nucleotide salvage	Annotated-site	Single
+O49196	Plants	Chloroplastic APS kinase 2	Sulfate activation and assimilation	Annotated-site	Single
+P0DI76	Plants	Chloroplastic 1,8-cineole synthase 1	Terpene biosynthesis	Low-site	Multi
+F4HRV8	Plants	Meiosis-specific protein ASY1	Homolog pairing during meiosis	Low-site	Multi
+O49434	Plants	Allantoate deiminase	Purine-derived nitrogen metabolism	Low-site	Multi
+C0LGF4	Plants	Receptor-like kinase FEI1	Cell-wall and root-growth signaling	Annotated-site	Multi
+O64782	Plants	G-type lectin receptor-like kinase SD1-29	Extracellular recognition and plant signaling	Annotated-site	Multi
+P04613	Viruses	HIV-1 Tat	Activates viral transcription	Low-site	Single
+Q69091	Viruses	Herpesvirus envelope glycoprotein D	Receptor binding and viral entry	Low-site	Single
+Q69027	Viruses	Hepatitis B virus protein X	Modifies host signaling and transcription	Low-site	Single
+P10186	Viruses	Herpesvirus uracil-DNA glycosylase	Removes uracil during viral DNA repair	Annotated-site	Single
+P0DXO5	Viruses	Influenza PA-X	Host-shutoff endonuclease	Annotated-site	Single
+P05893	Viruses	SIV Gag polyprotein	Virion structure and assembly	Low-site	Multi
+Q4JR05	Viruses	Varicella-zoster envelope glycoprotein B	Membrane fusion and viral entry	Low-site	Multi
+A3EXG6	Viruses	Bat-coronavirus spike glycoprotein	Receptor recognition and membrane fusion	Low-site	Multi
+O12158	Viruses	HIV-1 Gag-Pol polyprotein	Virion structure, protease, reverse transcription and integration	Annotated-site	Multi
+P04588	Viruses	HIV-1 Gag-Pol polyprotein	Virion structure and replication enzymes	Annotated-site	Multi

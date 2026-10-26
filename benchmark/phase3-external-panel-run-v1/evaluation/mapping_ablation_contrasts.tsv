@@ -1,0 +1,5 @@
+ablation	reference	baseline	metric	effect	ci_lower	ci_upper	paired_query_count	p_value	holm_adjusted_p
+ALL_MAPPINGS	NO_MAPPING	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.0	0.0	0.0	47	1.0	1.0
+CURATED_GO_SYNONYMS	NO_MAPPING	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.0	0.0	0.0	47	1.0	1.0
+GO_EC_MAPPING	NO_MAPPING	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.0	0.0	0.0	47	1.0	1.0
+INTERPRO2GO	NO_MAPPING	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.0	0.0	0.0	47	1.0	1.0

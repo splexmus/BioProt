@@ -1,0 +1,11 @@
+{
+  "bootstrap_replicates": 10000,
+  "ci_lower": -0.05902355623100304,
+  "ci_upper": 0.05319148936170213,
+  "conclusion": "NO_MEASURABLE_OVERALL_BENEFIT",
+  "contrast": "B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY",
+  "estimate": 0.001519756838905772,
+  "metric": "function_recall_at_10",
+  "paired_query_count": 47,
+  "seed": 42
+}

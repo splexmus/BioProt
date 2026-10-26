@@ -1,0 +1,21 @@
+{
+  "case_type": "external_candidate_panel",
+  "cluster_count": 47,
+  "dataset_id": "phase3-external-panel-v1",
+  "excluded_candidate_count": 13,
+  "exclusion_reason_counts": {
+    "NO_TIER_A_EC_OR_GO_MF": 12,
+    "PILOT_CLUSTER_OVERLAP": 1
+  },
+  "included_query_count": 47,
+  "limitations": [
+    "This external case does not alter the frozen pilot development/validation/test splits.",
+    "Architecture labels remain provisional because no release-matched positional InterProScan source was available.",
+    "NO_ANNOTATED_ACTIVE_SITE means no UniProt ACT_SITE feature; it does not imply biological inactivity.",
+    "Only included records are evaluated; every supplied exclusion remains in panel_screening.tsv."
+  ],
+  "low_identity_eligible_count": 2,
+  "prohibited_pair_count": 127,
+  "source_release": "2026_03",
+  "supplied_candidate_count": 60
+}

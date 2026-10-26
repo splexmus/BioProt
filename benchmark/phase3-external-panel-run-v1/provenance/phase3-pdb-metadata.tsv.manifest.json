@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-26T01:47:37.664824+00:00",
+  "output": "/tmp/phase3-external-pdb-metadata.tsv",
+  "output_sha256": "84e79685c3416ac13da38effe1e67604ea8267a7dee9c9509155790cf81f785d",
+  "counts": {
+    "targets": 1562650,
+    "targets_with_uniprot": 1413676,
+    "targets_with_protein_name": 986811,
+    "targets_with_go": 1209226,
+    "targets_with_ec": 549754,
+    "targets_with_interpro": 1467150,
+    "malformed_target_ids": 0,
+    "duplicate_lookup_rows_collapsed": 28
+  },
+  "inputs": [
+    {
+      "path": "/media/splexmus/4TB_HDD1/dualrag/databases/foldseek/pdb.lookup",
+      "size_bytes": 50332108,
+      "sha256": "91d62f5f28cfb5930de8f03b6a77b6d76b5e46a8249e64992b6afba41efc705a"
+    },
+    {
+      "path": "/media/splexmus/4TB_HDD1/dualrag/databases/metadata/sifts/pdb_chain_uniprot.tsv.gz",
+      "size_bytes": 6275927,
+      "sha256": "fff063a56ad6359ccbf87d3357bb10b34949fac89bffdb3f52d6312b29d0d144"
+    },
+    {
+      "path": "/media/splexmus/4TB_HDD1/dualrag/databases/metadata/sifts/pdb_chain_go.tsv.gz",
+      "size_bytes": 82089341,
+      "sha256": "44247b1cf00de63417b888c383af6be660b00097bbcb16e6db59066bc7dfbe45"
+    },
+    {
+      "path": "/media/splexmus/4TB_HDD1/dualrag/databases/metadata/sifts/pdb_chain_enzyme.tsv.gz",
+      "size_bytes": 2173027,
+      "sha256": "c796e5d9ec7cefce4a2e59ae16cad7042308d7feb36cc74a595049d72c4b57dc"
+    },
+    {
+      "path": "/media/splexmus/4TB_HDD1/dualrag/databases/metadata/sifts/pdb_chain_interpro.tsv.gz",
+      "size_bytes": 14303724,
+      "sha256": "ec7713f75ee1b87ac985e73a478ef3a9ee570343fffdd0eb0b1eee2f2e5923a6"
+    },
+    {
+      "path": "/media/splexmus/4TB_HDD1/dualrag/databases/uniprot/swissprot/current/uniprot_sprot.fasta.gz",
+      "size_bytes": 93801562,
+      "sha256": "a9c3496aa727e61d25d9e1291c9ba28d2c2ad19c0e26569dc083d53ec4169536"
+    }
+  ],
+  "source_release_headers": {
+    "pdb_chain_uniprot": "2026/10/04 - 08:26 | PDB: 40.26 | UniProt: 2026.03",
+    "pdb_chain_interpro": "2026/10/04 - 08:30 | PDB: 40.26 | UniProt: 2026.03",
+    "pdb_chain_go": "2026/10/04 - 08:28 | PDB: 40.26 | UniProt: 2026.03",
+    "pdb_chain_enzyme": "2026/10/04 - 08:33 | PDB: 40.26 | UniProt: 2026.03"
+  },
+  "notes": [
+    "Foldseek target IDs are preserved exactly from the lookup file.",
+    "UniProt and InterPro mappings are chain-level SIFTS annotations.",
+    "Protein names are available only for reviewed Swiss-Prot accessions.",
+    "GO and EC annotations are chain-level SIFTS mappings.",
+    "supfam_ids is blank because no SUPFAM mapping source was supplied."
+  ]
+}

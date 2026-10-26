@@ -1,0 +1,19 @@
+{
+  "conflict_rate": 0.02127659574468085,
+  "counts": {
+    "both_correct": 27,
+    "both_fail_or_missing": 4,
+    "conflict": 1,
+    "incorrect_consensus": 2,
+    "intersection_prediction": 37,
+    "sequence_rescue": 13,
+    "structure_rescue": 0,
+    "union_correct": 40
+  },
+  "incorrect_consensus_rate": 0.0425531914893617,
+  "intersection_coverage": 0.7872340425531915,
+  "query_count": 47,
+  "sequence_rescue_rate": 0.2765957446808511,
+  "structure_rescue_rate": 0.0,
+  "union_recall": 0.851063829787234
+}

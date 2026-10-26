@@ -1,0 +1,35 @@
+{
+  "claim_scope": "Independent external candidate-panel case. It does not replace or enlarge the frozen pilot test split and is not a powered release benchmark.",
+  "commands": [
+    "scripts/build_phase3_panel_case.py",
+    "python -m dualrag.structure.metadata",
+    "scripts/run_phase3_benchmark.py",
+    "scripts/evaluate_phase3.py --evaluation-split external_case",
+    "scripts/finalize_phase3_panel.py"
+  ],
+  "contract_id": "phase3-benchmark-v1",
+  "created_at": "2026-10-26T02:04:36.816925+00:00",
+  "dataset_id": "phase3-external-panel-v1",
+  "environment": {
+    "dualrag": "0.2.0",
+    "foldseek": "9.427df8a",
+    "mmseqs2": "16.747c6",
+    "pixi_lock_sha256": "7b4dc617f8734e8a123ce6d030625948ca7a0faec594431188d9cb17dc7f9215",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "python": "3.11.9"
+  },
+  "git": {
+    "commit": "525505179a48f8cb5f262b0cdeafb7d29ef2f4ce",
+    "status": "M EVALUATION.md\n M MEMORY.md\n M README.md\n M scripts/evaluate_phase3.py\n M src/dualrag/benchmark/dataset.py\n M tests/test_benchmark_dataset.py\n?? benchmark/phase3-external-panel-run-v1/\n?? benchmark/phase3-external-panel-v1/\n?? docs/PHASE3_EXTERNAL_PANEL_REPORT.md\n?? scripts/build_phase3_panel_case.py\n?? scripts/finalize_phase3_panel.py\n?? src/dualrag/benchmark/panel.py\n?? tests/test_phase3_panel_case.py"
+  },
+  "inputs": {
+    "dataset_manifest_sha256": "fe554b433d5b89b5d39646b0366d967d78d365d98cd9361090edca00180f79ae",
+    "go_ic_manifest_sha256": "540133e9b4d98594d696197937dc648ffdf12ef0e7f2757e6e640344733b9168",
+    "mapping_manifest_sha256": "6089d15d48e0b4c1dca2fca7796abd32dda0178bf8b1fc919d34704f013426f8",
+    "panel_input_sha256": "713a09f6ca23ac12876b76588e2a72b2651ea31d1f73f7faebf4eea6a66a6385",
+    "pdb_metadata_manifest_sha256": "68636dffe69609b4a326f6ac63851046df77c269f88ea31de40f19d325f5472f"
+  },
+  "phase": "3 external-case rerun",
+  "random_seed": 42,
+  "schema_version": 1
+}

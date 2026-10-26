@@ -1,0 +1,69 @@
+group_type	group	baseline	metric	estimate	ci_lower	ci_upper	query_count	exploratory	contrast	effect	p_value	holm_adjusted_p
+difficulty_stratum	FROM_20_TO_30	B2_SEQUENCE_ONLY	function_recall_at_10	0.375	0.0	0.75	2	true				
+difficulty_stratum	FROM_20_TO_30	B3_STRUCTURE_ONLY	function_recall_at_10	0.375	0.0	0.75	2	true				
+difficulty_stratum	FROM_20_TO_30	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.375	0.0	0.75	2	true				
+difficulty_stratum	FROM_30_TO_50	B2_SEQUENCE_ONLY	function_recall_at_10	0.6805555555555556	0.3472222222222222	0.9583333333333334	6	true				
+difficulty_stratum	FROM_30_TO_50	B3_STRUCTURE_ONLY	function_recall_at_10	0.2361111111111111	0.0	0.4861111111111111	6	true				
+difficulty_stratum	FROM_30_TO_50	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.6527777777777778	0.3194444444444444	0.9444444444444444	6	true				
+difficulty_stratum	FROM_50_TO_70	B2_SEQUENCE_ONLY	function_recall_at_10	0.9125	0.7875	1.0	8	true				
+difficulty_stratum	FROM_50_TO_70	B3_STRUCTURE_ONLY	function_recall_at_10	0.6	0.25	0.875	8	true				
+difficulty_stratum	FROM_50_TO_70	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.975	0.925	1.0	8	true				
+difficulty_stratum	GT_70	B2_SEQUENCE_ONLY	function_recall_at_10	0.8140371533228676	0.6949895342752486	0.9203296703296703	28	true				
+difficulty_stratum	GT_70	B3_STRUCTURE_ONLY	function_recall_at_10	0.49594453165881736	0.3411769034536891	0.6479591836734694	28	true				
+difficulty_stratum	GT_70	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.804683411826269	0.6773874934589221	0.9170918367346939	28	true				
+difficulty_stratum	NO_ALLOWED_HIT	B2_SEQUENCE_ONLY	function_recall_at_10	0.0	0.0	0.0	3	true				
+difficulty_stratum	NO_ALLOWED_HIT	B3_STRUCTURE_ONLY	function_recall_at_10	0.0	0.0	0.0	3	true				
+difficulty_stratum	NO_ALLOWED_HIT	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.0	0.0	0.0	3	true				
+taxonomy_superkingdom	Archaea	B2_SEQUENCE_ONLY	function_recall_at_10	0.90625	0.78125	1.0	8	true				
+taxonomy_superkingdom	Archaea	B3_STRUCTURE_ONLY	function_recall_at_10	0.375	0.125	0.75	8	true				
+taxonomy_superkingdom	Archaea	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.90625	0.71875	1.0	8	true				
+taxonomy_superkingdom	Bacteria	B2_SEQUENCE_ONLY	function_recall_at_10	0.705	0.48	0.9	10	true				
+taxonomy_superkingdom	Bacteria	B3_STRUCTURE_ONLY	function_recall_at_10	0.73	0.53	0.88	10	true				
+taxonomy_superkingdom	Bacteria	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.755	0.55	0.91	10	true				
+taxonomy_superkingdom	Eukaryota	B2_SEQUENCE_ONLY	function_recall_at_10	0.705054945054945	0.5383882783882784	0.8541071428571428	25	true				
+taxonomy_superkingdom	Eukaryota	B3_STRUCTURE_ONLY	function_recall_at_10	0.4221245421245421	0.2594871794871795	0.5835595238095237	25	true				
+taxonomy_superkingdom	Eukaryota	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.6879120879120879	0.5171428571428571	0.8404761904761905	25	true				
+taxonomy_superkingdom	Viruses	B2_SEQUENCE_ONLY	function_recall_at_10	0.75	0.25	1.0	4	true				
+taxonomy_superkingdom	Viruses	B3_STRUCTURE_ONLY	function_recall_at_10	0.0	0.0	0.0	4	true				
+taxonomy_superkingdom	Viruses	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.75	0.25	1.0	4	true				
+enzyme_group	enzyme	B2_SEQUENCE_ONLY	function_recall_at_10	0.8065162907268171	0.6924812030075188	0.9056390977443609	19	true				
+enzyme_group	enzyme	B3_STRUCTURE_ONLY	function_recall_at_10	0.5847117794486215	0.41227130325814537	0.7447493734335837	19	true				
+enzyme_group	enzyme	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.8453634085213033	0.740344611528822	0.9342105263157895	19	true				
+enzyme_group	non_enzyme	B2_SEQUENCE_ONLY	function_recall_at_10	0.700091575091575	0.5334249084249084	0.8489010989010989	28	true				
+enzyme_group	non_enzyme	B3_STRUCTURE_ONLY	function_recall_at_10	0.34798534798534797	0.18727106227106227	0.5173992673992674	28	true				
+enzyme_group	non_enzyme	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.6762820512820513	0.5072916666666667	0.836996336996337	28	true				
+low_identity_group	LOW_IDENTITY_ELIGIBLE	B2_SEQUENCE_ONLY	function_recall_at_10	0.375	0.0	0.75	2	true				
+low_identity_group	LOW_IDENTITY_ELIGIBLE	B3_STRUCTURE_ONLY	function_recall_at_10	0.375	0.0	0.75	2	true				
+low_identity_group	LOW_IDENTITY_ELIGIBLE	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.375	0.0	0.75	2	true				
+low_identity_group	OTHER_IDENTITY	B2_SEQUENCE_ONLY	function_recall_at_10	0.7594749694749695	0.6508981481481482	0.8586350223850223	45	true				
+low_identity_group	OTHER_IDENTITY	B3_STRUCTURE_ONLY	function_recall_at_10	0.44673585673585675	0.32318650793650794	0.5715542328042328	45	true				
+low_identity_group	OTHER_IDENTITY	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.7610622710622711	0.6499475986975987	0.862914122914123	45	true				
+active_site_group	ANNOTATED_ACTIVE_SITE	B2_SEQUENCE_ONLY	function_recall_at_10	0.8240601503759398	0.7131578947368421	0.9191729323308271	19	true				
+active_site_group	ANNOTATED_ACTIVE_SITE	B3_STRUCTURE_ONLY	function_recall_at_10	0.5145363408521303	0.34962406015037595	0.677703634085213	19	true				
+active_site_group	ANNOTATED_ACTIVE_SITE	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.8015037593984963	0.6710526315789473	0.9082769423558896	19	true				
+active_site_group	NO_ANNOTATED_ACTIVE_SITE	B2_SEQUENCE_ONLY	function_recall_at_10	0.6881868131868132	0.5267857142857143	0.8392857142857143	28	true				
+active_site_group	NO_ANNOTATED_ACTIVE_SITE	B3_STRUCTURE_ONLY	function_recall_at_10	0.3956043956043956	0.23145604395604397	0.5652472527472527	28	true				
+active_site_group	NO_ANNOTATED_ACTIVE_SITE	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.7060439560439561	0.537757554945055	0.8578296703296703	28	true				
+supplied_architecture_group	MULTI	B2_SEQUENCE_ONLY	function_recall_at_10	0.7041125541125541	0.543823051948052	0.8524918831168831	22	true				
+supplied_architecture_group	MULTI	B3_STRUCTURE_ONLY	function_recall_at_10	0.4405844155844156	0.2712040043290043	0.6095238095238095	22	true				
+supplied_architecture_group	MULTI	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.749025974025974	0.5922077922077922	0.8886363636363637	22	true				
+supplied_architecture_group	SINGLE	B2_SEQUENCE_ONLY	function_recall_at_10	0.7774358974358975	0.6248525641025642	0.91	25	true				
+supplied_architecture_group	SINGLE	B3_STRUCTURE_ONLY	function_recall_at_10	0.4464102564102564	0.27307692307692305	0.6230769230769231	25	true				
+supplied_architecture_group	SINGLE	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.7407692307692307	0.58	0.8807692307692307	25	true				
+difficulty_stratum	FROM_20_TO_30		function_recall_at_10		0.0	0.0	2	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+difficulty_stratum	FROM_30_TO_50		function_recall_at_10		-0.25	0.16666666666666666	6	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	-0.02777777777777778	1.0	1.0
+difficulty_stratum	FROM_50_TO_70		function_recall_at_10		0.0	0.1875	8	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0625	1.0	1.0
+difficulty_stratum	GT_70		function_recall_at_10		-0.09906462585034014	0.05654761904761905	28	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	-0.009353741496598645	1.0	1.0
+difficulty_stratum	NO_ALLOWED_HIT		function_recall_at_10		0.0	0.0	3	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+taxonomy_superkingdom	Archaea		function_recall_at_10		-0.1875	0.1875	8	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+taxonomy_superkingdom	Bacteria		function_recall_at_10		0.0	0.15	10	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.05	1.0	1.0
+taxonomy_superkingdom	Eukaryota		function_recall_at_10		-0.11333333333333334	0.046190476190476185	25	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	-0.017142857142857147	1.0	1.0
+taxonomy_superkingdom	Viruses		function_recall_at_10		0.0	0.0	4	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+enzyme_group	enzyme		function_recall_at_10		-0.048245614035087724	0.12719298245614033	19	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.038847117794486206	0.35384615384615387	1.0
+enzyme_group	non_enzyme		function_recall_at_10		-0.10714285714285714	0.03571428571428571	28	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	-0.02380952380952381	1.0	1.0
+low_identity_group	LOW_IDENTITY_ELIGIBLE		function_recall_at_10		0.0	0.0	2	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+low_identity_group	OTHER_IDENTITY		function_recall_at_10		-0.06164021164021164	0.057142857142857134	45	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.001587301587301584	1.0	1.0
+active_site_group	ANNOTATED_ACTIVE_SITE		function_recall_at_10		-0.14912280701754385	0.060776942355889714	19	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	-0.022556390977443618	1.0	1.0
+active_site_group	NO_ANNOTATED_ACTIVE_SITE		function_recall_at_10		-0.03571428571428571	0.07142857142857142	28	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.017857142857142856	1.0	1.0
+supplied_architecture_group	MULTI		function_recall_at_10		-0.03463203463203463	0.12878787878787878	22	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.04491341991341991	0.35384615384615387	1.0
+supplied_architecture_group	SINGLE		function_recall_at_10		-0.12	0.009999999999999992	25	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	-0.03666666666666667	1.0	1.0

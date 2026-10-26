@@ -1,0 +1,9 @@
+{
+  "created_at": "2026-10-25T15:11:20.764345+00:00",
+  "go_obo_sha256": "b08d45b268b8c24ccb2513dbbbc7d4df9f6521c099b413f79eb31e06e0fa3bcc",
+  "go_term_count": 8548,
+  "output_sha256": "14b328071982ca4847d4d664397e5dc95afca0b4d0ff885b42bac30e1808d06c",
+  "protein_corpus_size": 482827,
+  "source_release": "2026_03",
+  "swissprot_sha256": "c87208822a56e8ae0d6bf5072c287b35e42a8b9f25e8bd771389abc5b7a29c38"
+}
