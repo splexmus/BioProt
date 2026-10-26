@@ -513,6 +513,8 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"mapped: UniProt {result.uniprot_mapped_count:,}; "
         f"names {result.protein_name_mapped_count:,}; "
+        f"GO {result.go_mapped_count:,}; "
+        f"EC {result.ec_mapped_count:,}; "
         f"InterPro {result.interpro_mapped_count:,}"
     )
     print(f"provenance: {result.manifest}")

@@ -26,6 +26,12 @@ InterPro2GO, EC2GO, and `go-basic.obo`. PDB-chain GO/EC/InterPro and UniProt res
 come from the same SIFTS release used to build Foldseek target metadata. Mapping
 projections are annotation rules, not experimental evidence or identifier equivalence.
 
+The production Foldseek target metadata schema includes chain-level `go_terms` and
+`ec_numbers` in addition to UniProt, protein name, and InterPro. Old metadata tables
+without GO/EC can execute structure search but materially reduce function retrieval.
+Rebuild them with `python -m dualrag.structure.metadata`; the atomic output and manifest
+record annotation coverage and checksums. Missing target annotations stay explicit.
+
 ## AlphaFold policy
 Do not mirror AlphaFoldDB for the standard project workflow. Store eggNOG and Foldseek
 target databases locally, but retrieve AlphaFold query models on demand through the

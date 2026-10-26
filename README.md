@@ -88,6 +88,14 @@ proteins, and the complete result is in `docs/PHASE3_EXTERNAL_PANEL_REPORT.md`, 
 dataset and run artifacts under `benchmark/phase3-external-panel-v1/` and
 `benchmark/phase3-external-panel-run-v1/`.
 
+The production fusion profile is now `quality-gated-v2`. It deduplicates repeated
+biological sources, rewards independent support with a capped bonus, reduces weak
+structure-function transfer using coverage/TM-score gates, and supports safe offline
+rescoring from preserved raw evidence. It improved development FR@10 from 0.557 to
+0.575 while preserving validation and the previously exposed test FR@10. This is a ranking
+improvement, not a new biological-validation claim; the Phase 3 conclusion remains
+`NO_MEASURABLE_OVERALL_BENEFIT`. See `docs/PIPELINE_V2.md`.
+
 For the full external-HDD database setup, including the writable-mount preflight,
 eggNOG installation, Foldseek PDB download, provenance finalization, and validation,
 see [Phase 1 data installation](docs/PHASE1_DATA_INSTALL.md). The current production

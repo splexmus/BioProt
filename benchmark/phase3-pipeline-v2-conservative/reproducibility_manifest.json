@@ -1,0 +1,46 @@
+{
+  "claim_scope": "Development/validation-selected ranking profile regression-checked on the already exposed nine-query v1 test split. It is not fresh confirmation or a powered biological benchmark.",
+  "configuration": {
+    "agreement_weight": 0.2,
+    "deep_candidate_score_multiplier": 0.5,
+    "deep_support_min": 3,
+    "direct_hit_k": 10,
+    "sequence_weight": 0.5,
+    "structure_min_query_coverage": 0.5,
+    "structure_min_target_coverage": 0.5,
+    "structure_min_tm_score": 0.5,
+    "structure_quality_floor": 0.2,
+    "structure_weight": 0.3,
+    "support_bonus_max": 0.15,
+    "support_saturation": 3
+  },
+  "created_at": "2026-10-26T06:07:06.492087+00:00",
+  "dataset": "benchmark/phase3-pilot-v1",
+  "environment": {
+    "dualrag": "0.2.0",
+    "pixi_lock_sha256": "7b4dc617f8734e8a123ce6d030625948ca7a0faec594431188d9cb17dc7f9215",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "python": "3.11.9"
+  },
+  "git": {
+    "commit": "665c2f033557575430ffa3e365d5b844bb23f1e9",
+    "status": "M ARCHITECTURE.md\n M DATA.md\n M EVALUATION.md\n M MEMORY.md\n M README.md\n M ROADMAP.md\n M config/4tb-hdd.yaml\n M docs/PHASE1_DATA_INSTALL.md\n M docs/PHASE2_FUSION.md\n M scripts/run_phase3_benchmark.py\n M src/dualrag/benchmark/runner.py\n M src/dualrag/config.py\n M src/dualrag/fusion/candidates.py\n M src/dualrag/fusion/scoring.py\n M src/dualrag/models.py\n M src/dualrag/structure/metadata.py\n M tests/test_config.py\n M tests/test_fusion.py\n?? benchmark/phase3-pipeline-v2-conservative/\n?? benchmark/phase3-pipeline-v2-validation/\n?? docs/PIPELINE_V2.md\n?? scripts/compare_pipeline_profiles.py\n?? scripts/finalize_pipeline_v2.py\n?? tests/test_benchmark_runner.py\n?? tests/test_pipeline_v2_results.py"
+  },
+  "inputs": {
+    "dataset_manifest_sha256": "4df98555a9b35300cf0d0016d34e5b3c4c8b2d421a6908fdffda2f4547c93ef9",
+    "go_ic_manifest_sha256": "540133e9b4d98594d696197937dc648ffdf12ef0e7f2757e6e640344733b9168",
+    "mapping_manifest_sha256": "6089d15d48e0b4c1dca2fca7796abd32dda0178bf8b1fc919d34704f013426f8"
+  },
+  "profile": "quality-gated-v2",
+  "raw_evidence_reused": true,
+  "raw_input_sha256": {
+    "alphafold_acquisition.tsv": "235c4a55b4e5c02993bb189b074cc3fb83357a21bb83a770ed9b9794c4f75739",
+    "sequence_evidence.tsv": "762f804aeb82d905aed294d06fb2ef42dbc334e81f0648d3f6f121042e132ca2",
+    "structure_evidence.tsv": "b2efc905c62c7005356bbd8c9f2976738eafc0ea88b432d673a86369b7b9aa8a",
+    "structure_exclusions.tsv": "a2bdd49158132c096ee1c64b449073d6f17fab0df636da7c68f4997fcc0cc4d7"
+  },
+  "schema_version": 1,
+  "scientific_conclusion": "NO_MEASURABLE_OVERALL_BENEFIT",
+  "source_run": "benchmark/phase3-run-v1",
+  "target_pool_k": 10
+}

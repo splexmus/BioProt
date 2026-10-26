@@ -1,0 +1,7 @@
+baseline	metric	estimate	ci_lower	ci_upper	query_count	missing_count
+B2_SEQUENCE_ONLY	interpro_exact_recall_at_10	0.8863636363636364	0.7676767676767676	0.9797979797979798	9	0
+B2_SEQUENCE_ONLY	pfam_exact_recall_at_10	1.0	1.0	1.0	9	0
+B3_STRUCTURE_ONLY	interpro_exact_recall_at_10	0.6902356902356902	0.48063973063973064	0.8611111111111112	9	0
+B3_STRUCTURE_ONLY	pfam_exact_recall_at_10	0.0	0.0	0.0	9	0
+B4_DUAL_DETERMINISTIC	interpro_exact_recall_at_10	0.8863636363636364	0.7676767676767676	0.9797979797979798	9	0
+B4_DUAL_DETERMINISTIC	pfam_exact_recall_at_10	1.0	1.0	1.0	9	0

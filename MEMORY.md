@@ -269,3 +269,12 @@ When a durable decision changes, append a short entry below rather than silently
   B4 0.745; paired B4-minus-B2 was +0.0015 with 95% CI -0.0590 to 0.0532, again yielding
   `NO_MEASURABLE_OVERALL_BENEFIT`. Architecture labels remain provisional because no
   positional InterProScan source was available.
+- 2026-10-26: selected the conservative `quality-gated-v2` fusion profile from
+  development/validation behavior and regression-checked it against `fixed-weight-v1`.
+  The nine-query v1 test split was already exposed, so it is not fresh v2 confirmation. V2
+  deduplicates biological sources, adds a capped independent-support bonus, gates
+  structure transfer by coverage/TM-score, and can rescore preserved TSV evidence
+  offline. Development B4 FR@10 changed 0.557 to 0.575; validation remained 0.796 and
+  test remained 0.778. The 50-hit profile is experimental because it reduces precision.
+  This engineering/ranking improvement does not change the Phase 3 conclusion
+  `NO_MEASURABLE_OVERALL_BENEFIT` or establish calibrated biological confidence.

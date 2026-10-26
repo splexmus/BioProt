@@ -138,7 +138,7 @@ Foldseek similarity output does not itself provide protein function. Populate
 UniProt mapping workflow. The required header is created by `init-storage`:
 
 ```text
-target_structure_id  target_uniprot_id  protein_name  interpro_ids  supfam_ids  structure_source  experimental_structure  source_accession
+target_structure_id  target_uniprot_id  protein_name  go_terms  ec_numbers  interpro_ids  supfam_ids  structure_source  experimental_structure  source_accession
 ```
 
 Use tab separators, semicolons for multiple identifiers, `PDB` as `structure_source`,
@@ -156,7 +156,8 @@ pixi run python -m dualrag.structure.metadata \
 ```
 
 The builder reads the exact target names from `pdb.lookup`, maps their PDB entry and
-chain through SIFTS, and adds reviewed protein names from Swiss-Prot. It emits one row
+chain through SIFTS, adds chain-level GO/EC/InterPro, and adds reviewed protein names
+from Swiss-Prot. It emits one row
 for every unique Foldseek target, including unmapped targets, so missing metadata
 remains visible rather than silently shrinking the search database. Duplicate lookup
 names are collapsed deterministically and counted in the manifest. Repeated biological-

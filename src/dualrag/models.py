@@ -117,6 +117,10 @@ class CandidateContribution:
     informativeness_reason: str
     original_candidate_id: str = ""
     mapping_provenance: str = ""
+    support_id: str = ""
+    evidence_reliability: float = 1.0
+    quality_flags: tuple[str, ...] = ()
+    source_rank: int = 0
 
 
 @dataclass
@@ -130,6 +134,14 @@ class FunctionCandidate:
     modalities: list[str]
     sequence_score: float | None
     structure_score: float | None
+    sequence_max_score: float | None
+    structure_max_score: float | None
+    structure_reliability_score: float | None
+    structure_gated_evidence_count: int
+    structure_quality_flags: list[str]
+    sequence_best_hit_rank: int | None
+    structure_best_hit_rank: int | None
+    agreement_reliability_score: float
     sequence_evidence_count: int
     structure_evidence_count: int
     sequence_source_ids: list[str]

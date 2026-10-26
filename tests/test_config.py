@@ -43,7 +43,9 @@ def test_4tb_hdd_profile_uses_ext4_mount() -> None:
     assert config.structure.foldseek_db == Path(
         "/media/splexmus/4TB_HDD1/dualrag/databases/foldseek/pdb"
     )
-    assert config.fusion.version == "fixed-weight-v1"
+    assert config.fusion.version == "quality-gated-v2"
+    assert config.fusion.support_aggregation_enabled is True
+    assert config.fusion.structure_quality_gating_enabled is True
 
 
 def test_fusion_weights_must_sum_to_one() -> None:

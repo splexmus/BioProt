@@ -97,6 +97,18 @@ class FusionConfig(BaseModel):
     conflict_report_top_k: int = Field(default=5, ge=1)
     alternatives_top_k: int = Field(default=5, ge=1)
     ambiguity_margin: float = Field(default=0.05, ge=0, le=1)
+    support_aggregation_enabled: bool = False
+    support_bonus_max: float = Field(default=0.15, ge=0, le=0.5)
+    support_saturation: int = Field(default=3, ge=2)
+    deep_evidence_filter_enabled: bool = False
+    direct_hit_k: int = Field(default=10, ge=1)
+    deep_support_min: int = Field(default=3, ge=2)
+    deep_candidate_score_multiplier: float = Field(default=0.50, gt=0, le=1)
+    structure_quality_gating_enabled: bool = False
+    structure_min_query_coverage: float = Field(default=0.50, gt=0, le=1)
+    structure_min_target_coverage: float = Field(default=0.50, gt=0, le=1)
+    structure_min_tm_score: float = Field(default=0.50, gt=0, le=1)
+    structure_quality_floor: float = Field(default=0.20, ge=0, le=1)
 
     @model_validator(mode="after")
     def weights_sum_to_one(self) -> FusionConfig:

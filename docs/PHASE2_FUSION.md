@@ -5,6 +5,13 @@ retrieval tables. Sequence and structure evidence remain independently inspectab
 The implementation is a transparent baseline for benchmarking, not a calibrated
 functional prediction or experimental validation.
 
+`fixed-weight-v1` remains the frozen baseline described below. The production
+`quality-gated-v2` profile adds biological-source deduplication, capped independent
+support aggregation, structure coverage/TM-score gates, and optional guarded deep-hit
+retrieval. Raw scores and v1-compatible evidence remain visible. Its formulas,
+configuration, evaluation, and offline-rescoring workflow are documented in
+`docs/PIPELINE_V2.md`.
+
 ## 2.1 Candidate-function grouping
 
 `dualrag.fusion.candidates` converts each normalized hit into candidate assertions using:

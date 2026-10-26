@@ -1,0 +1,49 @@
+group_type	group	baseline	metric	estimate	ci_lower	ci_upper	query_count	exploratory	contrast	effect	p_value	holm_adjusted_p
+difficulty_stratum	FROM_20_TO_30	B2_SEQUENCE_ONLY	function_recall_at_10	1.0	1.0	1.0	1	true				
+difficulty_stratum	FROM_20_TO_30	B3_STRUCTURE_ONLY	function_recall_at_10	1.0	1.0	1.0	1	true				
+difficulty_stratum	FROM_20_TO_30	B4_DUAL_DETERMINISTIC	function_recall_at_10	1.0	1.0	1.0	1	true				
+difficulty_stratum	FROM_30_TO_50	B2_SEQUENCE_ONLY	function_recall_at_10	0.4638888888888889	0.26666666666666666	0.6666666666666666	18	true				
+difficulty_stratum	FROM_30_TO_50	B3_STRUCTURE_ONLY	function_recall_at_10	0.23333333333333334	0.08333333333333333	0.4027777777777778	18	true				
+difficulty_stratum	FROM_30_TO_50	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.5111111111111111	0.3055555555555556	0.7222222222222222	18	true				
+difficulty_stratum	FROM_50_TO_70	B2_SEQUENCE_ONLY	function_recall_at_10	0.7878787878787878	0.5909090909090909	0.9545454545454546	11	true				
+difficulty_stratum	FROM_50_TO_70	B3_STRUCTURE_ONLY	function_recall_at_10	0.3977272727272727	0.15151515151515152	0.6704545454545454	11	true				
+difficulty_stratum	FROM_50_TO_70	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.7878787878787878	0.5909090909090909	0.9545454545454546	11	true				
+difficulty_stratum	GT_70	B2_SEQUENCE_ONLY	function_recall_at_10	0.7895833333333333	0.6354166666666666	0.925	24	true				
+difficulty_stratum	GT_70	B3_STRUCTURE_ONLY	function_recall_at_10	0.5604166666666667	0.38333333333333336	0.7375	24	true				
+difficulty_stratum	GT_70	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.8104166666666667	0.6583333333333333	0.9375	24	true				
+difficulty_stratum	NO_ALLOWED_HIT	B2_SEQUENCE_ONLY	function_recall_at_10	0.0	0.0	0.0	6	true				
+difficulty_stratum	NO_ALLOWED_HIT	B3_STRUCTURE_ONLY	function_recall_at_10	0.0	0.0	0.0	6	true				
+difficulty_stratum	NO_ALLOWED_HIT	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.0	0.0	0.0	6	true				
+taxonomy_superkingdom	Archaea	B2_SEQUENCE_ONLY	function_recall_at_10	0.9285714285714286	0.8214285714285714	1.0	14	true				
+taxonomy_superkingdom	Archaea	B3_STRUCTURE_ONLY	function_recall_at_10	0.7827380952380952	0.6041666666666666	0.9434523809523809	14	true				
+taxonomy_superkingdom	Archaea	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.9642857142857143	0.8928571428571429	1.0	14	true				
+taxonomy_superkingdom	Bacteria	B2_SEQUENCE_ONLY	function_recall_at_10	0.33666666666666667	0.15	0.55	15	true				
+taxonomy_superkingdom	Bacteria	B3_STRUCTURE_ONLY	function_recall_at_10	0.29333333333333333	0.10666666666666667	0.51	15	true				
+taxonomy_superkingdom	Bacteria	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.3933333333333333	0.17983333333333348	0.6266666666666667	15	true				
+taxonomy_superkingdom	Eukaryota	B2_SEQUENCE_ONLY	function_recall_at_10	0.7944444444444444	0.6333333333333333	0.9277777777777778	15	true				
+taxonomy_superkingdom	Eukaryota	B3_STRUCTURE_ONLY	function_recall_at_10	0.4444444444444444	0.24444444444444444	0.6555555555555556	15	true				
+taxonomy_superkingdom	Eukaryota	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.7944444444444444	0.6333333333333333	0.9277777777777778	15	true				
+taxonomy_superkingdom	Other	B2_SEQUENCE_ONLY	function_recall_at_10	0.5	0.0	1.0	2	true				
+taxonomy_superkingdom	Other	B3_STRUCTURE_ONLY	function_recall_at_10	0.5	0.0	1.0	2	true				
+taxonomy_superkingdom	Other	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.5	0.0	1.0	2	true				
+taxonomy_superkingdom	Viruses	B2_SEQUENCE_ONLY	function_recall_at_10	0.42857142857142855	0.21428571428571427	0.7142857142857143	14	true				
+taxonomy_superkingdom	Viruses	B3_STRUCTURE_ONLY	function_recall_at_10	0.0	0.0	0.0	14	true				
+taxonomy_superkingdom	Viruses	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.42857142857142855	0.21428571428571427	0.7142857142857143	14	true				
+enzyme_group	enzyme	B2_SEQUENCE_ONLY	function_recall_at_10	0.6972222222222222	0.5611111111111111	0.825	36	true				
+enzyme_group	enzyme	B3_STRUCTURE_ONLY	function_recall_at_10	0.4974537037037037	0.35162037037037036	0.6444444444444445	36	true				
+enzyme_group	enzyme	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.7347222222222223	0.5958333333333333	0.8611111111111112	36	true				
+enzyme_group	non_enzyme	B2_SEQUENCE_ONLY	function_recall_at_10	0.49444444444444446	0.30833333333333335	0.6763888888888889	24	true				
+enzyme_group	non_enzyme	B3_STRUCTURE_ONLY	function_recall_at_10	0.21319444444444444	0.08333333333333333	0.36041666666666666	24	true				
+enzyme_group	non_enzyme	B4_DUAL_DETERMINISTIC	function_recall_at_10	0.49444444444444446	0.30833333333333335	0.6763888888888889	24	true				
+difficulty_stratum	FROM_20_TO_30		function_recall_at_10		0.0	0.0	1	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+difficulty_stratum	FROM_30_TO_50		function_recall_at_10		0.0	0.11388888888888889	18	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.04722222222222222	0.3333333333333333	1.0
+difficulty_stratum	FROM_50_TO_70		function_recall_at_10		0.0	0.0	11	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+difficulty_stratum	GT_70		function_recall_at_10		0.0	0.0625	24	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.020833333333333332	1.0	1.0
+difficulty_stratum	NO_ALLOWED_HIT		function_recall_at_10		0.0	0.0	6	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+taxonomy_superkingdom	Archaea		function_recall_at_10		0.0	0.10714285714285714	14	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.03571428571428571	1.0	1.0
+taxonomy_superkingdom	Bacteria		function_recall_at_10		0.0	0.13333333333333333	15	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.056666666666666664	0.3333333333333333	1.0
+taxonomy_superkingdom	Eukaryota		function_recall_at_10		0.0	0.0	15	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+taxonomy_superkingdom	Other		function_recall_at_10		0.0	0.0	2	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+taxonomy_superkingdom	Viruses		function_recall_at_10		0.0	0.0	14	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0
+enzyme_group	enzyme		function_recall_at_10		0.002777777777777778	0.08194444444444444	36	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0375	0.17647058823529413	1.0
+enzyme_group	non_enzyme		function_recall_at_10		0.0	0.0	24	true	B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY	0.0	1.0	1.0

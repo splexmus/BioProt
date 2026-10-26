@@ -210,3 +210,108 @@ def test_reranking_and_alternative_margin_are_explicit() -> None:
     assert result.alternatives[0]["score_delta_from_top"] == 0
     assert result.alternatives[1]["ambiguous_with_top"] is True
     assert result.candidates[0].rerank_score != result.candidates[0].fused_score
+
+
+def test_v2_deduplicates_support_and_rewards_independent_sources() -> None:
+    result = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [
+            sequence(
+                target_id="chain-a",
+                source_accession="P1",
+                ec_numbers=["1.1.1.1"],
+            ),
+            sequence(
+                target_id="chain-b",
+                source_accession="P1",
+                ec_numbers=["1.1.1.1"],
+            ),
+            sequence(
+                target_id="independent",
+                source_accession="P2",
+                ec_numbers=["1.1.1.1"],
+            ),
+        ],
+        [],
+        FusionConfig(
+            version="quality-gated-v2",
+            support_aggregation_enabled=True,
+            support_bonus_max=0.15,
+            support_saturation=3,
+        ),
+        run_id="run",
+        parameters_hash="parameters",
+    )
+
+    candidate = result.candidates[0]
+    assert candidate.sequence_evidence_count == 2
+    assert candidate.sequence_max_score == 0.8
+    assert candidate.sequence_score == 0.815
+
+
+def test_v2_retains_raw_structure_score_and_gates_weak_transfer() -> None:
+    result = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [],
+        [
+            structure(
+                normalized_score=0.9,
+                query_coverage=0.10,
+                target_coverage=0.20,
+                tm_score=0.20,
+                ec_numbers=["1.1.1.1"],
+            )
+        ],
+        FusionConfig(
+            version="quality-gated-v2",
+            structure_quality_gating_enabled=True,
+        ),
+        run_id="run",
+        parameters_hash="parameters",
+    )
+
+    candidate = result.candidates[0]
+    assert candidate.structure_max_score == 0.9
+    assert candidate.structure_score is not None
+    assert candidate.structure_score < candidate.structure_max_score
+    assert candidate.structure_reliability_score is not None
+    assert candidate.structure_reliability_score < 1.0
+    assert candidate.structure_gated_evidence_count == 1
+    assert candidate.structure_quality_flags == [
+        "LOW_QUERY_COVERAGE",
+        "LOW_TARGET_COVERAGE",
+        "LOW_TM_SCORE",
+    ]
+    assert result.audit["structure_quality_gating"]["gated_contribution_count"] == 1
+
+
+def test_v2_requires_repeated_support_for_functions_beyond_direct_hit_pool() -> None:
+    top_hits = [sequence(target_id=f"top-{index}", go_terms=["GO:0005524"]) for index in range(10)]
+    deep_hits = [sequence(target_id=f"deep-{index}", ec_numbers=["1.1.1.1"]) for index in range(3)]
+    config = FusionConfig(
+        version="quality-gated-v2",
+        deep_evidence_filter_enabled=True,
+        direct_hit_k=10,
+        deep_support_min=3,
+    )
+
+    unsupported = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [*top_hits, deep_hits[0]],
+        [],
+        config,
+        run_id="run",
+        parameters_hash="parameters",
+    )
+    supported = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [*top_hits, *deep_hits],
+        [],
+        config,
+        run_id="run",
+        parameters_hash="parameters",
+    )
+
+    assert "EC:1.1.1.1" not in {item.candidate_id for item in unsupported.candidates}
+    assert "EC:1.1.1.1" in {item.candidate_id for item in supported.candidates}
+    assert unsupported.audit["deep_filtered_contribution_count"] == 1

@@ -94,8 +94,9 @@ def fuse_candidates(
 ) -> FusionResult:
     """Build and rank auditable candidates; scores are not calibrated confidence."""
     bundle = load_mapping_bundle(config.mapping_path, config.synonym_path)
-    raw = extract_contributions(sequence_hits, structure_hits)
-    contributions, mapped_count = apply_exact_mappings(raw, bundle)
+    raw = extract_contributions(sequence_hits, structure_hits, config)
+    filtered, filtered_count = _filter_deep_contributions(raw, config)
+    contributions, mapped_count = apply_exact_mappings(filtered, bundle)
     candidates = _aggregate(contributions, config, run_id, parameters_hash)
     compatible_count = _apply_compatible_relations(candidates, bundle, config)
     by_query: dict[str, list[FunctionCandidate]] = defaultdict(list)
@@ -132,6 +133,7 @@ def fuse_candidates(
         alternatives,
         bundle,
         len(raw),
+        filtered_count,
         mapped_count,
         compatible_count,
         config,
@@ -157,11 +159,22 @@ def _aggregate(
         informative = any(item.informative for item in items)
         kind = items[0].candidate_kind
         status = _candidate_status(kind, informative, seq, struct)
-        seq_score, struct_score = _max_score(seq), _max_score(struct)
-        fused_score = _base_score(seq_score, struct_score, status, config)
+        seq_score, struct_score = _aggregate_score(seq, config), _aggregate_score(struct, config)
+        seq_max_score, struct_max_score = _max_score(seq), _max_score(struct)
+        agreement_reliability = _agreement_reliability(seq, struct, config)
+        fused_score = _base_score(
+            seq_score,
+            struct_score,
+            status,
+            config,
+            agreement_reliability,
+        )
         identifier_quality = IDENTIFIER_QUALITY[kind] if informative else 0.0
         modality_support = len({item.modality for item in items}) / 2
-        hit_support = min(len({(item.modality, item.source_id) for item in items}) / 3, 1.0)
+        hit_support = min(
+            len({(item.modality, item.support_id or item.source_id) for item in items}) / 3,
+            1.0,
+        )
         quality = 0.5 * identifier_quality + 0.3 * modality_support + 0.2 * hit_support
         rerank = config.base_score_weight * fused_score + config.quality_weight * quality
         candidates.append(
@@ -177,8 +190,24 @@ def _aggregate(
                 modalities=sorted({item.modality for item in items}),
                 sequence_score=seq_score,
                 structure_score=struct_score,
-                sequence_evidence_count=len({item.source_id for item in seq}),
-                structure_evidence_count=len({item.source_id for item in struct}),
+                sequence_max_score=seq_max_score,
+                structure_max_score=struct_max_score,
+                structure_reliability_score=(
+                    round(max(item.evidence_reliability for item in struct), 6) if struct else None
+                ),
+                structure_gated_evidence_count=sum(
+                    item.evidence_reliability < 1.0 for item in struct
+                ),
+                structure_quality_flags=sorted(
+                    {flag for item in struct for flag in item.quality_flags}
+                ),
+                sequence_best_hit_rank=min((item.source_rank for item in seq), default=None),
+                structure_best_hit_rank=min((item.source_rank for item in struct), default=None),
+                agreement_reliability_score=agreement_reliability,
+                sequence_evidence_count=len({item.support_id or item.source_id for item in seq}),
+                structure_evidence_count=len(
+                    {item.support_id or item.source_id for item in struct}
+                ),
                 sequence_source_ids=sorted({item.source_id for item in seq}),
                 structure_source_ids=sorted({item.source_id for item in struct}),
                 sequence_provenance=sorted({item.provenance for item in seq}),
@@ -236,6 +265,7 @@ def _apply_compatible_relations(
                         candidate.structure_score,
                         candidate.cross_modal_status,
                         config,
+                        candidate.agreement_reliability_score,
                     ),
                     6,
                 )
@@ -265,7 +295,11 @@ def _candidate_status(
 
 
 def _base_score(
-    seq: float | None, struct: float | None, status: CrossModalStatus, config: FusionConfig
+    seq: float | None,
+    struct: float | None,
+    status: CrossModalStatus,
+    config: FusionConfig,
+    agreement_reliability: float = 1.0,
 ) -> float:
     bonus = {CrossModalStatus.CONSENSUS: 1.0, CrossModalStatus.PARTIAL_CONSENSUS: 0.5}.get(
         status, 0.0
@@ -273,8 +307,23 @@ def _base_score(
     return (
         config.sequence_weight * (seq or 0.0)
         + config.structure_weight * (struct or 0.0)
-        + config.agreement_weight * bonus
+        + config.agreement_weight * bonus * agreement_reliability
     )
+
+
+def _agreement_reliability(
+    seq: list[CandidateContribution],
+    struct: list[CandidateContribution],
+    config: FusionConfig,
+) -> float:
+    if not seq or not struct or not config.deep_evidence_filter_enabled:
+        return 1.0
+    if (
+        min(item.source_rank for item in seq) > config.direct_hit_k
+        or min(item.source_rank for item in struct) > config.direct_hit_k
+    ):
+        return config.deep_candidate_score_multiplier
+    return 1.0
 
 
 def _summarize_query(
@@ -423,6 +472,7 @@ def _audit(
     alternatives: list[dict[str, Any]],
     bundle: MappingBundle,
     contribution_count: int,
+    deep_filtered_contribution_count: int,
     mapped_count: int,
     compatible_count: int,
     config: FusionConfig,
@@ -437,6 +487,7 @@ def _audit(
         "rerank_version": config.rerank_version,
         "query_count": len(queries),
         "contribution_count": contribution_count,
+        "deep_filtered_contribution_count": deep_filtered_contribution_count,
         "candidate_count": len(candidates),
         "informative_candidate_count": sum(item.informative for item in candidates),
         "unclear_candidate_count": sum(not item.informative for item in candidates),
@@ -465,6 +516,28 @@ def _audit(
             "only explicit versioned mappings and synonyms are applied",
             "absence of a mapping is not biological disagreement",
         ],
+        "support_aggregation": {
+            "enabled": config.support_aggregation_enabled,
+            "maximum_bonus": config.support_bonus_max,
+            "saturation_sources": config.support_saturation,
+            "deduplication_key": "modality plus biological support accession",
+        },
+        "deep_evidence_filter": {
+            "enabled": config.deep_evidence_filter_enabled,
+            "direct_hit_k": config.direct_hit_k,
+            "minimum_independent_deep_support": config.deep_support_min,
+            "deep_candidate_score_multiplier": config.deep_candidate_score_multiplier,
+        },
+        "structure_quality_gating": {
+            "enabled": config.structure_quality_gating_enabled,
+            "minimum_query_coverage": config.structure_min_query_coverage,
+            "minimum_target_coverage": config.structure_min_target_coverage,
+            "minimum_tm_score": config.structure_min_tm_score,
+            "quality_floor": config.structure_quality_floor,
+            "gated_contribution_count": sum(
+                item.structure_gated_evidence_count for item in candidates
+            ),
+        },
     }
 
 
@@ -482,6 +555,26 @@ def _top_for_modality(
     )[:top_k]
 
 
+def _filter_deep_contributions(
+    contributions: list[CandidateContribution], config: FusionConfig
+) -> tuple[list[CandidateContribution], int]:
+    if not config.deep_evidence_filter_enabled:
+        return contributions, 0
+    support: dict[tuple[str, str, str], set[str]] = defaultdict(set)
+    for item in contributions:
+        support[(item.query_id, item.modality, item.candidate_id)].add(
+            item.support_id or item.source_id
+        )
+    retained = [
+        item
+        for item in contributions
+        if item.source_rank <= config.direct_hit_k
+        or len(support[(item.query_id, item.modality, item.candidate_id)])
+        >= config.deep_support_min
+    ]
+    return retained, len(contributions) - len(retained)
+
+
 def _candidate_sort_key(candidate: FunctionCandidate) -> tuple[object, ...]:
     return (
         not candidate.informative,
@@ -493,3 +586,30 @@ def _candidate_sort_key(candidate: FunctionCandidate) -> tuple[object, ...]:
 
 def _max_score(items: list[CandidateContribution]) -> float | None:
     return max((item.normalized_score for item in items), default=None)
+
+
+def _aggregate_score(items: list[CandidateContribution], config: FusionConfig) -> float | None:
+    if not items:
+        return None
+    by_support: dict[str, float] = {}
+    for item in items:
+        support_id = item.support_id or item.source_id
+        effective = item.normalized_score * item.evidence_reliability
+        by_support[support_id] = max(by_support.get(support_id, 0.0), effective)
+    maximum = max(by_support.values())
+    if not config.support_aggregation_enabled:
+        return maximum
+    additional = min(
+        (len(by_support) - 1) / (config.support_saturation - 1),
+        1.0,
+    )
+    score = round(
+        maximum + (1.0 - maximum) * config.support_bonus_max * additional,
+        6,
+    )
+    if (
+        config.deep_evidence_filter_enabled
+        and min(item.source_rank for item in items) > config.direct_hit_k
+    ):
+        score *= config.deep_candidate_score_multiplier
+    return round(score, 6)

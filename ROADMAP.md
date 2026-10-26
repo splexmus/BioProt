@@ -51,8 +51,8 @@ Exit criteria:
 
 ## Phase 2 — Function-level fusion
 
-Status: **steps 2.1-2.10 implemented on 2026-10-21; controlled mappings are optional
-inputs and unconfigured namespace gaps remain explicit.**
+Status: **steps 2.1-2.10 implemented on 2026-10-21; quality-gated v2 ranking added on
+2026-10-26; controlled mappings remain optional and namespace gaps remain explicit.**
 
 ### 2.1 Candidate-function grouping
 - namespaced EC, GO, InterPro, Pfam, SUPFAM, orthologous-group, and label candidates **(complete)**
@@ -100,6 +100,10 @@ Exit criteria:
 - real characterized run and 12-artifact repeatability check **(complete: 2026-10-21)**
 - mapping, synonym, relation, reranking, alternatives, and audit unit tests **(complete)**
 - official Pfam 38.2/InterPro 110.0 mapping bundle and repeat run **(complete: 2026-10-22)**
+- biological-source deduplication, capped support aggregation, structure-quality gates,
+  and raw-evidence offline rescoring **(complete: 2026-10-26)**
+- conservative v2 profile selected on development and checked without primary-endpoint
+  regression on validation/test; powered scientific validation remains pending
 
 ## Phase 3 — Benchmarking
 

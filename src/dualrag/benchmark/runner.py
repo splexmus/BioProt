@@ -11,7 +11,7 @@ from dualrag.benchmark.dataset import SwissProtEntry, parse_swissprot
 from dualrag.config import AlphaFoldApiConfig, FusionConfig, StructureConfig
 from dualrag.fasta import read_fasta
 from dualrag.fusion.scoring import fuse_candidates
-from dualrag.io import file_sha256, stable_hash, write_json, write_tsv
+from dualrag.io import file_sha256, read_tsv, stable_hash, write_json, write_tsv
 from dualrag.models import (
     CandidateKind,
     FunctionCandidate,
@@ -51,43 +51,55 @@ def run_phase3_benchmark(
     synonym_path: Path | None = None,
     structure_enabled: bool = True,
     resume: bool = False,
+    reuse_raw_evidence: bool = False,
+    target_pool_k: int = 10,
+    quality_gated_fusion: bool = False,
 ) -> dict[str, object]:
+    if target_pool_k < 10:
+        raise ValueError("target_pool_k must be at least the reported top-K of 10")
     output_dir.mkdir(parents=True, exist_ok=True)
     raw_dir = output_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     queries = read_fasta(dataset_dir / "queries.fasta")
     query_accessions = {_query_accession(query): query for query in queries}
     prohibited = _prohibited_pairs(dataset_dir / "prohibited_targets.tsv")
-    sequence_hits = build_sequence_reference_hits(
-        queries=queries,
-        alignments_path=dataset_dir / "reference_alignments.tsv",
-        swissprot_dat=swissprot_dat,
-        prohibited=prohibited,
-        top_k=10,
-    )
-    write_tsv(
-        raw_dir / "sequence_evidence.tsv",
-        [hit.to_row() for hit in sequence_hits],
-        [item.name for item in dataclass_fields(SequenceEvidence)],
-    )
-
     acquisition_records: list[AcquisitionRecord] = []
     structure_hits: list[StructureEvidence] = []
     structure_exclusions: list[dict[str, object]] = []
-    if structure_enabled:
-        if foldseek_db is None or foldseek_metadata is None or alphafold_cache is None:
-            raise ValueError(
-                "structure retrieval requires Foldseek DB, metadata, and AlphaFold cache"
-            )
-        structure_hits, acquisition_records, structure_exclusions = _structure_hits(
+    if reuse_raw_evidence:
+        sequence_hits = _read_sequence_evidence(raw_dir / "sequence_evidence.tsv")
+        if structure_enabled:
+            structure_hits = _read_structure_evidence(raw_dir / "structure_evidence.tsv")
+            acquisition_records = _read_acquisition_records(raw_dir / "alphafold_acquisition.tsv")
+            structure_exclusions = read_tsv(raw_dir / "structure_exclusions.tsv")
+    else:
+        sequence_hits = build_sequence_reference_hits(
             queries=queries,
-            foldseek_db=foldseek_db,
-            foldseek_metadata=foldseek_metadata,
-            alphafold_cache=alphafold_cache,
-            tmp_dir=tmp_dir,
-            raw_dir=raw_dir,
+            alignments_path=dataset_dir / "reference_alignments.tsv",
+            swissprot_dat=swissprot_dat,
             prohibited=prohibited,
-            resume=resume,
+            top_k=target_pool_k,
+        )
+        if structure_enabled:
+            if foldseek_db is None or foldseek_metadata is None or alphafold_cache is None:
+                raise ValueError(
+                    "structure retrieval requires Foldseek DB, metadata, and AlphaFold cache"
+                )
+            structure_hits, acquisition_records, structure_exclusions = _structure_hits(
+                queries=queries,
+                foldseek_db=foldseek_db,
+                foldseek_metadata=foldseek_metadata,
+                alphafold_cache=alphafold_cache,
+                tmp_dir=tmp_dir,
+                raw_dir=raw_dir,
+                prohibited=prohibited,
+                resume=resume,
+                target_pool_k=target_pool_k,
+            )
+        write_tsv(
+            raw_dir / "sequence_evidence.tsv",
+            [hit.to_row() for hit in sequence_hits],
+            [item.name for item in dataclass_fields(SequenceEvidence)],
         )
     write_tsv(
         raw_dir / "structure_evidence.tsv",
@@ -128,7 +140,10 @@ def run_phase3_benchmark(
             ("B3_STRUCTURE_ONLY", [], struct_variant),
             ("B4_DUAL_DETERMINISTIC", seq_variant, struct_variant),
         ):
-            config = FusionConfig(mapping_path=None, synonym_path=current_synonyms)
+            config = _fusion_config(
+                synonym_path=current_synonyms,
+                quality_gated=quality_gated_fusion,
+            )
             result = fuse_candidates(
                 queries,
                 seq_current,
@@ -174,6 +189,9 @@ def run_phase3_benchmark(
         "created_at": datetime.now(UTC).isoformat(),
         "dataset_id": dataset_dir.name,
         "query_count": len(query_accessions),
+        "target_pool_k": target_pool_k,
+        "raw_evidence_reused": reuse_raw_evidence,
+        "fusion_profile": ("quality-gated-v2" if quality_gated_fusion else "fixed-weight-v1"),
         "sequence_allowed_hit_count": len(sequence_hits),
         "structure_allowed_hit_count": len(structure_hits),
         "structure_exclusion_count": len(structure_exclusions),
@@ -192,6 +210,94 @@ def run_phase3_benchmark(
     }
     write_json(output_dir / "retrieval_summary.json", summary)
     return summary
+
+
+def _read_sequence_evidence(path: Path) -> list[SequenceEvidence]:
+    _require_raw_file(path)
+    return [
+        SequenceEvidence(
+            **_decode_evidence_row(
+                row,
+                list_fields={"go_terms", "ec_numbers", "kegg_terms", "interpro_ids", "pfam_ids"},
+                float_fields={
+                    "sequence_identity",
+                    "alignment_coverage",
+                    "evalue",
+                    "bitscore",
+                    "normalized_score",
+                },
+            )
+        )
+        for row in read_tsv(path)
+    ]
+
+
+def _read_structure_evidence(path: Path) -> list[StructureEvidence]:
+    _require_raw_file(path)
+    return [
+        StructureEvidence(
+            **_decode_evidence_row(
+                row,
+                list_fields={"go_terms", "ec_numbers", "interpro_ids", "supfam_ids"},
+                float_fields={
+                    "foldseek_evalue",
+                    "foldseek_score",
+                    "tm_score",
+                    "query_coverage",
+                    "target_coverage",
+                    "sequence_identity",
+                    "normalized_score",
+                },
+                int_fields={"alignment_length"},
+                bool_fields={"experimental_structure"},
+            )
+        )
+        for row in read_tsv(path)
+    ]
+
+
+def _read_acquisition_records(path: Path) -> list[AcquisitionRecord]:
+    _require_raw_file(path)
+    return [
+        AcquisitionRecord(
+            **_decode_evidence_row(
+                row,
+                int_fields={"http_status"},
+                bool_fields={"sequence_compatible"},
+            )
+        )
+        for row in read_tsv(path)
+    ]
+
+
+def _decode_evidence_row(
+    row: dict[str, str],
+    *,
+    list_fields: set[str] | None = None,
+    float_fields: set[str] | None = None,
+    int_fields: set[str] | None = None,
+    bool_fields: set[str] | None = None,
+) -> dict[str, object]:
+    decoded: dict[str, object] = dict(row)
+    for field in list_fields or set():
+        decoded[field] = [value for value in row[field].split(";") if value]
+    for field in float_fields or set():
+        decoded[field] = float(row[field]) if row[field] else None
+    for field in int_fields or set():
+        decoded[field] = int(row[field]) if row[field] else None
+    for field in bool_fields or set():
+        decoded[field] = (
+            None if not row[field] else row[field].strip().lower() in {"true", "1", "yes"}
+        )
+    for field, value in list(decoded.items()):
+        if value == "":
+            decoded[field] = None
+    return decoded
+
+
+def _require_raw_file(path: Path) -> None:
+    if not path.is_file():
+        raise FileNotFoundError(f"raw evidence reuse requested but file is missing: {path}")
 
 
 def build_sequence_reference_hits(
@@ -270,6 +376,7 @@ def _structure_hits(
     raw_dir: Path,
     prohibited: set[tuple[str, str]],
     resume: bool,
+    target_pool_k: int,
 ) -> tuple[list[StructureEvidence], list[AcquisitionRecord], list[dict[str, object]]]:
     structure_raw = raw_dir / "structure"
     api_config = AlphaFoldApiConfig(enabled=True, request_interval_seconds=0.2)
@@ -284,7 +391,7 @@ def _structure_hits(
         alphafold_api=api_config,
         database_name="Foldseek-PDB",
         database_version="PDB 2025-01-01; SIFTS 2026-10-04",
-        top_k=100,
+        top_k=max(100, target_pool_k * 2),
         executable="foldseek",
         threads=8,
         sensitivity=7.5,
@@ -327,10 +434,36 @@ def _structure_hits(
                 }
             )
             continue
-        if len(allowed[hit.query_id]) < 10:
+        if len(allowed[hit.query_id]) < target_pool_k:
             normalize_structure(hit, "phase3-structure-v1")
             allowed[hit.query_id].append(hit)
     return [hit for query in queries for hit in allowed[query.query_id]], acquisitions, exclusions
+
+
+def _fusion_config(*, synonym_path: Path | None, quality_gated: bool) -> FusionConfig:
+    if not quality_gated:
+        return FusionConfig(mapping_path=None, synonym_path=synonym_path)
+    return FusionConfig(
+        version="quality-gated-v2",
+        rerank_version="support-aggregated-v2",
+        sequence_weight=0.50,
+        structure_weight=0.30,
+        agreement_weight=0.20,
+        mapping_path=None,
+        synonym_path=synonym_path,
+        support_aggregation_enabled=True,
+        support_bonus_max=0.15,
+        support_saturation=3,
+        deep_evidence_filter_enabled=True,
+        direct_hit_k=10,
+        deep_support_min=3,
+        deep_candidate_score_multiplier=0.50,
+        structure_quality_gating_enabled=True,
+        structure_min_query_coverage=0.50,
+        structure_min_target_coverage=0.50,
+        structure_min_tm_score=0.50,
+        structure_quality_floor=0.20,
+    )
 
 
 def _load_projections(path: Path | None) -> dict[str, dict[str, set[str]]]:

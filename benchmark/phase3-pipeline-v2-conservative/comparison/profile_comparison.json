@@ -1,0 +1,21 @@
+{
+  "dual_function_recall_at_10": {
+    "fixed-weight-v1:development": 0.5571428571428572,
+    "fixed-weight-v1:test": 0.7777777777777778,
+    "fixed-weight-v1:validation": 0.7962962962962963,
+    "quality-gated-v2-deep50:development": 0.5630952380952381,
+    "quality-gated-v2-deep50:test": 0.7777777777777778,
+    "quality-gated-v2-deep50:validation": 0.7962962962962963,
+    "quality-gated-v2:development": 0.575,
+    "quality-gated-v2:test": 0.7777777777777778,
+    "quality-gated-v2:validation": 0.7962962962962963
+  },
+  "primary_profile": "quality-gated-v2",
+  "profiles": [
+    "fixed-weight-v1",
+    "quality-gated-v2",
+    "quality-gated-v2-deep50"
+  ],
+  "scientific_conclusion": "NO_MEASURABLE_OVERALL_BENEFIT",
+  "selection_reason": "Higher development FR@5/FR@10 with unchanged validation metrics and unchanged previously exposed test metrics. The 50-hit profile remains experimental."
+}

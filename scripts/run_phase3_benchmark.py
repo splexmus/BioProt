@@ -20,6 +20,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--synonyms", type=Path)
     parser.add_argument("--skip-structure", action="store_true")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--reuse-raw-evidence",
+        action="store_true",
+        help="Rescore preserved raw TSV evidence without rerunning retrieval or external APIs.",
+    )
+    parser.add_argument(
+        "--target-pool-k",
+        type=int,
+        default=10,
+        help="Allowed target hits retained per modality before function aggregation.",
+    )
+    parser.add_argument(
+        "--quality-gated-fusion",
+        action="store_true",
+        help="Use quality-gated-v2 scoring and biological-source support aggregation.",
+    )
     return parser.parse_args()
 
 
@@ -37,6 +53,9 @@ def main() -> None:
         synonym_path=args.synonyms,
         structure_enabled=not args.skip_structure,
         resume=args.resume,
+        reuse_raw_evidence=args.reuse_raw_evidence,
+        target_pool_k=args.target_pool_k,
+        quality_gated_fusion=args.quality_gated_fusion,
     )
     print(json.dumps(summary, indent=2, sort_keys=True))
 

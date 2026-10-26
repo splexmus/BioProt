@@ -257,6 +257,14 @@ support. `evidence-quality-v1` reranks with `0.8 * fixed score + 0.2 * quality s
 Both components and all features remain in `function_candidates.tsv`; none is a
 probability or calibrated confidence.
 
+The production `quality-gated-v2` profile extends this baseline without collapsing the
+modalities. It deduplicates evidence by biological accession, applies a capped bonus
+for independent sources, retains raw modality maxima, and adjusts structure-derived
+function transfer using query coverage, target coverage, and TM-score. Low-rank
+functions from target pools deeper than ten require three independent supports and are
+downweighted. All gates, ranks, raw scores, adjusted scores, and counts remain auditable.
+The frozen `fixed-weight-v1` profile remains reproducible for benchmark comparison.
+
 Phase 2.9 writes `alternatives.tsv` with deterministic top candidates, score deltas,
 and a configurable near-tie flag. Phase 2.10 writes `fusion_audit.json` with status and
 candidate counts, mapping checksums, mapping coverage, and explicit limitations. Both

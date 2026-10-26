@@ -1,0 +1,50 @@
+{
+  "cross_modal": {
+    "conflict_rate": 0.0,
+    "counts": {
+      "both_correct": 30,
+      "both_fail_or_missing": 12,
+      "conflict": 0,
+      "incorrect_consensus": 4,
+      "intersection_prediction": 40,
+      "sequence_rescue": 13,
+      "structure_rescue": 1,
+      "union_correct": 44
+    },
+    "incorrect_consensus_rate": 0.06666666666666667,
+    "intersection_coverage": 0.6666666666666666,
+    "query_count": 60,
+    "sequence_rescue_rate": 0.21666666666666667,
+    "structure_rescue_rate": 0.016666666666666666,
+    "union_recall": 0.7333333333333333
+  },
+  "files": [
+    "aggregate_metrics.tsv",
+    "aggregate_metrics_all.tsv",
+    "biological_error_analysis.tsv",
+    "cross_modal_metrics.json",
+    "domain_metrics.tsv",
+    "evaluation_summary.json",
+    "mapping_ablation_contrasts.tsv",
+    "mapping_ablation_metrics.tsv",
+    "per_query_metrics.tsv",
+    "per_query_metrics_all.tsv",
+    "primary_comparison.json",
+    "secondary_function_metrics.tsv",
+    "secondary_function_metrics_all.tsv",
+    "subgroup_metrics.tsv"
+  ],
+  "primary_comparison": {
+    "bootstrap_replicates": 10000,
+    "ci_lower": 0.0,
+    "ci_upper": 0.0,
+    "conclusion": "NO_MEASURABLE_OVERALL_BENEFIT",
+    "contrast": "B4_DUAL_DETERMINISTIC-minus-B2_SEQUENCE_ONLY",
+    "estimate": 0.0,
+    "metric": "function_recall_at_10",
+    "paired_query_count": 9,
+    "seed": 42
+  },
+  "primary_query_count": 9,
+  "primary_split": "validation"
+}

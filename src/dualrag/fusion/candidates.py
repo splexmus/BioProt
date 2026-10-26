@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import re
+from collections import defaultdict
 
+from dualrag.config import FusionConfig
 from dualrag.models import (
     CandidateContribution,
     CandidateKind,
@@ -32,11 +34,15 @@ GENERIC_LABEL_PATTERNS = (
 
 
 def extract_contributions(
-    sequence_hits: list[SequenceEvidence], structure_hits: list[StructureEvidence]
+    sequence_hits: list[SequenceEvidence],
+    structure_hits: list[StructureEvidence],
+    config: FusionConfig | None = None,
 ) -> list[CandidateContribution]:
     """Convert heterogeneous hit annotations into explicit candidate assertions."""
     contributions: list[CandidateContribution] = []
+    sequence_ranks: dict[str, int] = defaultdict(int)
     for hit in sequence_hits:
+        sequence_ranks[hit.query_id] += 1
         values: list[tuple[CandidateKind, str]] = []
         values.extend((CandidateKind.EC, value) for value in hit.ec_numbers)
         values.extend((CandidateKind.GO, value) for value in hit.go_terms)
@@ -59,10 +65,15 @@ def extract_contributions(
                 score=hit.normalized_score,
                 protein_name=hit.protein_name,
                 values=values,
+                support_id=hit.source_accession or hit.target_id,
+                source_rank=sequence_ranks[hit.query_id],
             )
         )
 
+    structure_ranks: dict[str, int] = defaultdict(int)
     for hit in structure_hits:
+        structure_ranks[hit.query_id] += 1
+        reliability, flags = structure_reliability(hit, config or FusionConfig())
         values = []
         values.extend((CandidateKind.EC, value) for value in hit.ec_numbers)
         values.extend((CandidateKind.GO, value) for value in hit.go_terms)
@@ -81,6 +92,10 @@ def extract_contributions(
                 score=hit.normalized_score,
                 protein_name=hit.protein_name,
                 values=values,
+                support_id=hit.target_uniprot_id or hit.target_structure_id,
+                evidence_reliability=reliability,
+                quality_flags=flags,
+                source_rank=structure_ranks[hit.query_id],
             )
         )
     return contributions
@@ -95,6 +110,10 @@ def _from_values(
     score: float | None,
     protein_name: str | None,
     values: list[tuple[CandidateKind, str]],
+    support_id: str,
+    evidence_reliability: float = 1.0,
+    quality_flags: tuple[str, ...] = (),
+    source_rank: int,
 ) -> list[CandidateContribution]:
     contributions: list[CandidateContribution] = []
     seen: set[str] = set()
@@ -120,9 +139,41 @@ def _from_values(
                 informative=informative,
                 informativeness_reason=reason,
                 original_candidate_id=candidate_id,
+                support_id=support_id,
+                evidence_reliability=evidence_reliability,
+                quality_flags=quality_flags,
+                source_rank=source_rank,
             )
         )
     return contributions
+
+
+def structure_reliability(
+    hit: StructureEvidence, config: FusionConfig
+) -> tuple[float, tuple[str, ...]]:
+    """Return a transparent coverage/TM reliability multiplier for function transfer."""
+    if not config.structure_quality_gating_enabled:
+        return 1.0, ()
+    fields = (
+        ("LOW_QUERY_COVERAGE", hit.query_coverage, config.structure_min_query_coverage),
+        ("LOW_TARGET_COVERAGE", hit.target_coverage, config.structure_min_target_coverage),
+        ("LOW_TM_SCORE", hit.tm_score, config.structure_min_tm_score),
+    )
+    ratios: list[float] = []
+    flags: list[str] = []
+    for flag, value, threshold in fields:
+        if value is None:
+            ratios.append(0.0)
+            flags.append(f"MISSING_{flag.removeprefix('LOW_')}")
+            continue
+        ratios.append(min(max(value / threshold, 0.0), 1.0))
+        if value < threshold:
+            flags.append(flag)
+    geometric = (ratios[0] * ratios[1] * ratios[2]) ** (1 / 3)
+    reliability = (
+        config.structure_quality_floor + (1.0 - config.structure_quality_floor) * geometric
+    )
+    return round(reliability, 6), tuple(flags)
 
 
 def canonical_candidate_id(kind: CandidateKind, value: str) -> str:

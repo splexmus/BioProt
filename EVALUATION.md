@@ -24,6 +24,16 @@ Tier-A gold-label and pilot-cluster screening. External-case FR@10 was 0.743 for
 -0.0590 to 0.0532. See `docs/PHASE3_EXTERNAL_PANEL_REPORT.md`. This is exploratory,
 not a replacement confirmatory test set.
 
+On 2026-10-26, the conservative `quality-gated-v2` profile was selected using the
+development/validation behavior and checked against the previously exposed test split. B4
+FR@10 increased from 0.557 to 0.575 on development and remained 0.796 on validation
+and 0.778 on test. Test precision@10, MRR and nDCG@10 were also unchanged. The deeper
+50-hit profile was retained as experimental because it lowered precision. The v1 test
+split is only a regression check for v2, not fresh confirmatory evidence. These results
+improve the ranking implementation but do not change the contract conclusion of
+`NO_MEASURABLE_OVERALL_BENEFIT`. See `docs/PIPELINE_V2.md` and the comparison artifacts
+under `benchmark/phase3-pipeline-v2-conservative/comparison/`.
+
 ## 1. Research questions
 
 - RQ1: Does dual sequence+structure retrieval increase functional recall over sequence-only retrieval?

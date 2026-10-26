@@ -49,18 +49,30 @@ normalization:
 
 fusion:
   enabled: true
-  version: fixed-weight-v1
-  sequence_weight: 0.4
-  structure_weight: 0.4
+  version: quality-gated-v2
+  sequence_weight: 0.5
+  structure_weight: 0.3
   agreement_weight: 0.2
   mapping_path: /media/splexmus/4TB_HDD1/dualrag/databases/metadata/dualrag-phase2-mapping-bundle-2026-10-22/mappings.tsv
   synonym_path: /media/splexmus/4TB_HDD1/dualrag/databases/metadata/dualrag-phase2-mapping-bundle-2026-10-22/synonyms.tsv
-  rerank_version: evidence-quality-v1
+  rerank_version: support-aggregated-v2
   base_score_weight: 0.8
   quality_weight: 0.2
   conflict_report_top_k: 5
   alternatives_top_k: 5
   ambiguity_margin: 0.05
+  support_aggregation_enabled: true
+  support_bonus_max: 0.15
+  support_saturation: 3
+  deep_evidence_filter_enabled: true
+  direct_hit_k: 10
+  deep_support_min: 3
+  deep_candidate_score_multiplier: 0.5
+  structure_quality_gating_enabled: true
+  structure_min_query_coverage: 0.5
+  structure_min_target_coverage: 0.5
+  structure_min_tm_score: 0.5
+  structure_quality_floor: 0.2
 
 literature:
   enabled: false
