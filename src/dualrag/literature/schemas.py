@@ -277,19 +277,40 @@ class LiteratureCandidate(ContractModel):
 
 class BiologicalEvidenceReference(ContractModel):
     modality: EvidenceModality
-    candidate_id: str = Field(min_length=1)
+    evidence_id: str | None = Field(default=None, min_length=1)
+    candidate_id: str | None = Field(default=None, min_length=1)
+    target_id: str | None = Field(default=None, min_length=1)
+    label: str | None = Field(default=None, min_length=1)
+    rank: int | None = Field(default=None, ge=1)
     score: float
+    raw_metrics: dict[str, float | int | str | bool | None] = Field(default_factory=dict)
+    annotations: dict[str, list[str]] = Field(default_factory=dict)
+    tool: str | None = None
+    tool_version: str | None = None
+    database: str | None = None
+    database_version: str | None = None
+    normalization_version: str | None = None
+    structure_source: str | None = None
+    experimental_structure: bool | None = None
     source_ids: list[str] = Field(min_length=1)
     run_id: str = Field(min_length=1)
     parameters_hash: str = Field(min_length=1)
     artifact_path: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_target_identity(self) -> BiologicalEvidenceReference:
+        if not self.target_id and not self.candidate_id:
+            raise ValueError("biological evidence requires target_id or candidate_id")
+        return self
 
 
 class EvidencePacket(ContractModel):
     packet_id: str = Field(min_length=1)
     contract_id: str = "phase4-literature-v1"
     query: LiteratureQuery
-    biological_evidence: list[BiologicalEvidenceReference] = Field(default_factory=list)
+    biological_evidence: list[BiologicalEvidenceReference] = Field(
+        default_factory=list, max_length=10
+    )
     literature_hits: list[LiteratureHit] = Field(max_length=20)
     alternative_hypotheses: list[str] = Field(default_factory=list)
     contradiction_hit_ids: list[str] = Field(default_factory=list)
@@ -298,6 +319,13 @@ class EvidencePacket(ContractModel):
 
     @model_validator(mode="after")
     def validate_packet_links_and_limits(self) -> EvidencePacket:
+        biological_ids = [
+            item.evidence_id
+            for item in self.biological_evidence
+            if item.evidence_id is not None
+        ]
+        if len(biological_ids) != len(set(biological_ids)):
+            raise ValueError("biological evidence IDs must be unique")
         hit_ids = [hit.hit_id for hit in self.literature_hits]
         if len(hit_ids) != len(set(hit_ids)):
             raise ValueError("literature hit IDs must be unique")

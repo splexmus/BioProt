@@ -148,9 +148,10 @@ Exit criteria:
 
 ## Phase 4 — Literature RAG
 
-Status: **Phase 4.0-4.7 engineering implementation and five-query live HDD pilot
-complete on 2026-10-26. Pooled evaluation v2 and a leakage-safe 20-query exit runner
-are implemented; expert annotation and a passing exit run remain pending.**
+Status: **Phase 4.0-4.7 engineering implementation is complete. The human-provenanced
+20-query v4 run passes the separate Phase 5 development-transition policy, while its
+frozen scientific exit remains `FAIL` because six retrieval-quality checks missed their
+thresholds.**
 
 - frozen relevance, evidence-role, review, entity/organism, access, and packet-limit
   contract **(4.0 complete)**
@@ -169,13 +170,15 @@ are implemented; expert annotation and a passing exit run remain pending.**
   thresholds **(4.7 implemented; expert annotations and passing result pending)**
 
 Exit criteria:
-- literature retrieval precision/recall evaluation on a sufficiently large expert-
-  labelled subset **(not yet met)**
+- literature retrieval precision/recall evaluation on a 20-query human-labelled subset
+  **(evaluated; scientific thresholds not met)**
+- Phase 5 engineering transition **(PASS_FOR_PHASE5_DEVELOPMENT; not a scientific pass)**
 
 ## Phase 5 — LLM synthesis
 
-Status: **engineering implementation available with local Ollama and an explicit
-unvalidated-Phase-4 override; live model smoke test and human/expert evaluation pending.**
+Status: **`PASS_FOR_PHASE6_DEVELOPMENT` based on project-owner acceptance of the
+grounded output and completed deterministic report verification. Blinded expert
+comparison remains pending, so this is not a scientific Phase 5 pass.**
 
 - structured, bounded prompt/context with versioned templates **(implemented)**
 - grounded typed report schema with `NOT_CALIBRATED` confidence **(implemented)**
@@ -183,19 +186,28 @@ unvalidated-Phase-4 override; live model smoke test and human/expert evaluation 
   **(implemented)**
 - deterministic citation/evidence-link verifier **(implemented)**
 - controlled-identifier and experimental-overclaim checks **(implemented)**
+- Phase 5.1 bounded biological evidence: top five leakage-filtered sequence and
+  structure records, separate modalities, raw metrics and provenance **(complete)**
+- separate sequence-support, structure-support, and cross-modal report sections with
+  modality-discussion verification **(complete)**
 - human/expert evaluation sample **(pending)**
 
 Exit criteria:
 - generated reports are more useful without reducing factual grounding
 
 ## Phase 6 — Confidence calibration
-- collect prediction/evidence features
-- train/fit calibration model on validation data
-- reliability diagrams / Brier score / ECE
-- define confidence labels
+
+Status: **engineering-complete development pilot. Platt calibration fitted on 51
+development examples and evaluated on 15 validation examples; exposed test excluded.**
+
+- collect prediction/evidence features **(complete)**
+- fit external Platt calibrator on development data **(complete)**
+- validation reliability diagram / Brier score / ECE / log-loss **(complete)**
+- define descriptive LOW/MODERATE/HIGH labels **(complete)**
 
 Exit criteria:
 - confidence correlates with empirical correctness on held-out characterized proteins
+  **(development evidence only; larger newly locked cohort pending)**
 
 ## Phase 7 — Optional GraphRAG
 - build protein/function/domain/publication graph

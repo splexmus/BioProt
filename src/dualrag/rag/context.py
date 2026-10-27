@@ -3,7 +3,7 @@ from __future__ import annotations
 from dualrag.literature.schemas import EvidencePacket
 from dualrag.rag.schemas import ContextEvidence, GenerationContext
 
-CONTEXT_BUILDER_VERSION = "phase5-context-v1"
+CONTEXT_BUILDER_VERSION = "phase5-context-v2"
 
 
 def build_generation_context(
@@ -39,17 +39,21 @@ def build_generation_context(
             )
         )
     for reference in packet.biological_evidence:
+        evidence_id = reference.evidence_id or (
+            f"bio:{reference.modality}:{reference.candidate_id or reference.target_id}"
+        )
+        evidence_type = {
+            "SEQUENCE": "SEQUENCE_RETRIEVAL_HIT",
+            "STRUCTURE": "STRUCTURE_RETRIEVAL_HIT",
+            "DOMAIN_ONTOLOGY": "DOMAIN_ONTOLOGY",
+        }[str(reference.modality)]
         evidence.append(
             ContextEvidence(
-                evidence_id=f"bio:{reference.modality}:{reference.candidate_id}",
-                evidence_type=str(reference.modality),
-                label=reference.candidate_id,
-                details={
-                    "score": reference.score,
-                    "source_ids": reference.source_ids,
-                    "run_id": reference.run_id,
-                    "parameters_hash": reference.parameters_hash,
-                },
+                evidence_id=evidence_id,
+                evidence_type=evidence_type,
+                label=reference.label or reference.target_id or reference.candidate_id or "unknown",
+                details=reference.model_dump(mode="json", exclude_none=True),
+                assessed_role="COMPUTATIONAL_PREDICTION",
             )
         )
     for hit in packet.literature_hits:

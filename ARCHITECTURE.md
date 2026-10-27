@@ -303,6 +303,13 @@ Evidence packets enforce the frozen limits of 10 unique articles, 20 passages, a
 passages per article. They reference compact upstream biological evidence rather than
 copying full result tables or papers. See `docs/LITERATURE_CONTRACT.md`.
 
+Phase 5.1 fills those compact biological references from leakage-filtered Phase 3
+evidence, bounded to five sequence and five structure hits per query. Each record keeps
+raw metrics, normalized rank, annotations, tool/database versions, artifact provenance,
+and experimental-versus-predicted structure status when available. The current benchmark
+uses MMseqs2/Swiss-Prot for its rankable sequence channel and Foldseek/PDB-SIFTS for its
+structure channel. No gold labels enter this enrichment step.
+
 Phase 4.2 implements the deterministic boundary between biological retrieval and source
 adapters. `build-literature-queries` reads only the query, candidate, fusion,
 alternative, sequence-hit, and run-provenance artifacts. It selects ranked informative
@@ -362,7 +369,18 @@ ALTERNATIVE HYPOTHESES
 INSTRUCTIONS / CLAIM BOUNDARIES
 ```
 
+Phase 5 context contract v2 exposes biological records as
+`SEQUENCE_RETRIEVAL_HIT` and `STRUCTURE_RETRIEVAL_HIT`. Both are computational
+predictions, their normalized scores are not confidence probabilities, and Foldseek
+matches are not relabelled as sequence homologs.
+
 ## 12. LLM generator
+
+Phase 6 confidence is external to the LLM. Calibrator v1 maps the B4 top-1 ranking score
+to an estimated probability of exact Tier-A EC/GO-MF correctness. It is fitted only on
+the development split, evaluated on validation, and never reads literature labels or
+LLM self-confidence. Diagnostic evidence features remain exported for future larger
+cohorts but are not fitted in the small pilot.
 Required output fields:
 
 - predicted function

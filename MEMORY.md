@@ -319,3 +319,29 @@ When a durable decision changes, append a short entry below rather than silently
   20-query `gemma3:4b` development run completed with 20 `PASS_WITH_WARNINGS` verifier
   results, all warnings caused by the deliberate Phase 4 bypass. This is engineering
   validation only; semantic truth and Phase 5 usefulness still require expert review.
+- 2026-10-27: assessed the human-labelled 20-query Phase 4 v4 run with a separate
+  `phase4-to-phase5-development-v1` transition policy. It records
+  `PASS_FOR_PHASE5_DEVELOPMENT` because readiness/provenance checks pass, while the
+  frozen scientific exit remains `FAIL`; recall@10, nDCG@10, citation precision/recall,
+  entity correctness, and organism correctness remain below threshold. Phase 5 must
+  retain the scientific-gate override, treat this literature conservatively, and keep
+  confidence `NOT_CALIBRATED` until those gates and later calibration are completed.
+- 2026-10-27: completed Phase 5.1 bounded biological-evidence enrichment. The v4 HDD
+  packet set now has a separate checksummed `evidence_packets.biological-v1.jsonl` with
+  up to five leakage-filtered records per modality: 80 MMseqs2/Swiss-Prot sequence hits
+  and 70 Foldseek/PDB-SIFTS structure hits across 20 queries. Six queries correctly have
+  no allowed structure hit. Context/prompt v2 keeps modalities separate, preserves raw
+  metrics and provenance, reads no benchmark gold labels, and retains `NOT_CALIBRATED`.
+- 2026-10-27: Phase 5 Markdown renderer v2 now shows sequence retrieval, structure
+  retrieval, and cross-modal interpretation as separate topics with bounded raw metrics,
+  annotations, and provenance. Prompt v3 requests modality-specific claims, and verifier
+  v2 warns when available sequence or structure evidence is not discussed. Generation
+  adapter v4 deterministically adds conservative top-hit modality claims when Gemma omits
+  them while retaining the unchanged raw model response.
+- 2026-10-27: recorded `PASS_FOR_PHASE6_DEVELOPMENT` after project-owner acceptance of
+  Phase 5 output; blinded expert comparison remains pending. Implemented Phase 6
+  `phase6-platt-v1`, which estimates exact top-1 Tier-A EC/GO-MF correctness from the B4
+  ranking score. It fitted 51 examples from 36 development proteins and evaluated 15
+  examples from nine validation proteins; the exposed test split was excluded. Validation
+  Brier improved 0.3069 to 0.2729, ECE 0.2387 to 0.1824, and log-loss 0.9071 to 0.7406.
+  This remains `DEVELOPMENT_PILOT_NOT_FOR_PRODUCTION` due to the tiny validation cohort.

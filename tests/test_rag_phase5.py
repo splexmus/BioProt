@@ -21,6 +21,7 @@ from dualrag.rag.ollama import OllamaClient, OllamaConfig
 from dualrag.rag.pipeline import run_generation_pipeline
 from dualrag.rag.schemas import (
     ClaimType,
+    ContextEvidence,
     GroundedProteinReport,
     InferenceLevel,
     ReportClaim,
@@ -139,6 +140,31 @@ def test_verifier_rejects_unassessed_literature_as_direct_support() -> None:
     )
 
 
+def test_verifier_warns_when_available_modality_is_not_discussed() -> None:
+    context = build_generation_context(
+        _packet(), phase4_exit_status="PASS", phase4_exit_override=False
+    )
+    context = context.model_copy(
+        update={
+            "evidence": [
+                *context.evidence,
+                ContextEvidence(
+                    evidence_id="bio:sequence:T1",
+                    evidence_type="SEQUENCE_RETRIEVAL_HIT",
+                    label="Sequence target",
+                    assessed_role="COMPUTATIONAL_PREDICTION",
+                ),
+            ]
+        }
+    )
+    context = type(context).model_validate(context.model_dump())
+    verification = verify_report(_report(), context)
+    assert any(
+        finding.code == "SEQUENCE_SUPPORT_NOT_DISCUSSED"
+        for finding in verification.findings
+    )
+
+
 class _Response:
     def __init__(self, payload: dict[str, object]):
         self.payload = payload
@@ -195,6 +221,63 @@ def test_ollama_adapter_requests_schema_constrained_json() -> None:
     assert session.last_payload["options"] == {"temperature": 0.0, "seed": 42}
 
 
+def test_ollama_adapter_adds_missing_biological_modality_claims() -> None:
+    session = _Session(_report())
+    client = OllamaClient(OllamaConfig(model="test-model"), session=session)
+    context = build_generation_context(
+        _packet(), phase4_exit_status="PASS", phase4_exit_override=False
+    )
+    context = context.model_copy(
+        update={
+            "evidence": [
+                *context.evidence,
+                ContextEvidence(
+                    evidence_id="bio:sequence:T1",
+                    evidence_type="SEQUENCE_RETRIEVAL_HIT",
+                    label="Sequence target",
+                    details={
+                        "rank": 1,
+                        "target_id": "T1",
+                        "raw_metrics": {
+                            "sequence_identity": 0.8,
+                            "alignment_coverage": 0.9,
+                        },
+                    },
+                    assessed_role="COMPUTATIONAL_PREDICTION",
+                ),
+                ContextEvidence(
+                    evidence_id="bio:structure:1abc_A",
+                    evidence_type="STRUCTURE_RETRIEVAL_HIT",
+                    label="Structure target",
+                    details={
+                        "rank": 1,
+                        "target_id": "1abc_A",
+                        "raw_metrics": {
+                            "tm_score": 0.7,
+                            "query_coverage": 0.8,
+                            "target_coverage": 0.9,
+                        },
+                    },
+                    assessed_role="COMPUTATIONAL_PREDICTION",
+                ),
+            ]
+        }
+    )
+    context = type(context).model_validate(context.model_dump())
+
+    report, _raw = client.generate_report(
+        context=context,
+        system_prompt="system",
+        report_prompt="context={context_json}",
+    )
+
+    by_id = {claim.claim_id: claim for claim in report.claims}
+    assert by_id["system:sequence-top-hit"].evidence_ids == ["bio:sequence:T1"]
+    assert "identity=0.8" in by_id["system:sequence-top-hit"].text
+    assert by_id["system:structure-top-hit"].evidence_ids == ["bio:structure:1abc_A"]
+    assert "TM-score=0.7" in by_id["system:structure-top-hit"].text
+
+
 def test_pipeline_refuses_unvalidated_phase4_without_override(tmp_path: Path) -> None:
     run_dir = tmp_path / "phase4"
     run_dir.mkdir()
@@ -226,6 +309,17 @@ def test_pipeline_writes_experimental_override_manifest(tmp_path: Path) -> None:
     system.write_text("system", encoding="utf-8")
     prompt.write_text("{context_json}", encoding="utf-8")
     client = OllamaClient(OllamaConfig(model="test-model"), session=_Session(_report()))
+    (run_dir / "phase4_exit_manifest.json").write_text(
+        json.dumps(
+            {
+                "evaluation": {"status": "FAIL"},
+                "phase5_development_transition": {
+                    "status": "PASS_FOR_PHASE5_DEVELOPMENT"
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
 
     manifest = run_generation_pipeline(
         packets_path=packets,
@@ -238,6 +332,10 @@ def test_pipeline_writes_experimental_override_manifest(tmp_path: Path) -> None:
 
     assert manifest["report_count"] == 1
     assert manifest["phase4_exit_override"] is True
+    assert (
+        manifest["phase4_development_transition_status"]
+        == "PASS_FOR_PHASE5_DEVELOPMENT"
+    )
     assert manifest["scientific_status"] == "EXPERIMENTAL_UNVALIDATED_PHASE4_OVERRIDE"
     assert manifest["verification_status_counts"] == {"PASS_WITH_WARNINGS": 1}
     assert (tmp_path / "output/reports/P01040.md").is_file()

@@ -92,3 +92,16 @@ thresholds are frozen in `config/literature-evaluation-v2.yaml` before annotatio
 all checks must pass. A `PASS` supports moving to Phase 5 as a development-pilot gate;
 it does not establish experimental confirmation, clinical validity, or absolute
 literature recall.
+
+## Separate Phase 5 development transition
+
+`config/phase4-development-transition-v1.yaml` separates engineering readiness from
+retrieval-quality success. A completely judged, human-provenanced, contradiction-covered
+20-query pool with usable candidate coverage may receive
+`PASS_FOR_PHASE5_DEVELOPMENT` even when the frozen scientific exit status remains
+`FAIL`. The Phase 4 manifest records both decisions and lists every failed scientific
+check.
+
+This status permits prompt, schema, verifier, and human-comparison development only. It
+does not validate the literature as direct support, change the frozen thresholds, allow
+calibrated confidence, or constitute a Phase 4 scientific pass.

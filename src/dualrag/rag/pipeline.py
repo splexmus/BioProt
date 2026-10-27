@@ -18,8 +18,8 @@ from dualrag.rag.render import render_markdown
 from dualrag.rag.schemas import GenerationRecord, GroundedProteinReport, ReportVerification
 from dualrag.rag.verifier import verify_report
 
-GENERATION_PIPELINE_VERSION = "phase5-ollama-generation-v1"
-PROMPT_VERSION = "phase5-grounded-report-v1"
+GENERATION_PIPELINE_VERSION = "phase5-ollama-generation-v4"
+PROMPT_VERSION = "phase5-grounded-report-v3"
 
 
 def run_generation_pipeline(
@@ -45,6 +45,9 @@ def run_generation_pipeline(
         raise ValueError("no evidence packets selected for generation")
 
     phase4_status = _phase4_exit_status(packets_path.parent)
+    phase4_development_transition = _phase4_development_transition_status(
+        packets_path.parent
+    )
     if phase4_status != "PASS" and not allow_unvalidated_phase4:
         raise ValueError(
             f"Phase 4 exit status is {phase4_status!r}; pass "
@@ -91,7 +94,9 @@ def run_generation_pipeline(
         report_path = reports_dir / f"{query_id}.json"
         markdown_path = reports_dir / f"{query_id}.md"
         write_json(report_path, report.model_dump(mode="json"))
-        markdown_path.write_text(render_markdown(report, verification), encoding="utf-8")
+        markdown_path.write_text(
+            render_markdown(report, verification, context), encoding="utf-8"
+        )
         reports.append(report)
         verifications.append(verification)
         records.append(
@@ -127,6 +132,7 @@ def run_generation_pipeline(
         "report_count": len(reports),
         "verification_status_counts": dict(sorted(status_counts.items())),
         "phase4_exit_status": phase4_status,
+        "phase4_development_transition_status": phase4_development_transition,
         "phase4_exit_override": phase4_status != "PASS",
         "scientific_status": (
             "EXPERIMENTAL_UNVALIDATED_PHASE4_OVERRIDE"
@@ -180,6 +186,17 @@ def _phase4_exit_status(run_dir: Path) -> str:
         if isinstance(acceptance, dict) and acceptance.get("status"):
             return str(acceptance["status"])
     return "NOT_EVALUATED"
+
+
+def _phase4_development_transition_status(run_dir: Path) -> str:
+    path = run_dir / "phase4_exit_manifest.json"
+    if not path.is_file():
+        return "NOT_ASSESSED"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    transition = manifest.get("phase5_development_transition")
+    if isinstance(transition, dict) and transition.get("status"):
+        return str(transition["status"])
+    return "NOT_ASSESSED"
 
 
 def _model_available(requested: str, available: list[str]) -> bool:

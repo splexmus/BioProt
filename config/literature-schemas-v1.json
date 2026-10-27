@@ -281,23 +281,151 @@
         "BiologicalEvidenceReference": {
           "additionalProperties": false,
           "properties": {
+            "annotations": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "title": "Annotations",
+              "type": "object"
+            },
             "artifact_path": {
               "minLength": 1,
               "title": "Artifact Path",
               "type": "string"
             },
             "candidate_id": {
-              "minLength": 1,
-              "title": "Candidate Id",
-              "type": "string"
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Candidate Id"
+            },
+            "database": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Database"
+            },
+            "database_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Database Version"
+            },
+            "evidence_id": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Evidence Id"
+            },
+            "experimental_structure": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Experimental Structure"
+            },
+            "label": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Label"
             },
             "modality": {
               "$ref": "#/$defs/EvidenceModality"
+            },
+            "normalization_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Normalization Version"
             },
             "parameters_hash": {
               "minLength": 1,
               "title": "Parameters Hash",
               "type": "string"
+            },
+            "rank": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Rank"
+            },
+            "raw_metrics": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "title": "Raw Metrics",
+              "type": "object"
             },
             "run_id": {
               "minLength": 1,
@@ -321,11 +449,59 @@
               "minItems": 1,
               "title": "Source Ids",
               "type": "array"
+            },
+            "structure_source": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Structure Source"
+            },
+            "target_id": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Target Id"
+            },
+            "tool": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Tool"
+            },
+            "tool_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Tool Version"
             }
           },
           "required": [
             "modality",
-            "candidate_id",
             "score",
             "source_ids",
             "run_id",
@@ -1022,6 +1198,7 @@
           "items": {
             "$ref": "#/$defs/BiologicalEvidenceReference"
           },
+          "maxItems": 10,
           "title": "Biological Evidence",
           "type": "array"
         },

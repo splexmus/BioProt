@@ -1,0 +1,45 @@
+schema_version: 2
+contract_id: phase5-grounded-generation-v2
+status: frozen_for_phase5_1_biological_evidence
+extends: phase5-grounded-generation-v1
+phase4_entry_gate:
+  required_status: PASS
+  development_transition_status: PASS_FOR_PHASE5_DEVELOPMENT
+  scientific_override_still_required: true
+scope:
+  output: putative_protein_function_hypothesis
+  experimental_confirmation: false
+  clinical_use: false
+  confidence_status: NOT_CALIBRATED
+biological_evidence:
+  maximum_sequence_records_per_query: 5
+  maximum_structure_records_per_query: 5
+  preserve_modalities_separately: true
+  selection: descending_normalized_score
+  normalized_score_is_confidence: false
+  foldseek_match_is_automatically_homolog: false
+  transferred_annotation_is_query_confirmation: false
+required_sequence_fields_when_available:
+  - target_id
+  - sequence_identity
+  - alignment_coverage
+  - evalue
+  - bitscore
+  - annotations
+  - tool_and_database_provenance
+required_structure_fields_when_available:
+  - target_structure_id
+  - target_uniprot_id
+  - foldseek_evalue
+  - foldseek_score
+  - tm_score
+  - query_coverage
+  - target_coverage
+  - annotations
+  - structure_source
+  - experimental_structure
+prohibited_context:
+  - benchmark_gold_labels
+  - held_out_answers
+  - complete_database_dumps
+  - complete_articles

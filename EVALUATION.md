@@ -196,6 +196,13 @@ Evaluate with:
 
 Compare external calibration to LLM self-confidence as a baseline, not as the preferred method.
 
+Phase 6 freezes `phase6-confidence-calibration-v1`: fit an external L2-regularized
+Platt model on development top-1 B4 scores and evaluate once on validation. The exposed
+test split is prohibited. The development run improves validation Brier score from
+0.3069 to 0.2729, ECE from 0.2387 to 0.1824, and log-loss from 0.9071 to 0.7406 across
+only 15 query-namespace examples. This is engineering evidence, not production
+calibration; see `docs/PHASE6_REPORT.md`.
+
 ## 10. Ablation study
 Full system versus:
 

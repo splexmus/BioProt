@@ -1,0 +1,57 @@
+schema_version: 1
+contract_id: phase6-confidence-calibration-v1
+status: frozen_before_phase6_development_run
+scientific_status: DEVELOPMENT_PILOT_NOT_FOR_PRODUCTION
+target:
+  unit: query_namespace_top1_prediction
+  namespaces: [EC, GO_MF]
+  outcome: exact_match_to_admissible_tier_a_gold
+  condition: a_top1_prediction_exists
+  interpretation: probability_that_the_top_ranked_function_identifier_is_exactly_correct
+data_policy:
+  fit_split: development
+  evaluation_split: validation
+  prohibited_split: test
+  prohibited_inputs:
+    - phase4_literature_labels
+    - llm_self_reported_confidence
+    - benchmark_test_labels
+  query_weighting: equal_weight_per_protein_across_available_namespaces
+model:
+  family: platt_logistic
+  input_feature: top1_ranking_score
+  standardize_on_fit_split: true
+  l2_penalty_on_slope: 1.0
+  maximum_iterations: 100
+  convergence_tolerance: 1.0e-10
+diagnostic_features_not_used_for_fitting:
+  - top1_top2_margin
+  - sequence_score
+  - structure_score
+  - structure_reliability_score
+  - agreement_reliability_score
+  - modality_support
+  - hit_support
+  - evidence_quality_score
+  - evidence_counts
+  - cross_modal_status
+  - difficulty_stratum
+confidence_labels:
+  LOW: [0.0, 0.5]
+  MODERATE: [0.5, 0.75]
+  HIGH: [0.75, 1.0]
+  interval_convention: lower_inclusive_upper_exclusive_except_final
+evaluation:
+  reliability_bins: 5
+  metrics:
+    - brier_score
+    - expected_calibration_error
+    - log_loss
+    - accuracy_by_confidence_label
+  compare_against: clipped_raw_ranking_score
+claim_boundaries:
+  - The current cohort is too small for production calibration.
+  - Validation contains only nine proteins and fifteen query-namespace examples.
+  - The exposed test split is not used for fitting, selection, or evaluation.
+  - Calibrated probability estimates top-1 exact identifier correctness, not experimental truth.
+  - Confidence does not apply to free-text biological claims or literature truthfulness.

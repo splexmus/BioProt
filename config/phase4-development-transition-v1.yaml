@@ -1,0 +1,19 @@
+schema_version: 1
+policy_version: phase4-to-phase5-development-v1
+purpose: permit Phase 5 engineering work while preserving the Phase 4 scientific exit result
+required_readiness_checks:
+  - minimum_queries
+  - complete_candidate_pool
+  - expert_annotation_provenance
+  - minimum_contradiction_labels
+  - query_candidate_coverage
+passing_status: PASS_FOR_PHASE5_DEVELOPMENT
+failing_status: HOLD_FOR_PHASE5_DEVELOPMENT
+permitted_work:
+  - phase5_engineering
+  - phase5_prompt_and_verifier_evaluation
+claim_boundary:
+  - This policy does not alter the frozen Phase 4 retrieval-quality thresholds.
+  - Failed scientific checks remain visible and must be carried into Phase 5 limitations.
+  - Literature from a failed Phase 4 scientific gate is not validated direct support.
+  - Phase 5 confidence remains NOT_CALIBRATED.

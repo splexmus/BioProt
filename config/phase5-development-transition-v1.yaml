@@ -1,0 +1,18 @@
+schema_version: 1
+policy_version: phase5-to-phase6-development-v1
+recorded_at: 2026-10-27
+status: PASS_FOR_PHASE6_DEVELOPMENT
+basis:
+  - project_owner_reports_that_the_phase5_output_is_satisfactory
+  - structured_generation_and_deterministic_verification_are_operational
+  - sequence_and_structure_support_are_rendered_as_separate_topics
+  - raw_model_responses_and_evidence_links_are_preserved
+does_not_claim:
+  - blinded_expert_preference
+  - biological_truth_validation
+  - production_readiness
+  - calibrated_confidence
+remaining_phase5_scientific_work:
+  - blinded_comparison_with_deterministic_template_baseline
+  - comparison_with_biological_evidence_only_generation
+  - expert_factual_grounding_and_usefulness_review

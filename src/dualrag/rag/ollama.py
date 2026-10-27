@@ -152,7 +152,12 @@ def _canonicalize_claim_roles(
             for evidence_id in claim.evidence_ids
             if evidence_id in evidence
         }
-        if "COMPUTATIONAL_CANDIDATE" in types:
+        if types & {
+            "COMPUTATIONAL_CANDIDATE",
+            "SEQUENCE_RETRIEVAL_HIT",
+            "STRUCTURE_RETRIEVAL_HIT",
+            "DOMAIN_ONTOLOGY",
+        }:
             level = InferenceLevel.COMPUTATIONAL_PREDICTION
         elif "SEQUENCE_HOMOLOG" in types:
             level = InferenceLevel.INDIRECT_HOMOLOG_EVIDENCE
@@ -192,4 +197,72 @@ def _canonicalize_claim_roles(
                 evidence_ids=[matching.evidence_id],
             ),
         )
+    claims.extend(_missing_modality_claims(claims, context))
     return report.model_copy(update={"claims": claims})
+
+
+def _missing_modality_claims(
+    claims: list[ReportClaim], context: GenerationContext
+) -> list[ReportClaim]:
+    additions: list[ReportClaim] = []
+    specifications = (
+        ("SEQUENCE_RETRIEVAL_HIT", ClaimType.SEQUENCE, "sequence"),
+        ("STRUCTURE_RETRIEVAL_HIT", ClaimType.STRUCTURE, "structure"),
+    )
+    for evidence_type, claim_type, modality in specifications:
+        records = [item for item in context.evidence if item.evidence_type == evidence_type]
+        if not records:
+            continue
+        record_ids = {item.evidence_id for item in records}
+        if any(
+            claim.claim_type is claim_type and bool(set(claim.evidence_ids) & record_ids)
+            for claim in claims
+        ):
+            continue
+        top = min(records, key=lambda item: int(item.details.get("rank", 10**9)))
+        metrics = top.details.get("raw_metrics", {})
+        metric_text = _modality_metric_text(modality, metrics)
+        target = top.details.get("target_id", top.evidence_id)
+        transfer_note = (
+            "Functional transfer from this sequence match remains computational."
+            if modality == "sequence"
+            else "Structural similarity does not by itself establish identical function."
+        )
+        additions.append(
+            ReportClaim(
+                claim_id=f"system:{modality}-top-hit",
+                claim_type=claim_type,
+                text=(
+                    f"The top {modality} retrieval hit is {top.label} ({target})"
+                    f"{metric_text}. {transfer_note}"
+                ),
+                inference_level=InferenceLevel.COMPUTATIONAL_PREDICTION,
+                evidence_ids=[top.evidence_id],
+            )
+        )
+    return additions
+
+
+def _modality_metric_text(modality: str, metrics: object) -> str:
+    if not isinstance(metrics, dict):
+        return ""
+    fields = (
+        ("sequence_identity", "identity"),
+        ("alignment_coverage", "coverage"),
+    ) if modality == "sequence" else (
+        ("tm_score", "TM-score"),
+        ("query_coverage", "query coverage"),
+        ("target_coverage", "target coverage"),
+    )
+    rendered = [
+        f"{label}={_short_number(metrics[key])}"
+        for key, label in fields
+        if metrics.get(key) is not None
+    ]
+    return f" with {', '.join(rendered)}" if rendered else ""
+
+
+def _short_number(value: object) -> str:
+    if isinstance(value, float):
+        return f"{value:.4g}"
+    return str(value)

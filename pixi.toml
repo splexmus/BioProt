@@ -29,4 +29,5 @@ smoke-fixture = "python -m dualrag run --config config/config.yaml --input tests
 smoke-literature-query = { cmd = "python -m dualrag build-literature-queries --run results/pixi-smoke --output results/pixi-smoke-literature-queries --context tests/fixtures/literature_query_context.tsv", depends-on = ["smoke-fixture"] }
 phase4-hdd-help = "bash scripts/run_phase4_on_hdd.sh --help"
 phase5-ollama-help = "bash scripts/run_phase5_ollama.sh --help"
+phase6-calibration-help = "bash scripts/run_phase6_calibration.sh --help"
 validate = { depends-on = ["test", "lint", "cli", "check-tools"] }

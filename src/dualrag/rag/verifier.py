@@ -5,6 +5,7 @@ import re
 from datetime import UTC, datetime
 
 from dualrag.rag.schemas import (
+    ContextEvidence,
     GenerationContext,
     GroundedProteinReport,
     InferenceLevel,
@@ -14,7 +15,7 @@ from dualrag.rag.schemas import (
     VerificationStatus,
 )
 
-VERIFIER_VERSION = "deterministic-report-verifier-v1"
+VERIFIER_VERSION = "deterministic-report-verifier-v2"
 _CONTROLLED_ID = re.compile(
     r"\b(?:GO:\d{7}|EC:\d+(?:\.[\d-]+){1,3}|IPR\d{6}|PF\d{5}|[A-NR-Z][0-9][A-Z0-9]{3}[0-9])\b"
 )
@@ -77,6 +78,7 @@ def verify_report(report: GroundedProteinReport, context: GenerationContext) -> 
                     message="Scientific claim has no supplied evidence ID.",
                 )
             )
+
         for evidence_id in claim.evidence_ids:
             item = evidence.get(evidence_id)
             if item is None:
@@ -129,6 +131,23 @@ def verify_report(report: GroundedProteinReport, context: GenerationContext) -> 
                     message="Computational prediction is phrased as experimental certainty.",
                 )
             )
+
+    _check_modality_discussion(
+        evidence=evidence,
+        report=report,
+        evidence_type="SEQUENCE_RETRIEVAL_HIT",
+        claim_type="SEQUENCE",
+        finding_code="SEQUENCE_SUPPORT_NOT_DISCUSSED",
+        findings=findings,
+    )
+    _check_modality_discussion(
+        evidence=evidence,
+        report=report,
+        evidence_type="STRUCTURE_RETRIEVAL_HIT",
+        claim_type="STRUCTURE",
+        finding_code="STRUCTURE_SUPPORT_NOT_DISCUSSED",
+        findings=findings,
+    )
 
     for evidence_id, reference in references.items():
         item = evidence.get(evidence_id)
@@ -191,3 +210,36 @@ def verify_report(report: GroundedProteinReport, context: GenerationContext) -> 
         checked_at=datetime.now(UTC),
         verifier_version=VERIFIER_VERSION,
     )
+
+
+def _check_modality_discussion(
+    *,
+    evidence: dict[str, ContextEvidence],
+    report: GroundedProteinReport,
+    evidence_type: str,
+    claim_type: str,
+    finding_code: str,
+    findings: list[VerificationFinding],
+) -> None:
+    modality_ids = {
+        evidence_id
+        for evidence_id, item in evidence.items()
+        if item.evidence_type == evidence_type
+    }
+    if not modality_ids:
+        return
+    discussed = any(
+        claim.claim_type.value == claim_type and bool(set(claim.evidence_ids) & modality_ids)
+        for claim in report.claims
+    )
+    if not discussed:
+        findings.append(
+            VerificationFinding(
+                code=finding_code,
+                severity=VerificationSeverity.WARNING,
+                message=(
+                    f"Context contains {evidence_type} records, but the generated report "
+                    f"has no evidence-linked {claim_type} claim."
+                ),
+            )
+        )

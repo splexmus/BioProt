@@ -108,12 +108,27 @@ enabled.
 Phase 5 now has an experimental local-Ollama path. It rejects unvalidated Phase 4 input
 by default; the explicit development override keeps literature as background, records
 the bypass, and emits `NOT_CALIBRATED` confidence. See
-`docs/PHASE5_LLM_SYNTHESIS.md` and run:
+`docs/PHASE5_LLM_SYNTHESIS.md`. Phase 5.1 adds at most five leakage-filtered MMseqs2
+sequence hits and five Foldseek structure hits to each compact packet while preserving
+raw metrics and provenance. Run:
 
 ```bash
 pixi run python -m dualrag init-ollama --model gemma3:4b
-scripts/run_phase5_ollama.sh smoke --query-id P01040
+scripts/enrich_phase5_biological_evidence.sh
+scripts/run_phase5_ollama.sh smoke \
+  --run-name phase5-ollama-biological-v1 \
+  --query-id P01040
 ```
+
+Phase 6 has a development-only external confidence calibrator. It estimates exact top-1
+EC/GO-MF correctness from the B4 ranking score, never from LLM self-confidence. Run:
+
+```bash
+scripts/run_phase6_calibration.sh
+```
+
+The current 15-example validation result is useful for engineering but too small for
+production confidence. See `docs/PHASE6_REPORT.md`.
 
 Phase 4.2 now builds deterministic, leakage-safe literature queries from completed
 biological runs:

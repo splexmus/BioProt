@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from dualrag.calibration import run_confidence_calibration
 from dualrag.config import load_config
 from dualrag.io import write_json
 from dualrag.literature.benchmark_queries import build_benchmark_literature_queries
@@ -17,6 +18,7 @@ from dualrag.literature.pipeline import run_literature_pipeline
 from dualrag.literature.pubmed import PubMedConfig
 from dualrag.literature.query_builder import build_literature_queries
 from dualrag.pipeline import run_pipeline
+from dualrag.rag.biological_evidence import enrich_evidence_packets
 from dualrag.rag.ollama import OllamaClient, OllamaConfig
 from dualrag.rag.pipeline import run_generation_pipeline
 from dualrag.reproducibility import compare_runs
@@ -209,6 +211,38 @@ def evaluate_literature_command(
     )
 
 
+@app.command("enrich-phase5-evidence")
+def enrich_phase5_evidence_command(
+    packets: Annotated[Path, typer.Option("--packets", exists=True, dir_okay=False)],
+    sequence_evidence: Annotated[
+        Path, typer.Option("--sequence-evidence", exists=True, dir_okay=False)
+    ],
+    structure_evidence: Annotated[
+        Path, typer.Option("--structure-evidence", exists=True, dir_okay=False)
+    ],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    manifest: Annotated[Path, typer.Option("--manifest")],
+    max_per_modality: Annotated[int, typer.Option("--max-per-modality", min=1, max=5)] = 5,
+    source_manifest: Annotated[
+        Path | None, typer.Option("--source-manifest", exists=True, dir_okay=False)
+    ] = None,
+) -> None:
+    """Add bounded sequence and structure records to Phase 5 evidence packets."""
+    result = enrich_evidence_packets(
+        packets_path=packets,
+        sequence_evidence_path=sequence_evidence,
+        structure_evidence_path=structure_evidence,
+        output_path=output,
+        manifest_path=manifest,
+        max_per_modality=max_per_modality,
+        source_manifest_path=source_manifest,
+    )
+    typer.echo(
+        f"enriched {result['packet_count']} packets with "
+        f"{result['modality_record_counts']} -> {output}"
+    )
+
+
 @app.command("init-ollama")
 def init_ollama_command(
     model: Annotated[str, typer.Option("--model")] = "gemma3:4b",
@@ -232,6 +266,36 @@ def init_ollama_command(
     typer.echo(f"Ollama {version} ready: model={model}; installed={models}")
 
 
+@app.command("calibrate-confidence")
+def calibrate_confidence_command(
+    predictions: Annotated[Path, typer.Option("--predictions", exists=True, dir_okay=False)],
+    candidates: Annotated[Path, typer.Option("--candidates", exists=True, dir_okay=False)],
+    gold_labels: Annotated[Path, typer.Option("--gold-labels", exists=True, dir_okay=False)],
+    splits: Annotated[Path, typer.Option("--splits", exists=True, dir_okay=False)],
+    difficulty: Annotated[Path, typer.Option("--difficulty", exists=True, dir_okay=False)],
+    contract: Annotated[Path, typer.Option("--contract", exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+) -> None:
+    """Fit and evaluate the Phase 6 development confidence calibrator."""
+    result = run_confidence_calibration(
+        predictions_path=predictions,
+        candidates_path=candidates,
+        gold_labels_path=gold_labels,
+        splits_path=splits,
+        difficulty_path=difficulty,
+        contract_path=contract,
+        output_dir=output,
+    )
+    manifest = result["manifest"]
+    evaluation = result["evaluation"]["validation_calibrated"]
+    typer.echo(
+        f"Phase 6 calibrated {manifest['development_example_count']} development examples; "
+        f"validation n={manifest['validation_example_count']}, "
+        f"Brier={evaluation['brier_score']:.4f}, "
+        f"ECE={evaluation['expected_calibration_error']:.4f} -> {output}"
+    )
+
+
 @app.command("generate-reports")
 def generate_reports_command(
     packets: Annotated[Path, typer.Option("--packets", exists=True, dir_okay=False)],
@@ -243,10 +307,10 @@ def generate_reports_command(
     timeout: Annotated[float, typer.Option("--timeout", min=1)] = 300.0,
     system_prompt: Annotated[
         Path, typer.Option("--system-prompt", exists=True, dir_okay=False)
-    ] = Path("prompts/phase5-system-v1.txt"),
+    ] = Path("prompts/phase5-system-v3.txt"),
     report_prompt: Annotated[
         Path, typer.Option("--report-prompt", exists=True, dir_okay=False)
-    ] = Path("prompts/phase5-report-v1.txt"),
+    ] = Path("prompts/phase5-report-v3.txt"),
     query_id: Annotated[list[str] | None, typer.Option("--query-id")] = None,
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
     allow_unvalidated_phase4: Annotated[bool, typer.Option("--allow-unvalidated-phase4")] = False,

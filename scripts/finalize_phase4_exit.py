@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from dualrag.io import file_sha256, write_json
+from dualrag.literature.gates import assess_phase5_development_transition
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,6 +39,11 @@ def main() -> None:
     evaluation_path = run / "evaluation/literature_evaluation.json"
     if args.stage == "evaluated" and not evaluation_path.is_file():
         raise FileNotFoundError(f"evaluation is missing: {evaluation_path}")
+    evaluation = (
+        json.loads(evaluation_path.read_text(encoding="utf-8"))
+        if evaluation_path.is_file()
+        else None
+    )
     manifest = {
         "schema_version": 1,
         "contract_id": "phase4-literature-v1",
@@ -67,6 +73,9 @@ def main() -> None:
             "acceptance_contract": file_sha256(
                 root / "config/literature-evaluation-v2.yaml"
             ),
+            "phase5_development_transition_policy": file_sha256(
+                root / "config/phase4-development-transition-v1.yaml"
+            ),
         },
         "commands": {
             "prepare": (
@@ -78,9 +87,15 @@ def main() -> None:
             ),
         },
         "annotation": annotation,
-        "evaluation": (
-            json.loads(evaluation_path.read_text(encoding="utf-8"))
-            if evaluation_path.is_file()
+        "evaluation": evaluation,
+        "scientific_exit_status": (
+            evaluation.get("status", "NOT_EVALUATED")
+            if isinstance(evaluation, dict)
+            else "NOT_EVALUATED"
+        ),
+        "phase5_development_transition": (
+            assess_phase5_development_transition(evaluation)
+            if isinstance(evaluation, dict)
             else None
         ),
         "artifact_checksums": {
@@ -90,7 +105,8 @@ def main() -> None:
         },
         "claim_boundary": (
             "PASS is a development-pilot literature retrieval gate, not experimental "
-            "confirmation or absolute recall over all literature."
+            "confirmation or absolute recall over all literature. A separate Phase 5 "
+            "development transition never changes the scientific exit status."
         ),
     }
     write_json(run / "phase4_exit_manifest.json", manifest)
