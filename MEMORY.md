@@ -345,3 +345,8 @@ When a durable decision changes, append a short entry below rather than silently
   examples from nine validation proteins; the exposed test split was excluded. Validation
   Brier improved 0.3069 to 0.2729, ECE 0.2387 to 0.1824, and log-loss 0.9071 to 0.7406.
   This remains `DEVELOPMENT_PILOT_NOT_FOR_PRODUCTION` due to the tiny validation cohort.
+- 2026-10-27: generated the versioned 20-row Phase 5 human-review table from
+  `phase5-ollama-biological-sections-full-v1`. It pre-fills report checksums, evidence and
+  claim counts, cross-modal status, and verifier findings while leaving controlled human
+  judgments blank; six structure-unavailable cases are prefilled `NA`. Added the review
+  guide and a ten-step post-Phase-6 scientific-validation plan to `ROADMAP.md`.

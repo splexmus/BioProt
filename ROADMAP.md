@@ -191,6 +191,7 @@ comparison remains pending, so this is not a scientific Phase 5 pass.**
 - separate sequence-support, structure-support, and cross-modal report sections with
   modality-discussion verification **(complete)**
 - human/expert evaluation sample **(pending)**
+- versioned 20-report human-review table and instructions **(template complete; review pending)**
 
 Exit criteria:
 - generated reports are more useful without reducing factual grounding
@@ -208,6 +209,33 @@ development examples and evaluated on 15 validation examples; exposed test exclu
 Exit criteria:
 - confidence correlates with empirical correctness on held-out characterized proteins
   **(development evidence only; larger newly locked cohort pending)**
+
+## Next execution plan — scientific validation
+
+1. Complete the 20-report Phase 5 human-review table and summarize acceptance,
+   unsupported claims, modality interpretation, citation grounding, and usefulness.
+2. Freeze the current development system: Git commit, Pixi lock, contracts, prompts,
+   Ollama model, database releases, manifests, and checksums.
+3. Build a new characterized panel of at least 200 reviewed proteins with experimental
+   Tier-A EC or GO-MF labels, taxonomic/function diversity, and substantial low-identity
+   representation. Exclude the existing 60 proteins and prohibited homolog clusters.
+4. Assign cluster-aware development/validation/test splits. Target at least 100
+   query-namespace examples in validation and 100 in a completely untouched test set.
+5. Freeze Phase 6 scientific thresholds before revealing new evaluation labels: improved
+   Brier/log-loss over raw scores, ECE target, monotonic confidence-group accuracy,
+   minimum group sizes, and a predeclared high-confidence accuracy target.
+6. Run Phase 1-5 without gold-label access, freeze predictions/reports/confidence, then
+   reveal validation labels. Compare raw score, Platt, isotonic, and multifeature logistic
+   calibration using development/validation only.
+7. Freeze the selected calibrator and evaluate the untouched test set exactly once,
+   including EC, GO-MF, difficulty, taxonomy, and cross-modal subgroups.
+8. Add calibrated confidence to future reports only after the unseen evaluation passes;
+   keep confidence separate from experimental confirmation and literature truthfulness.
+9. Evaluate optional Phase 7 GraphRAG only through an ablation against this non-graph
+   baseline. Proceed only if grounding, contradiction handling, or expert usefulness
+   improves measurably.
+10. Begin the Phase 8 uncharacterized-protein study only after the calibrated pipeline
+    and evidence boundaries are frozen.
 
 ## Phase 7 — Optional GraphRAG
 - build protein/function/domain/publication graph
