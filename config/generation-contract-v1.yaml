@@ -1,0 +1,55 @@
+schema_version: 1
+contract_id: phase5-grounded-generation-v1
+status: frozen_before_phase5_live_generation
+phase4_entry_gate:
+  required_status: PASS
+  experimental_override_allowed: true
+  override_output_status: EXPERIMENTAL_UNVALIDATED_PHASE4_OVERRIDE
+scope:
+  output: putative_protein_function_hypothesis
+  experimental_confirmation: false
+  clinical_use: false
+  confidence_status: NOT_CALIBRATED
+allowed_context:
+  - query_identity
+  - sequence_evidence
+  - structure_evidence
+  - domain_ontology_evidence
+  - cross_modal_status
+  - bounded_literature_passages
+  - alternative_hypotheses
+  - contradictions
+  - claim_boundaries
+prohibited_context:
+  - benchmark_gold_labels
+  - held_out_answers
+  - complete_database_dumps
+  - complete_articles
+claim_rules:
+  every_scientific_claim_requires_supplied_evidence_id: true
+  unassessed_literature_is_verified_support: false
+  homolog_evidence_becomes_exact_query_evidence: false
+  computational_prediction_is_experimental_confirmation: false
+  recommended_experiments_are_completed_results: false
+  llm_generated_confidence_allowed: false
+prohibited_inventions:
+  - function
+  - EC_number
+  - GO_term
+  - InterPro_or_Pfam_identifier
+  - active_site
+  - pathway
+  - citation
+  - experimental_result
+verification:
+  fail_on_unknown_evidence_id: true
+  fail_on_reference_metadata_mismatch: true
+  fail_on_unassessed_literature_as_direct_support: true
+  fail_on_unsupplied_controlled_identifier: true
+  fail_on_computational_overclaim: true
+  semantic_truth_requires_human_review: true
+reproducibility:
+  preserve_raw_response: true
+  preserve_context_and_prompt_checksums: true
+  preserve_model_and_ollama_version: true
+  preserve_generation_parameters: true

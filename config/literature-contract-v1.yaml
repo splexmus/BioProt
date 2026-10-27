@@ -1,0 +1,171 @@
+schema_version: 1
+contract_id: phase4-literature-v1
+status: frozen_for_phase_4_2_to_4_7
+
+scope:
+  sources: [PUBMED, PMC_OPEN_ACCESS]
+  retrieval_unit: passage
+  llm_generation_allowed: false
+  literature_can_override_biological_evidence: false
+  output_is_experimental_confirmation: false
+
+relevance:
+  accepted_connections:
+    - exact_query_accession
+    - documented_equivalent_accession
+    - provenance_linked_homolog_with_candidate_function_experiment
+    - direct_candidate_function_experiment
+    - direct_contradiction_or_boundary_condition
+  family_or_domain_mention_alone: background_only
+  missing_literature_is_negative_evidence: false
+
+evidence_roles:
+  values: [SUPPORT, CONTRADICTION, BACKGROUND, IRRELEVANT, UNASSESSED]
+  default: UNASSESSED
+  support_requires:
+    article_type: primary_experimental
+    passage_reports_relevant_result: true
+    entity_link_required: true
+  contradiction_requires:
+    article_type: primary_experimental
+    passage_reports_incompatible_result: true
+    entity_link_required: true
+  review_allowed_roles: [BACKGROUND, IRRELEVANT, UNASSESSED]
+  absence_or_access_failure_is_contradiction: false
+
+section_policy:
+  strongest: [RESULTS, FIGURE_CAPTION, TABLE_CAPTION]
+  contextual: [METHODS, DISCUSSION]
+  background_default: [TITLE_ABSTRACT, INTRODUCTION, OTHER]
+  methods_alone_proves_result: false
+  discussion_requires_traceable_result_for_support: true
+
+entity_matching:
+  values:
+    - EXACT_ACCESSION
+    - EXACT_NAMED_PROTEIN
+    - TRACEABLE_HOMOLOG
+    - FAMILY_ONLY
+    - NONE
+    - UNRESOLVED
+  ambiguous_name_is_exact_match: false
+  retain_matching_span_or_identifier: true
+  homolog_evidence_becomes_exact_evidence: false
+
+organism_matching:
+  values:
+    - EXACT_TAXON
+    - SAME_SPECIES
+    - RELATED_TAXON
+    - HETEROLOGOUS_SYSTEM
+    - MISMATCH
+    - UNRESOLVED
+  keep_source_organism_and_assay_host_separate: true
+
+limits:
+  final_unique_articles_per_query: 10
+  final_chunks_per_query: 20
+  final_chunks_per_article: 3
+  maximum_chunk_characters: 1200
+  pad_with_weak_matches: false
+  preserve_contradictions: true
+
+query_construction:
+  allowed_inputs:
+    - query_accession
+    - protein_name
+    - organism
+    - taxonomy_id
+    - candidate_ids
+    - candidate_labels
+    - selected_homologs
+    - alternative_hypotheses
+    - cross_modal_status
+  prohibited_inputs:
+    - benchmark_gold_labels
+    - held_out_answers
+    - evaluation_annotations
+    - manual_literature_relevance_labels
+  deterministic_and_versioned: true
+
+source_policy:
+  PUBMED:
+    provides: [identifiers, bibliographic_metadata, title, abstract, publication_types]
+    implies_full_text: false
+  PMC_OPEN_ACCESS:
+    provides: [legally_available_full_text]
+  publisher_text_ingestion_without_license: false
+  preserve_raw_responses: true
+
+full_text_status:
+  values:
+    - PMC_OPEN_ACCESS
+    - ABSTRACT_ONLY
+    - METADATA_ONLY
+    - NOT_OPEN_ACCESS
+    - NOT_FOUND
+    - RETRIEVAL_ERROR
+  status_is_scientific_relevance: false
+
+deduplication_priority: [PMID, PMCID, DOI, SOURCE_ARTICLE_ID]
+
+required_provenance:
+  article:
+    - pmid
+    - pmcid
+    - doi
+    - title
+    - year
+    - journal
+    - source_url
+    - retrieved_at
+    - full_text_status
+  query:
+    - query_accession
+    - protein_name
+    - organism
+    - taxonomy_id
+    - candidate_ids
+    - selected_homologs
+    - query_terms
+    - query_variants
+    - source_biological_run_id
+  chunk:
+    - section_type
+    - character_offsets
+    - text_sha256
+    - chunker_version
+  hit:
+    - query_terms
+    - retrieval_score
+    - rank
+    - retriever_version
+    - entity_match
+    - organism_match
+    - evidence_role
+    - assignment_method
+
+phase_4_completion_gate:
+  manually_labeled_dataset_required: true
+  metrics:
+    - precision_at_k
+    - recall_at_k
+    - mrr_or_ndcg
+    - citation_precision
+    - citation_recall
+    - protein_entity_correctness
+    - organism_correctness
+    - primary_experiment_retrieval_rate
+    - contradiction_retrieval
+  acceptance_rule: must_be_frozen_before_final_evaluation
+  phase_5_allowed_before_gate_passes: false
+
+versioning:
+  requires_new_contract_version:
+    - evidence_role_definitions
+    - permitted_query_inputs
+    - review_policy
+    - entity_or_organism_semantics
+    - final_article_or_chunk_limits
+    - evaluation_acceptance_rules
+

@@ -1,0 +1,6 @@
+query_id	query_accession	protein_name	organism	taxonomy_id
+Q_CONSENSUS		Synthetic consensus protein	Synthetic fixture organism	
+Q_SEQ_ONLY		Synthetic sequence-only protein	Synthetic fixture organism	
+Q_STRUCT_ONLY		Synthetic structure-only protein	Synthetic fixture organism	
+Q_CONFLICT		Synthetic conflict protein	Synthetic fixture organism	
+Q_EMPTY		Synthetic insufficient-evidence protein	Synthetic fixture organism	

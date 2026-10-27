@@ -285,6 +285,41 @@ disjoint informative modalities. The fused value is a ranking feature, not confi
 ## 10. Literature retrieval
 Literature retrieval is downstream of candidate function creation.
 
+Phase 4.0-4.1 freezes contract `phase4-literature-v1` and defines typed
+`LiteratureQuery`, `ArticleMetadata`, `LiteratureChunk`, `LiteratureHit`,
+`BiologicalEvidenceReference`, and `EvidencePacket` records. Query records accept only
+protein/candidate evidence from upstream retrieval and forbid undeclared fields, which
+prevents benchmark gold labels from silently entering query construction. All records
+use explicit identifiers, source/access states, timezone-aware timestamps, and
+versioned processing provenance.
+
+Literature hits are passage-level records. Article metadata remains attached through
+PMID/PMCID/DOI and source article ID; chunks retain section, offsets, checksum, source
+URL, access status, and chunker version. Evidence-role assignment is separate from the
+retrieval score. Direct support or contradiction requires a primary experimental
+passage and an explicit entity-match basis; reviews are background only in v1.
+
+Evidence packets enforce the frozen limits of 10 unique articles, 20 passages, and 3
+passages per article. They reference compact upstream biological evidence rather than
+copying full result tables or papers. See `docs/LITERATURE_CONTRACT.md`.
+
+Phase 4.2 implements the deterministic boundary between biological retrieval and source
+adapters. `build-literature-queries` reads only the query, candidate, fusion,
+alternative, sequence-hit, and run-provenance artifacts. It selects ranked informative
+candidates and provenance-bearing sequence homologs, then emits atomic terms and
+source-neutral Boolean variants. Structural matches are not automatically labelled as
+homologs. PubMed field syntax, transport, and returned query translation remain inside
+the Phase 4.3 adapter.
+
+Phase 4.3-4.6 is implemented in `dualrag.literature`. The PubMed adapter performs
+deterministic ESearch followed by batched XML EFetch, and the PMC adapter requires a
+positive PMC OA-service response before acquiring full text. Raw responses and parsed
+records remain separate. Section-aware chunks feed independently normalized BM25 and
+character-trigram vector scores; a versioned rule reranker adds entity, organism, and
+section features without assigning support. The packet builder enforces the frozen
+article/chunk limits and retains `UNASSESSED` roles. Phase 4.7 reads manual labels only
+after retrieval and emits descriptive metrics; it never feeds labels back into queries.
+
 Inputs:
 - query protein
 - organism/taxonomy
@@ -343,6 +378,13 @@ Required output fields:
 - citations
 
 The generator must distinguish inference from experimental evidence.
+
+Implemented Phase 5 uses a local Ollama adapter with schema-constrained JSON. The normal
+entry gate requires Phase 4 `PASS`; an explicit development override records
+`EXPERIMENTAL_UNVALIDATED_PHASE4_OVERRIDE`. Candidate functions and selected homologs
+become citable context records. The LLM does not assign final evidence roles: the
+adapter derives computational, indirect-homolog, and background roles from cited record
+types, preserves the raw response, and keeps confidence `NOT_CALIBRATED`.
 
 ## 13. Citation verification
 For each externally sourced statement check:

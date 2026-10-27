@@ -147,22 +147,43 @@ Exit criteria:
 - statistically powered final benchmark remains future work
 
 ## Phase 4 — Literature RAG
-- PubMed/PMC retrieval
-- metadata preservation
-- section-aware chunking
-- vector index
-- reranker
-- evidence packet builder
+
+Status: **Phase 4.0-4.7 engineering implementation and five-query live HDD pilot
+complete on 2026-10-26. Pooled evaluation v2 and a leakage-safe 20-query exit runner
+are implemented; expert annotation and a passing exit run remain pending.**
+
+- frozen relevance, evidence-role, review, entity/organism, access, and packet-limit
+  contract **(4.0 complete)**
+- typed query, article, chunk, hit, biological-reference, and evidence-packet schemas
+  plus JSON Schema export **(4.1 complete)**
+- deterministic query builder with explicit gold-label exclusion, source-neutral query
+  variants, checksummed manifest, and CLI **(4.2 complete)**
+- PubMed metadata/abstract and PMC ESearch-filtered Open Access full-text adapters with immutable raw
+  response caching and explicit access failures **(4.3 implemented; live pilot complete)**
+- identifier deduplication and section-aware chunking **(4.4 implemented)**
+- BM25 lexical/character-vector/hybrid retrieval and deterministic reranking
+  **(4.5 implemented as baseline)**
+- compact evidence packet builder **(4.6 implemented)**
+- complete candidate-pool review table; lexical/vector/hybrid/reranked pooled metrics;
+  retrieval/citation/entity/organism/experiment/contradiction checks; and frozen pilot
+  thresholds **(4.7 implemented; expert annotations and passing result pending)**
 
 Exit criteria:
-- literature retrieval precision/recall evaluation on a labeled subset
+- literature retrieval precision/recall evaluation on a sufficiently large expert-
+  labelled subset **(not yet met)**
 
 ## Phase 5 — LLM synthesis
-- structured prompt/context
-- grounded report schema
-- citation verifier
-- hallucination checks
-- human/expert evaluation sample
+
+Status: **engineering implementation available with local Ollama and an explicit
+unvalidated-Phase-4 override; live model smoke test and human/expert evaluation pending.**
+
+- structured, bounded prompt/context with versioned templates **(implemented)**
+- grounded typed report schema with `NOT_CALIBRATED` confidence **(implemented)**
+- local Ollama adapter with structured JSON output and raw-response preservation
+  **(implemented)**
+- deterministic citation/evidence-link verifier **(implemented)**
+- controlled-identifier and experimental-overclaim checks **(implemented)**
+- human/expert evaluation sample **(pending)**
 
 Exit criteria:
 - generated reports are more useful without reducing factual grounding

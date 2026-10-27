@@ -7,7 +7,18 @@ import typer
 
 from dualrag.config import load_config
 from dualrag.io import write_json
+from dualrag.literature.benchmark_queries import build_benchmark_literature_queries
+from dualrag.literature.evaluation import (
+    evaluate_literature,
+    write_candidate_label_template,
+    write_label_template,
+)
+from dualrag.literature.pipeline import run_literature_pipeline
+from dualrag.literature.pubmed import PubMedConfig
+from dualrag.literature.query_builder import build_literature_queries
 from dualrag.pipeline import run_pipeline
+from dualrag.rag.ollama import OllamaClient, OllamaConfig
+from dualrag.rag.pipeline import run_generation_pipeline
 from dualrag.reproducibility import compare_runs
 from dualrag.storage import initialize_storage
 from dualrag.tools import check_tools
@@ -67,3 +78,199 @@ def compare_runs_command(
     typer.echo(f"runs are {status}: {first} vs {second}")
     if not report["equivalent"]:
         raise typer.Exit(code=1)
+
+
+@app.command("build-literature-queries")
+def build_literature_queries_command(
+    run_dir: Annotated[Path, typer.Option("--run", exists=True, file_okay=False)],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    context: Annotated[Path | None, typer.Option("--context", exists=True, dir_okay=False)] = None,
+    max_candidates: Annotated[int, typer.Option("--max-candidates", min=1)] = 5,
+    max_homologs: Annotated[int, typer.Option("--max-homologs", min=0)] = 5,
+    max_alternatives: Annotated[int, typer.Option("--max-alternatives", min=0)] = 3,
+) -> None:
+    """Build deterministic Phase 4 literature queries from a completed biological run."""
+    manifest = build_literature_queries(
+        run_dir=run_dir,
+        output_dir=output,
+        context_path=context,
+        max_candidates=max_candidates,
+        max_homologs=max_homologs,
+        max_alternatives=max_alternatives,
+    )
+    typer.echo(
+        f"built {manifest['query_count']} literature queries from "
+        f"run {manifest['source_run_id']} -> {output}"
+    )
+
+
+@app.command("run-literature")
+def run_literature_command(
+    queries: Annotated[Path, typer.Option("--queries", exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    email: Annotated[str, typer.Option("--email", help="NCBI contact email")],
+    tool: Annotated[str, typer.Option("--tool")] = "dualrag-bioprot",
+    api_key_env: Annotated[str, typer.Option("--api-key-env")] = "NCBI_API_KEY",
+    retmax: Annotated[int, typer.Option("--retmax", min=1, max=10000)] = 50,
+    candidate_pool: Annotated[int, typer.Option("--candidate-pool", min=1)] = 100,
+    top_k: Annotated[int, typer.Option("--top-k", min=1, max=20)] = 20,
+    skip_pmc: Annotated[bool, typer.Option("--skip-pmc")] = False,
+) -> None:
+    """Run Phase 4.3-4.6 acquisition, chunking, retrieval, and packet creation."""
+    manifest = run_literature_pipeline(
+        queries_path=queries,
+        output_dir=output,
+        config=PubMedConfig(
+            email=email,
+            tool=tool,
+            api_key_env=api_key_env,
+            retmax_per_variant=retmax,
+            candidate_pool_per_query=candidate_pool,
+        ),
+        fetch_pmc=not skip_pmc,
+        top_k=top_k,
+    )
+    typer.echo(f"Phase {manifest['phase']} pipeline complete -> {output}")
+    typer.echo("Scientific evaluation is pending manual Phase 4.7 labels.")
+
+
+@app.command("build-literature-benchmark-queries")
+def build_literature_benchmark_queries_command(
+    dataset: Annotated[Path, typer.Option("--dataset", exists=True, file_okay=False)],
+    phase3_run: Annotated[Path, typer.Option("--phase3-run", exists=True, file_okay=False)],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    split: Annotated[str, typer.Option("--split")] = "development",
+    maximum_queries: Annotated[int, typer.Option("--maximum-queries", min=20)] = 20,
+    go_obo: Annotated[Path | None, typer.Option("--go-obo", exists=True, dir_okay=False)] = None,
+    ec2go: Annotated[Path | None, typer.Option("--ec2go", exists=True, dir_okay=False)] = None,
+) -> None:
+    """Build a leakage-safe >=20-query Phase 4 benchmark from Phase 3 artifacts."""
+    manifest = build_benchmark_literature_queries(
+        dataset_dir=dataset,
+        phase3_run_dir=phase3_run,
+        output_dir=output,
+        split=split,
+        maximum_queries=maximum_queries,
+        go_obo_path=go_obo,
+        ec2go_path=ec2go,
+    )
+    typer.echo(
+        f"built {manifest['query_count']} {manifest['split']} literature benchmark queries "
+        f"-> {output}"
+    )
+
+
+@app.command("make-literature-label-template")
+def make_literature_label_template_command(
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    hits: Annotated[Path | None, typer.Option("--hits", exists=True, dir_okay=False)] = None,
+    candidates: Annotated[
+        Path | None, typer.Option("--candidates", exists=True, dir_okay=False)
+    ] = None,
+) -> None:
+    """Create a blank TSV for manual passage-level Phase 4.7 annotation."""
+    if (hits is None) == (candidates is None):
+        raise typer.BadParameter("provide exactly one of --hits or --candidates")
+    if candidates is not None:
+        write_candidate_label_template(candidates_path=candidates, output_path=output)
+    else:
+        assert hits is not None
+        write_label_template(hits_path=hits, output_path=output)
+    typer.echo(f"manual literature label template -> {output}")
+
+
+@app.command("evaluate-literature")
+def evaluate_literature_command(
+    hits: Annotated[Path, typer.Option("--hits", exists=True, dir_okay=False)],
+    labels: Annotated[Path, typer.Option("--labels", exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    minimum_queries: Annotated[int, typer.Option("--minimum-queries", min=1)] = 20,
+    candidates: Annotated[
+        Path | None, typer.Option("--candidates", exists=True, dir_okay=False)
+    ] = None,
+    queries: Annotated[Path | None, typer.Option("--queries", exists=True, dir_okay=False)] = None,
+    acceptance: Annotated[
+        Path | None, typer.Option("--acceptance", exists=True, dir_okay=False)
+    ] = None,
+) -> None:
+    """Evaluate Phase 4 retrieval against manually assigned passage labels."""
+    result = evaluate_literature(
+        hits_path=hits,
+        labels_path=labels,
+        output_dir=output,
+        minimum_queries=minimum_queries,
+        candidates_path=candidates,
+        queries_path=queries,
+        acceptance_path=acceptance,
+    )
+    typer.echo(
+        f"literature evaluation: {result['status']} "
+        f"({result['labeled_query_count']} labelled queries) -> {output}"
+    )
+
+
+@app.command("init-ollama")
+def init_ollama_command(
+    model: Annotated[str, typer.Option("--model")] = "gemma3:4b",
+    base_url: Annotated[str, typer.Option("--base-url")] = "http://127.0.0.1:11434",
+    pull: Annotated[bool, typer.Option("--pull")] = False,
+) -> None:
+    """Check local Ollama and optionally pull the configured Phase 5 model."""
+    client = OllamaClient(OllamaConfig(model=model, base_url=base_url, timeout_seconds=30))
+    version = client.version()
+    models = client.models()
+    if model not in models and model.removesuffix(":latest") not in {
+        item.removesuffix(":latest") for item in models
+    }:
+        if not pull:
+            typer.echo(f"Ollama {version} is running, but model {model!r} is not installed")
+            typer.echo(f"run again with --pull; installed models: {models}")
+            raise typer.Exit(code=1)
+        typer.echo(f"pulling {model} with Ollama {version}...")
+        client.pull()
+        models = client.models()
+    typer.echo(f"Ollama {version} ready: model={model}; installed={models}")
+
+
+@app.command("generate-reports")
+def generate_reports_command(
+    packets: Annotated[Path, typer.Option("--packets", exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    model: Annotated[str, typer.Option("--model")] = "gemma3:4b",
+    base_url: Annotated[str, typer.Option("--base-url")] = "http://127.0.0.1:11434",
+    temperature: Annotated[float, typer.Option("--temperature", min=0)] = 0.0,
+    seed: Annotated[int, typer.Option("--seed")] = 42,
+    timeout: Annotated[float, typer.Option("--timeout", min=1)] = 300.0,
+    system_prompt: Annotated[
+        Path, typer.Option("--system-prompt", exists=True, dir_okay=False)
+    ] = Path("prompts/phase5-system-v1.txt"),
+    report_prompt: Annotated[
+        Path, typer.Option("--report-prompt", exists=True, dir_okay=False)
+    ] = Path("prompts/phase5-report-v1.txt"),
+    query_id: Annotated[list[str] | None, typer.Option("--query-id")] = None,
+    limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
+    allow_unvalidated_phase4: Annotated[bool, typer.Option("--allow-unvalidated-phase4")] = False,
+) -> None:
+    """Generate and verify grounded Phase 5 reports with local Ollama."""
+    manifest = run_generation_pipeline(
+        packets_path=packets,
+        output_dir=output,
+        client=OllamaClient(
+            OllamaConfig(
+                model=model,
+                base_url=base_url,
+                timeout_seconds=timeout,
+                temperature=temperature,
+                seed=seed,
+            )
+        ),
+        system_prompt_path=system_prompt,
+        report_prompt_path=report_prompt,
+        allow_unvalidated_phase4=allow_unvalidated_phase4,
+        query_ids=set(query_id) if query_id else None,
+        limit=limit,
+    )
+    typer.echo(
+        f"Phase 5 generated {manifest['report_count']} reports with {manifest['model']} -> {output}"
+    )
+    typer.echo(f"verification: {manifest['verification_status_counts']}")

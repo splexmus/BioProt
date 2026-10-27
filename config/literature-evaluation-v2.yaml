@@ -1,0 +1,34 @@
+contract_id: phase4-literature-v1
+evaluation_version: literature-pooled-evaluation-v2
+status: frozen-before-phase4-exit-run
+unit: query-passage
+minimum_manually_labeled_queries: 20
+minimum_contradiction_labels: 5
+prohibited_annotators:
+  - codex_preannotation
+candidate_pool_definition:
+  source: union of all PubMed articles returned by deterministic Phase 4.2 queries
+  passage_scope: every normalized chunk from those articles
+  completeness_required: true
+  recall_interpretation: pooled recall within the judged PubMed candidate set
+acceptance_policy:
+  mode: all-thresholds-must-pass
+  thresholds:
+    query_candidate_coverage: 0.80
+    precision_at_5: 0.50
+    recall_at_10: 0.70
+    mrr: 0.60
+    ndcg_at_10: 0.70
+    citation_precision: 0.70
+    citation_recall: 0.70
+    entity_correctness: 0.80
+    organism_correctness: 0.80
+    primary_experiment_retrieval_rate: 0.50
+    contradiction_recall_at_10: 0.50
+leakage_controls:
+  labels_must_not_construct_queries: true
+  thresholds_frozen_before_human_annotation: true
+  development_split_only_for_initial_exit_run: true
+limitations:
+  - Recall is pooled recall over retrieved PubMed candidates, not absolute literature recall.
+  - These are pilot release gates and do not establish clinical or experimental validity.

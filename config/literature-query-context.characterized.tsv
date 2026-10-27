@@ -1,0 +1,6 @@
+query_id	query_accession	protein_name	organism	taxonomy_id
+sp|P69905|HBA_HUMAN	P69905	Hemoglobin subunit alpha	Homo sapiens	9606
+sp|P07741|APT_HUMAN	P07741	Adenine phosphoribosyltransferase	Homo sapiens	9606
+sp|P00330|ADH1_YEAST	P00330	Alcohol dehydrogenase 1	Saccharomyces cerevisiae	559292
+sp|P0A6F5|CH60_ECOLI	P0A6F5	Chaperonin GroEL	Escherichia coli K-12	83333
+sp|P00720|ENLYS_BPT4	P00720	Endolysin	Enterobacteria phage T4	10665

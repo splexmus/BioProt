@@ -1,0 +1,2425 @@
+{
+  "contract_id": "phase4-literature-v1",
+  "models": {
+    "ArticleMetadata": {
+      "$defs": {
+        "FullTextStatus": {
+          "enum": [
+            "PMC_OPEN_ACCESS",
+            "ABSTRACT_ONLY",
+            "METADATA_ONLY",
+            "NOT_OPEN_ACCESS",
+            "NOT_FOUND",
+            "RETRIEVAL_ERROR"
+          ],
+          "title": "FullTextStatus",
+          "type": "string"
+        },
+        "LiteratureSource": {
+          "enum": [
+            "PUBMED",
+            "PMC_OPEN_ACCESS"
+          ],
+          "title": "LiteratureSource",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "abstract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Abstract"
+        },
+        "abstract_sections": {
+          "items": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "title": "Abstract Sections",
+          "type": "array"
+        },
+        "acquisition_error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Acquisition Error"
+        },
+        "assay_hosts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assay Hosts",
+          "type": "array"
+        },
+        "doi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Doi"
+        },
+        "full_text_status": {
+          "$ref": "#/$defs/FullTextStatus"
+        },
+        "is_review": {
+          "default": false,
+          "title": "Is Review",
+          "type": "boolean"
+        },
+        "journal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Journal"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Keywords",
+          "type": "array"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "License"
+        },
+        "mesh_terms": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Mesh Terms",
+          "type": "array"
+        },
+        "pmcid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pmcid"
+        },
+        "pmid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pmid"
+        },
+        "protein_accessions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Protein Accessions",
+          "type": "array"
+        },
+        "publication_types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Publication Types",
+          "type": "array"
+        },
+        "raw_record_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Record Path"
+        },
+        "raw_record_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Record Sha256"
+        },
+        "related_articles": {
+          "items": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "title": "Related Articles",
+          "type": "array"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/$defs/LiteratureSource"
+        },
+        "source_article_id": {
+          "minLength": 1,
+          "title": "Source Article Id",
+          "type": "string"
+        },
+        "source_organisms": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Organisms",
+          "type": "array"
+        },
+        "source_taxonomy_ids": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Source Taxonomy Ids",
+          "type": "array"
+        },
+        "source_url": {
+          "minLength": 1,
+          "title": "Source Url",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "maximum": 2200,
+              "minimum": 1600,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "source_article_id",
+        "source",
+        "title",
+        "source_url",
+        "full_text_status",
+        "retrieved_at"
+      ],
+      "title": "ArticleMetadata",
+      "type": "object"
+    },
+    "EvidencePacket": {
+      "$defs": {
+        "AssignmentMethod": {
+          "enum": [
+            "UNASSESSED",
+            "MANUAL",
+            "RULE_BASED",
+            "MODEL"
+          ],
+          "title": "AssignmentMethod",
+          "type": "string"
+        },
+        "BiologicalEvidenceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "artifact_path": {
+              "minLength": 1,
+              "title": "Artifact Path",
+              "type": "string"
+            },
+            "candidate_id": {
+              "minLength": 1,
+              "title": "Candidate Id",
+              "type": "string"
+            },
+            "modality": {
+              "$ref": "#/$defs/EvidenceModality"
+            },
+            "parameters_hash": {
+              "minLength": 1,
+              "title": "Parameters Hash",
+              "type": "string"
+            },
+            "run_id": {
+              "minLength": 1,
+              "title": "Run Id",
+              "type": "string"
+            },
+            "schema_version": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "score": {
+              "title": "Score",
+              "type": "number"
+            },
+            "source_ids": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Source Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "modality",
+            "candidate_id",
+            "score",
+            "source_ids",
+            "run_id",
+            "parameters_hash",
+            "artifact_path"
+          ],
+          "title": "BiologicalEvidenceReference",
+          "type": "object"
+        },
+        "EntityMatch": {
+          "enum": [
+            "EXACT_ACCESSION",
+            "EXACT_NAMED_PROTEIN",
+            "TRACEABLE_HOMOLOG",
+            "FAMILY_ONLY",
+            "NONE",
+            "UNRESOLVED"
+          ],
+          "title": "EntityMatch",
+          "type": "string"
+        },
+        "EvidenceModality": {
+          "enum": [
+            "SEQUENCE",
+            "STRUCTURE",
+            "DOMAIN_ONTOLOGY"
+          ],
+          "title": "EvidenceModality",
+          "type": "string"
+        },
+        "EvidenceRole": {
+          "enum": [
+            "SUPPORT",
+            "CONTRADICTION",
+            "BACKGROUND",
+            "IRRELEVANT",
+            "UNASSESSED"
+          ],
+          "title": "EvidenceRole",
+          "type": "string"
+        },
+        "FullTextStatus": {
+          "enum": [
+            "PMC_OPEN_ACCESS",
+            "ABSTRACT_ONLY",
+            "METADATA_ONLY",
+            "NOT_OPEN_ACCESS",
+            "NOT_FOUND",
+            "RETRIEVAL_ERROR"
+          ],
+          "title": "FullTextStatus",
+          "type": "string"
+        },
+        "LiteratureChunk": {
+          "additionalProperties": false,
+          "properties": {
+            "article_is_review": {
+              "default": false,
+              "title": "Article Is Review",
+              "type": "boolean"
+            },
+            "chunk_id": {
+              "minLength": 1,
+              "title": "Chunk Id",
+              "type": "string"
+            },
+            "chunker_version": {
+              "minLength": 1,
+              "title": "Chunker Version",
+              "type": "string"
+            },
+            "doi": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Doi"
+            },
+            "end_character": {
+              "exclusiveMinimum": 0,
+              "title": "End Character",
+              "type": "integer"
+            },
+            "full_text_status": {
+              "$ref": "#/$defs/FullTextStatus"
+            },
+            "journal": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Journal"
+            },
+            "organism_context": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Organism Context",
+              "type": "array"
+            },
+            "pmcid": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Pmcid"
+            },
+            "pmid": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Pmid"
+            },
+            "retrieved_at": {
+              "format": "date-time",
+              "title": "Retrieved At",
+              "type": "string"
+            },
+            "schema_version": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "section_title": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Section Title"
+            },
+            "section_type": {
+              "$ref": "#/$defs/SectionType"
+            },
+            "source": {
+              "$ref": "#/$defs/LiteratureSource"
+            },
+            "source_article_id": {
+              "minLength": 1,
+              "title": "Source Article Id",
+              "type": "string"
+            },
+            "source_url": {
+              "minLength": 1,
+              "title": "Source Url",
+              "type": "string"
+            },
+            "start_character": {
+              "minimum": 0,
+              "title": "Start Character",
+              "type": "integer"
+            },
+            "text": {
+              "maxLength": 1200,
+              "minLength": 1,
+              "title": "Text",
+              "type": "string"
+            },
+            "text_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Text Sha256"
+            },
+            "title": {
+              "minLength": 1,
+              "title": "Title",
+              "type": "string"
+            },
+            "year": {
+              "anyOf": [
+                {
+                  "maximum": 2200,
+                  "minimum": 1600,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Year"
+            }
+          },
+          "required": [
+            "chunk_id",
+            "source_article_id",
+            "source",
+            "title",
+            "full_text_status",
+            "section_type",
+            "text",
+            "start_character",
+            "end_character",
+            "source_url",
+            "retrieved_at",
+            "chunker_version"
+          ],
+          "title": "LiteratureChunk",
+          "type": "object"
+        },
+        "LiteratureHit": {
+          "additionalProperties": false,
+          "properties": {
+            "assay_host": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Assay Host"
+            },
+            "assignment_method": {
+              "$ref": "#/$defs/AssignmentMethod",
+              "default": "UNASSESSED"
+            },
+            "assignment_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Assignment Version"
+            },
+            "chunk": {
+              "$ref": "#/$defs/LiteratureChunk"
+            },
+            "entity_match": {
+              "$ref": "#/$defs/EntityMatch",
+              "default": "UNRESOLVED"
+            },
+            "entity_match_basis": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Entity Match Basis",
+              "type": "array"
+            },
+            "evidence_role": {
+              "$ref": "#/$defs/EvidenceRole",
+              "default": "UNASSESSED"
+            },
+            "hit_id": {
+              "minLength": 1,
+              "title": "Hit Id",
+              "type": "string"
+            },
+            "is_primary_experiment": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Is Primary Experiment"
+            },
+            "lexical_score": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lexical Score"
+            },
+            "organism_match": {
+              "$ref": "#/$defs/OrganismMatch",
+              "default": "UNRESOLVED"
+            },
+            "query_id": {
+              "minLength": 1,
+              "title": "Query Id",
+              "type": "string"
+            },
+            "query_terms": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Query Terms",
+              "type": "array"
+            },
+            "rank": {
+              "minimum": 1,
+              "title": "Rank",
+              "type": "integer"
+            },
+            "reranker_score": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Reranker Score"
+            },
+            "reranker_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Reranker Version"
+            },
+            "retrieval_method": {
+              "minLength": 1,
+              "title": "Retrieval Method",
+              "type": "string"
+            },
+            "retrieval_score": {
+              "title": "Retrieval Score",
+              "type": "number"
+            },
+            "retrieved_at": {
+              "format": "date-time",
+              "title": "Retrieved At",
+              "type": "string"
+            },
+            "retriever_version": {
+              "minLength": 1,
+              "title": "Retriever Version",
+              "type": "string"
+            },
+            "schema_version": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "source_organism": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Organism"
+            },
+            "uncertainty_notes": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Uncertainty Notes",
+              "type": "array"
+            },
+            "vector_score": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Vector Score"
+            }
+          },
+          "required": [
+            "hit_id",
+            "query_id",
+            "chunk",
+            "rank",
+            "retrieval_score",
+            "retrieval_method",
+            "retriever_version",
+            "query_terms",
+            "retrieved_at"
+          ],
+          "title": "LiteratureHit",
+          "type": "object"
+        },
+        "LiteratureQuery": {
+          "additionalProperties": false,
+          "properties": {
+            "alternative_hypotheses": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Alternative Hypotheses",
+              "type": "array"
+            },
+            "candidate_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Candidate Ids",
+              "type": "array"
+            },
+            "candidate_labels": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Candidate Labels",
+              "type": "array"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "cross_modal_status": {
+              "title": "Cross Modal Status",
+              "type": "string"
+            },
+            "organism": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Organism"
+            },
+            "protein_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Protein Name"
+            },
+            "query_accession": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Query Accession"
+            },
+            "query_builder_version": {
+              "minLength": 1,
+              "title": "Query Builder Version",
+              "type": "string"
+            },
+            "query_id": {
+              "minLength": 1,
+              "title": "Query Id",
+              "type": "string"
+            },
+            "query_terms": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Query Terms",
+              "type": "array"
+            },
+            "query_variants": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Query Variants",
+              "type": "array"
+            },
+            "schema_version": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "selected_homologs": {
+              "items": {
+                "$ref": "#/$defs/SelectedHomolog"
+              },
+              "title": "Selected Homologs",
+              "type": "array"
+            },
+            "source_biological_run_id": {
+              "minLength": 1,
+              "title": "Source Biological Run Id",
+              "type": "string"
+            },
+            "source_parameters_hash": {
+              "minLength": 1,
+              "title": "Source Parameters Hash",
+              "type": "string"
+            },
+            "taxonomy_id": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Taxonomy Id"
+            }
+          },
+          "required": [
+            "query_id",
+            "cross_modal_status",
+            "query_terms",
+            "query_variants",
+            "query_builder_version",
+            "source_biological_run_id",
+            "source_parameters_hash",
+            "created_at"
+          ],
+          "title": "LiteratureQuery",
+          "type": "object"
+        },
+        "LiteratureSource": {
+          "enum": [
+            "PUBMED",
+            "PMC_OPEN_ACCESS"
+          ],
+          "title": "LiteratureSource",
+          "type": "string"
+        },
+        "OrganismMatch": {
+          "enum": [
+            "EXACT_TAXON",
+            "SAME_SPECIES",
+            "RELATED_TAXON",
+            "HETEROLOGOUS_SYSTEM",
+            "MISMATCH",
+            "UNRESOLVED"
+          ],
+          "title": "OrganismMatch",
+          "type": "string"
+        },
+        "SectionType": {
+          "enum": [
+            "TITLE_ABSTRACT",
+            "INTRODUCTION",
+            "METHODS",
+            "RESULTS",
+            "DISCUSSION",
+            "FIGURE_CAPTION",
+            "TABLE_CAPTION",
+            "OTHER"
+          ],
+          "title": "SectionType",
+          "type": "string"
+        },
+        "SelectedHomolog": {
+          "additionalProperties": false,
+          "properties": {
+            "accession": {
+              "minLength": 1,
+              "title": "Accession",
+              "type": "string"
+            },
+            "alignment_coverage": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Alignment Coverage"
+            },
+            "normalized_score": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Normalized Score"
+            },
+            "provenance": {
+              "minLength": 1,
+              "title": "Provenance",
+              "type": "string"
+            },
+            "schema_version": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "sequence_identity": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Sequence Identity"
+            },
+            "source_target_id": {
+              "minLength": 1,
+              "title": "Source Target Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "accession",
+            "source_target_id",
+            "provenance"
+          ],
+          "title": "SelectedHomolog",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "alternative_hypotheses": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Alternative Hypotheses",
+          "type": "array"
+        },
+        "biological_evidence": {
+          "items": {
+            "$ref": "#/$defs/BiologicalEvidenceReference"
+          },
+          "title": "Biological Evidence",
+          "type": "array"
+        },
+        "claim_boundaries": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Claim Boundaries",
+          "type": "array"
+        },
+        "contract_id": {
+          "default": "phase4-literature-v1",
+          "title": "Contract Id",
+          "type": "string"
+        },
+        "contradiction_hit_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Contradiction Hit Ids",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "literature_hits": {
+          "items": {
+            "$ref": "#/$defs/LiteratureHit"
+          },
+          "maxItems": 20,
+          "title": "Literature Hits",
+          "type": "array"
+        },
+        "packet_id": {
+          "minLength": 1,
+          "title": "Packet Id",
+          "type": "string"
+        },
+        "query": {
+          "$ref": "#/$defs/LiteratureQuery"
+        },
+        "schema_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "packet_id",
+        "query",
+        "literature_hits",
+        "claim_boundaries",
+        "created_at"
+      ],
+      "title": "EvidencePacket",
+      "type": "object"
+    },
+    "LiteratureCandidate": {
+      "$defs": {
+        "EntityMatch": {
+          "enum": [
+            "EXACT_ACCESSION",
+            "EXACT_NAMED_PROTEIN",
+            "TRACEABLE_HOMOLOG",
+            "FAMILY_ONLY",
+            "NONE",
+            "UNRESOLVED"
+          ],
+          "title": "EntityMatch",
+          "type": "string"
+        },
+        "FullTextStatus": {
+          "enum": [
+            "PMC_OPEN_ACCESS",
+            "ABSTRACT_ONLY",
+            "METADATA_ONLY",
+            "NOT_OPEN_ACCESS",
+            "NOT_FOUND",
+            "RETRIEVAL_ERROR"
+          ],
+          "title": "FullTextStatus",
+          "type": "string"
+        },
+        "LiteratureChunk": {
+          "additionalProperties": false,
+          "properties": {
+            "article_is_review": {
+              "default": false,
+              "title": "Article Is Review",
+              "type": "boolean"
+            },
+            "chunk_id": {
+              "minLength": 1,
+              "title": "Chunk Id",
+              "type": "string"
+            },
+            "chunker_version": {
+              "minLength": 1,
+              "title": "Chunker Version",
+              "type": "string"
+            },
+            "doi": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Doi"
+            },
+            "end_character": {
+              "exclusiveMinimum": 0,
+              "title": "End Character",
+              "type": "integer"
+            },
+            "full_text_status": {
+              "$ref": "#/$defs/FullTextStatus"
+            },
+            "journal": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Journal"
+            },
+            "organism_context": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Organism Context",
+              "type": "array"
+            },
+            "pmcid": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Pmcid"
+            },
+            "pmid": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Pmid"
+            },
+            "retrieved_at": {
+              "format": "date-time",
+              "title": "Retrieved At",
+              "type": "string"
+            },
+            "schema_version": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "section_title": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Section Title"
+            },
+            "section_type": {
+              "$ref": "#/$defs/SectionType"
+            },
+            "source": {
+              "$ref": "#/$defs/LiteratureSource"
+            },
+            "source_article_id": {
+              "minLength": 1,
+              "title": "Source Article Id",
+              "type": "string"
+            },
+            "source_url": {
+              "minLength": 1,
+              "title": "Source Url",
+              "type": "string"
+            },
+            "start_character": {
+              "minimum": 0,
+              "title": "Start Character",
+              "type": "integer"
+            },
+            "text": {
+              "maxLength": 1200,
+              "minLength": 1,
+              "title": "Text",
+              "type": "string"
+            },
+            "text_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Text Sha256"
+            },
+            "title": {
+              "minLength": 1,
+              "title": "Title",
+              "type": "string"
+            },
+            "year": {
+              "anyOf": [
+                {
+                  "maximum": 2200,
+                  "minimum": 1600,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Year"
+            }
+          },
+          "required": [
+            "chunk_id",
+            "source_article_id",
+            "source",
+            "title",
+            "full_text_status",
+            "section_type",
+            "text",
+            "start_character",
+            "end_character",
+            "source_url",
+            "retrieved_at",
+            "chunker_version"
+          ],
+          "title": "LiteratureChunk",
+          "type": "object"
+        },
+        "LiteratureSource": {
+          "enum": [
+            "PUBMED",
+            "PMC_OPEN_ACCESS"
+          ],
+          "title": "LiteratureSource",
+          "type": "string"
+        },
+        "OrganismMatch": {
+          "enum": [
+            "EXACT_TAXON",
+            "SAME_SPECIES",
+            "RELATED_TAXON",
+            "HETEROLOGOUS_SYSTEM",
+            "MISMATCH",
+            "UNRESOLVED"
+          ],
+          "title": "OrganismMatch",
+          "type": "string"
+        },
+        "SectionType": {
+          "enum": [
+            "TITLE_ABSTRACT",
+            "INTRODUCTION",
+            "METHODS",
+            "RESULTS",
+            "DISCUSSION",
+            "FIGURE_CAPTION",
+            "TABLE_CAPTION",
+            "OTHER"
+          ],
+          "title": "SectionType",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "minLength": 1,
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "chunk": {
+          "$ref": "#/$defs/LiteratureChunk"
+        },
+        "entity_match": {
+          "$ref": "#/$defs/EntityMatch",
+          "default": "UNRESOLVED"
+        },
+        "entity_match_basis": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entity Match Basis",
+          "type": "array"
+        },
+        "hybrid_rank": {
+          "minimum": 1,
+          "title": "Hybrid Rank",
+          "type": "integer"
+        },
+        "hybrid_score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Hybrid Score",
+          "type": "number"
+        },
+        "is_primary_experiment": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Primary Experiment"
+        },
+        "lexical_rank": {
+          "minimum": 1,
+          "title": "Lexical Rank",
+          "type": "integer"
+        },
+        "lexical_score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Lexical Score",
+          "type": "number"
+        },
+        "organism_match": {
+          "$ref": "#/$defs/OrganismMatch",
+          "default": "UNRESOLVED"
+        },
+        "query_id": {
+          "minLength": 1,
+          "title": "Query Id",
+          "type": "string"
+        },
+        "reranker_rank": {
+          "minimum": 1,
+          "title": "Reranker Rank",
+          "type": "integer"
+        },
+        "reranker_score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Reranker Score",
+          "type": "number"
+        },
+        "reranker_version": {
+          "minLength": 1,
+          "title": "Reranker Version",
+          "type": "string"
+        },
+        "retriever_version": {
+          "minLength": 1,
+          "title": "Retriever Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "scored_at": {
+          "format": "date-time",
+          "title": "Scored At",
+          "type": "string"
+        },
+        "vector_rank": {
+          "minimum": 1,
+          "title": "Vector Rank",
+          "type": "integer"
+        },
+        "vector_score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Vector Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "query_id",
+        "chunk",
+        "lexical_score",
+        "vector_score",
+        "hybrid_score",
+        "reranker_score",
+        "lexical_rank",
+        "vector_rank",
+        "hybrid_rank",
+        "reranker_rank",
+        "retriever_version",
+        "reranker_version",
+        "scored_at"
+      ],
+      "title": "LiteratureCandidate",
+      "type": "object"
+    },
+    "LiteratureChunk": {
+      "$defs": {
+        "FullTextStatus": {
+          "enum": [
+            "PMC_OPEN_ACCESS",
+            "ABSTRACT_ONLY",
+            "METADATA_ONLY",
+            "NOT_OPEN_ACCESS",
+            "NOT_FOUND",
+            "RETRIEVAL_ERROR"
+          ],
+          "title": "FullTextStatus",
+          "type": "string"
+        },
+        "LiteratureSource": {
+          "enum": [
+            "PUBMED",
+            "PMC_OPEN_ACCESS"
+          ],
+          "title": "LiteratureSource",
+          "type": "string"
+        },
+        "SectionType": {
+          "enum": [
+            "TITLE_ABSTRACT",
+            "INTRODUCTION",
+            "METHODS",
+            "RESULTS",
+            "DISCUSSION",
+            "FIGURE_CAPTION",
+            "TABLE_CAPTION",
+            "OTHER"
+          ],
+          "title": "SectionType",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "article_is_review": {
+          "default": false,
+          "title": "Article Is Review",
+          "type": "boolean"
+        },
+        "chunk_id": {
+          "minLength": 1,
+          "title": "Chunk Id",
+          "type": "string"
+        },
+        "chunker_version": {
+          "minLength": 1,
+          "title": "Chunker Version",
+          "type": "string"
+        },
+        "doi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Doi"
+        },
+        "end_character": {
+          "exclusiveMinimum": 0,
+          "title": "End Character",
+          "type": "integer"
+        },
+        "full_text_status": {
+          "$ref": "#/$defs/FullTextStatus"
+        },
+        "journal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Journal"
+        },
+        "organism_context": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Organism Context",
+          "type": "array"
+        },
+        "pmcid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pmcid"
+        },
+        "pmid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pmid"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "section_title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section Title"
+        },
+        "section_type": {
+          "$ref": "#/$defs/SectionType"
+        },
+        "source": {
+          "$ref": "#/$defs/LiteratureSource"
+        },
+        "source_article_id": {
+          "minLength": 1,
+          "title": "Source Article Id",
+          "type": "string"
+        },
+        "source_url": {
+          "minLength": 1,
+          "title": "Source Url",
+          "type": "string"
+        },
+        "start_character": {
+          "minimum": 0,
+          "title": "Start Character",
+          "type": "integer"
+        },
+        "text": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "text_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text Sha256"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "maximum": 2200,
+              "minimum": 1600,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "chunk_id",
+        "source_article_id",
+        "source",
+        "title",
+        "full_text_status",
+        "section_type",
+        "text",
+        "start_character",
+        "end_character",
+        "source_url",
+        "retrieved_at",
+        "chunker_version"
+      ],
+      "title": "LiteratureChunk",
+      "type": "object"
+    },
+    "LiteratureHit": {
+      "$defs": {
+        "AssignmentMethod": {
+          "enum": [
+            "UNASSESSED",
+            "MANUAL",
+            "RULE_BASED",
+            "MODEL"
+          ],
+          "title": "AssignmentMethod",
+          "type": "string"
+        },
+        "EntityMatch": {
+          "enum": [
+            "EXACT_ACCESSION",
+            "EXACT_NAMED_PROTEIN",
+            "TRACEABLE_HOMOLOG",
+            "FAMILY_ONLY",
+            "NONE",
+            "UNRESOLVED"
+          ],
+          "title": "EntityMatch",
+          "type": "string"
+        },
+        "EvidenceRole": {
+          "enum": [
+            "SUPPORT",
+            "CONTRADICTION",
+            "BACKGROUND",
+            "IRRELEVANT",
+            "UNASSESSED"
+          ],
+          "title": "EvidenceRole",
+          "type": "string"
+        },
+        "FullTextStatus": {
+          "enum": [
+            "PMC_OPEN_ACCESS",
+            "ABSTRACT_ONLY",
+            "METADATA_ONLY",
+            "NOT_OPEN_ACCESS",
+            "NOT_FOUND",
+            "RETRIEVAL_ERROR"
+          ],
+          "title": "FullTextStatus",
+          "type": "string"
+        },
+        "LiteratureChunk": {
+          "additionalProperties": false,
+          "properties": {
+            "article_is_review": {
+              "default": false,
+              "title": "Article Is Review",
+              "type": "boolean"
+            },
+            "chunk_id": {
+              "minLength": 1,
+              "title": "Chunk Id",
+              "type": "string"
+            },
+            "chunker_version": {
+              "minLength": 1,
+              "title": "Chunker Version",
+              "type": "string"
+            },
+            "doi": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Doi"
+            },
+            "end_character": {
+              "exclusiveMinimum": 0,
+              "title": "End Character",
+              "type": "integer"
+            },
+            "full_text_status": {
+              "$ref": "#/$defs/FullTextStatus"
+            },
+            "journal": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Journal"
+            },
+            "organism_context": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Organism Context",
+              "type": "array"
+            },
+            "pmcid": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Pmcid"
+            },
+            "pmid": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Pmid"
+            },
+            "retrieved_at": {
+              "format": "date-time",
+              "title": "Retrieved At",
+              "type": "string"
+            },
+            "schema_version": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "section_title": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Section Title"
+            },
+            "section_type": {
+              "$ref": "#/$defs/SectionType"
+            },
+            "source": {
+              "$ref": "#/$defs/LiteratureSource"
+            },
+            "source_article_id": {
+              "minLength": 1,
+              "title": "Source Article Id",
+              "type": "string"
+            },
+            "source_url": {
+              "minLength": 1,
+              "title": "Source Url",
+              "type": "string"
+            },
+            "start_character": {
+              "minimum": 0,
+              "title": "Start Character",
+              "type": "integer"
+            },
+            "text": {
+              "maxLength": 1200,
+              "minLength": 1,
+              "title": "Text",
+              "type": "string"
+            },
+            "text_sha256": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Text Sha256"
+            },
+            "title": {
+              "minLength": 1,
+              "title": "Title",
+              "type": "string"
+            },
+            "year": {
+              "anyOf": [
+                {
+                  "maximum": 2200,
+                  "minimum": 1600,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Year"
+            }
+          },
+          "required": [
+            "chunk_id",
+            "source_article_id",
+            "source",
+            "title",
+            "full_text_status",
+            "section_type",
+            "text",
+            "start_character",
+            "end_character",
+            "source_url",
+            "retrieved_at",
+            "chunker_version"
+          ],
+          "title": "LiteratureChunk",
+          "type": "object"
+        },
+        "LiteratureSource": {
+          "enum": [
+            "PUBMED",
+            "PMC_OPEN_ACCESS"
+          ],
+          "title": "LiteratureSource",
+          "type": "string"
+        },
+        "OrganismMatch": {
+          "enum": [
+            "EXACT_TAXON",
+            "SAME_SPECIES",
+            "RELATED_TAXON",
+            "HETEROLOGOUS_SYSTEM",
+            "MISMATCH",
+            "UNRESOLVED"
+          ],
+          "title": "OrganismMatch",
+          "type": "string"
+        },
+        "SectionType": {
+          "enum": [
+            "TITLE_ABSTRACT",
+            "INTRODUCTION",
+            "METHODS",
+            "RESULTS",
+            "DISCUSSION",
+            "FIGURE_CAPTION",
+            "TABLE_CAPTION",
+            "OTHER"
+          ],
+          "title": "SectionType",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "assay_host": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assay Host"
+        },
+        "assignment_method": {
+          "$ref": "#/$defs/AssignmentMethod",
+          "default": "UNASSESSED"
+        },
+        "assignment_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assignment Version"
+        },
+        "chunk": {
+          "$ref": "#/$defs/LiteratureChunk"
+        },
+        "entity_match": {
+          "$ref": "#/$defs/EntityMatch",
+          "default": "UNRESOLVED"
+        },
+        "entity_match_basis": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entity Match Basis",
+          "type": "array"
+        },
+        "evidence_role": {
+          "$ref": "#/$defs/EvidenceRole",
+          "default": "UNASSESSED"
+        },
+        "hit_id": {
+          "minLength": 1,
+          "title": "Hit Id",
+          "type": "string"
+        },
+        "is_primary_experiment": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Primary Experiment"
+        },
+        "lexical_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lexical Score"
+        },
+        "organism_match": {
+          "$ref": "#/$defs/OrganismMatch",
+          "default": "UNRESOLVED"
+        },
+        "query_id": {
+          "minLength": 1,
+          "title": "Query Id",
+          "type": "string"
+        },
+        "query_terms": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Query Terms",
+          "type": "array"
+        },
+        "rank": {
+          "minimum": 1,
+          "title": "Rank",
+          "type": "integer"
+        },
+        "reranker_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reranker Score"
+        },
+        "reranker_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reranker Version"
+        },
+        "retrieval_method": {
+          "minLength": 1,
+          "title": "Retrieval Method",
+          "type": "string"
+        },
+        "retrieval_score": {
+          "title": "Retrieval Score",
+          "type": "number"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "retriever_version": {
+          "minLength": 1,
+          "title": "Retriever Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source_organism": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Organism"
+        },
+        "uncertainty_notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Uncertainty Notes",
+          "type": "array"
+        },
+        "vector_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vector Score"
+        }
+      },
+      "required": [
+        "hit_id",
+        "query_id",
+        "chunk",
+        "rank",
+        "retrieval_score",
+        "retrieval_method",
+        "retriever_version",
+        "query_terms",
+        "retrieved_at"
+      ],
+      "title": "LiteratureHit",
+      "type": "object"
+    },
+    "LiteratureQuery": {
+      "$defs": {
+        "SelectedHomolog": {
+          "additionalProperties": false,
+          "properties": {
+            "accession": {
+              "minLength": 1,
+              "title": "Accession",
+              "type": "string"
+            },
+            "alignment_coverage": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Alignment Coverage"
+            },
+            "normalized_score": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Normalized Score"
+            },
+            "provenance": {
+              "minLength": 1,
+              "title": "Provenance",
+              "type": "string"
+            },
+            "schema_version": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "sequence_identity": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Sequence Identity"
+            },
+            "source_target_id": {
+              "minLength": 1,
+              "title": "Source Target Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "accession",
+            "source_target_id",
+            "provenance"
+          ],
+          "title": "SelectedHomolog",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "alternative_hypotheses": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Alternative Hypotheses",
+          "type": "array"
+        },
+        "candidate_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Candidate Ids",
+          "type": "array"
+        },
+        "candidate_labels": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Candidate Labels",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "cross_modal_status": {
+          "title": "Cross Modal Status",
+          "type": "string"
+        },
+        "organism": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Organism"
+        },
+        "protein_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Protein Name"
+        },
+        "query_accession": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Query Accession"
+        },
+        "query_builder_version": {
+          "minLength": 1,
+          "title": "Query Builder Version",
+          "type": "string"
+        },
+        "query_id": {
+          "minLength": 1,
+          "title": "Query Id",
+          "type": "string"
+        },
+        "query_terms": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Query Terms",
+          "type": "array"
+        },
+        "query_variants": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Query Variants",
+          "type": "array"
+        },
+        "schema_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "selected_homologs": {
+          "items": {
+            "$ref": "#/$defs/SelectedHomolog"
+          },
+          "title": "Selected Homologs",
+          "type": "array"
+        },
+        "source_biological_run_id": {
+          "minLength": 1,
+          "title": "Source Biological Run Id",
+          "type": "string"
+        },
+        "source_parameters_hash": {
+          "minLength": 1,
+          "title": "Source Parameters Hash",
+          "type": "string"
+        },
+        "taxonomy_id": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Taxonomy Id"
+        }
+      },
+      "required": [
+        "query_id",
+        "cross_modal_status",
+        "query_terms",
+        "query_variants",
+        "query_builder_version",
+        "source_biological_run_id",
+        "source_parameters_hash",
+        "created_at"
+      ],
+      "title": "LiteratureQuery",
+      "type": "object"
+    },
+    "SelectedHomolog": {
+      "additionalProperties": false,
+      "properties": {
+        "accession": {
+          "minLength": 1,
+          "title": "Accession",
+          "type": "string"
+        },
+        "alignment_coverage": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alignment Coverage"
+        },
+        "normalized_score": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalized Score"
+        },
+        "provenance": {
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sequence_identity": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sequence Identity"
+        },
+        "source_target_id": {
+          "minLength": 1,
+          "title": "Source Target Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "accession",
+        "source_target_id",
+        "provenance"
+      ],
+      "title": "SelectedHomolog",
+      "type": "object"
+    }
+  },
+  "schema_version": 1
+}

@@ -278,3 +278,44 @@ When a durable decision changes, append a short entry below rather than silently
   test remained 0.778. The 50-hit profile is experimental because it reduces precision.
   This engineering/ranking improvement does not change the Phase 3 conclusion
   `NO_MEASURABLE_OVERALL_BENEFIT` or establish calibrated biological confidence.
+- 2026-10-26: froze Phase 4.0 contract `phase4-literature-v1` and implemented Phase 4.1
+  typed schemas. Literature is passage-level, downstream evidence; direct support or
+  contradiction requires a primary experimental passage and explicit entity matching,
+  while reviews are background only. PubMed does not imply full-text access, and access
+  failure is not negative biological evidence. Queries forbid undeclared fields to
+  prevent benchmark-label leakage. Packets are capped at 10 articles, 20 chunks, and 3
+  chunks per article. Adapters, retrieval, and labelled evaluation remain pending.
+- 2026-10-26: completed Phase 4.2 deterministic literature-query construction.
+  `build-literature-queries` reads a fixed allowlist of biological-run artifacts,
+  rejects unexpected context columns, selects ranked informative candidates and
+  provenance-bearing sequence homologs, and emits source-neutral query variants plus a
+  checksummed manifest. Structural matches are not called homologs. Phase 4.3 PubMed is
+  specified as an ESearch-to-batched-EFetch metadata/abstract adapter with raw response
+  preservation, rate limiting, retries, caching, deduplication, and secret redaction;
+  network retrieval remains pending.
+- 2026-10-26: implemented Phase 4.3-4.7 engineering flow. PubMed ESearch/batched
+  EFetch and PMC OA-gated acquisition preserve raw responses, checksums, licenses,
+  access failures, caching, and redacted configuration. Section-aware chunking feeds
+  independent BM25 and character-trigram vector features plus a deterministic
+  biological reranker; retrieved passages remain `UNASSESSED`. Compact packets enforce
+  the 10-article/20-chunk/3-per-article limits. Manual evaluation reports retrieval,
+  citation, entity, organism, primary-experiment, and contradiction metrics, but live
+  scientific completion remains pending expert labels. The HDD runner refuses internal
+  fallback; `/media/splexmus/4TB_HDD1` was read-only during validation.
+- 2026-10-26: the five-query v3 audit exposed that labels covering only final hits make
+  citation recall tautological and do not measure missed candidates. Added pooled
+  evaluation v2: every PubMed candidate passage retains lexical, vector, hybrid, and
+  reranker ranks; the enriched review TSV must be completely human-labelled; and
+  thresholds require at least 20 queries and five contradiction passages. Added a
+  leakage-safe Phase 3 development-query builder and HDD exit-benchmark runner. The
+  user's terminal showed `/dev/sda1` mounted read-write; sandbox read-only visibility is
+  not authoritative for their terminal.
+- 2026-10-27: implemented an experimental Phase 5 local-Ollama generation path while
+  Phase 4 remains unvalidated. The default gate still requires Phase 4 `PASS`; an
+  explicit override marks every output `EXPERIMENTAL_UNVALIDATED_PHASE4_OVERRIDE`,
+  treats UNASSESSED literature only as background, and fixes confidence to
+  `NOT_CALIBRATED`. The LLM selects schema-bounded evidence IDs, while the system assigns
+  evidence roles and inserts the candidate-grounded computational function claim. A
+  20-query `gemma3:4b` development run completed with 20 `PASS_WITH_WARNINGS` verifier
+  results, all warnings caused by the deliberate Phase 4 bypass. This is engineering
+  validation only; semantic truth and Phase 5 usefulness still require expert review.

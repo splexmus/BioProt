@@ -148,6 +148,13 @@ For LLM-generated reports:
 
 Do not rely only on LLM-as-judge; include expert evaluation on a meaningful sample.
 
+Phase 5 reports that bypass the Phase 4 exit gate are development artifacts only. A
+deterministic verifier pass checks schema, evidence linkage, citation metadata,
+controlled identifiers, and claim boundaries; it is not a biological truth judgment.
+The Phase 5 exit decision still requires blinded human/expert comparison against a
+deterministic evidence-template baseline and a biological-evidence-only generation
+baseline.
+
 ## 8. Citation metrics
 
 ```text
@@ -156,6 +163,28 @@ Citation Recall = claims requiring citation with support / all claims requiring 
 ```
 
 Also inspect entity consistency: correct protein, organism, gene, and experimental context.
+
+Phase 4.0-4.1 contract `phase4-literature-v1` requires a manually labelled passage
+dataset before literature retrieval can be declared successful. Labels must distinguish
+support, contradiction, background, irrelevant, and unassessed passages while separately
+recording exact-protein/homolog/family matching and organism compatibility. The frozen
+evaluation set must report literature Precision@K, Recall@K, MRR or nDCG, citation
+precision/recall, entity correctness, organism correctness, primary-experiment retrieval,
+and contradiction retrieval. The original v1 evaluation profile intentionally left
+acceptance thresholds unset; pooled evaluation v2 now freezes pilot thresholds before
+the new annotation run.
+
+`dualrag evaluate-literature` implements these passage-level metrics using an explicit
+manual TSV. The evaluator reports `INSUFFICIENT_MANUAL_LABELS` below the frozen
+20-query pilot minimum. `config/literature-evaluation-v1.yaml` remains the descriptive
+historical profile. The operational Phase 4 exit gate is v2 below.
+
+The five-query v3 audit showed that labelling final hits alone cannot estimate recall.
+Evaluation v2 therefore uses a completely judged pooled candidate set and reports
+lexical, character-vector, hybrid, and reranked metrics separately. Pilot thresholds
+are frozen before human annotation in `config/literature-evaluation-v2.yaml`; all must
+pass. Recall is explicitly limited to the PubMed candidate pool and must not be
+described as absolute literature recall. See `docs/PHASE4_EXIT_BENCHMARK.md`.
 
 ## 9. Confidence calibration
 Evaluate with:

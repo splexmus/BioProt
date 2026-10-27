@@ -96,6 +96,53 @@ rescoring from preserved raw evidence. It improved development FR@10 from 0.557 
 improvement, not a new biological-validation claim; the Phase 3 conclusion remains
 `NO_MEASURABLE_OVERALL_BENEFIT`. See `docs/PIPELINE_V2.md`.
 
+Phase 4.0-4.1 is frozen in `docs/LITERATURE_CONTRACT.md` with machine-readable policy
+in `config/literature-contract-v1.yaml` and generated JSON schemas in
+`config/literature-schemas-v1.json`. Typed records for literature queries, articles,
+chunks, hits, and compact evidence packets live in `dualrag.literature.schemas`.
+Phase 4.3-4.7 is now implemented as an executable, evaluation-gated pipeline. PubMed
+provides metadata/abstracts, PMC OA provides eligible full text, and all retrieved
+passages remain `UNASSESSED` until explicit annotation. No LLM claim generation is
+enabled.
+
+Phase 5 now has an experimental local-Ollama path. It rejects unvalidated Phase 4 input
+by default; the explicit development override keeps literature as background, records
+the bypass, and emits `NOT_CALIBRATED` confidence. See
+`docs/PHASE5_LLM_SYNTHESIS.md` and run:
+
+```bash
+pixi run python -m dualrag init-ollama --model gemma3:4b
+scripts/run_phase5_ollama.sh smoke --query-id P01040
+```
+
+Phase 4.2 now builds deterministic, leakage-safe literature queries from completed
+biological runs:
+
+```bash
+pixi run python -m dualrag build-literature-queries \
+  --run results/my-biological-run \
+  --output results/my-literature-queries \
+  --context query_context.tsv
+```
+
+See `docs/PHASE4_QUERY_BUILDER.md`. Run Phase 4.3-4.6 on external storage with:
+
+```bash
+scripts/run_phase4_on_hdd.sh \
+  --queries results/my-literature-queries/literature_queries.jsonl \
+  --email you@example.org \
+  --run-name phase4-pilot-v1
+```
+
+The runner creates the Phase 4.7 manual-label template. Full stage behavior, outputs,
+limitations, and the evaluation command are in `docs/PHASE4_PIPELINE.md`.
+
+For the ≥20-query pooled evaluation required by the Phase 4 exit gate, use
+`scripts/run_phase4_exit_benchmark.sh`. It builds leakage-safe development queries from
+Phase 3 artifacts, preserves all method-ranked candidates, generates an annotation TSV
+with passage context, and applies the pre-frozen thresholds after human review. See
+`docs/PHASE4_EXIT_BENCHMARK.md`.
+
 For the full external-HDD database setup, including the writable-mount preflight,
 eggNOG installation, Foldseek PDB download, provenance finalization, and validation,
 see [Phase 1 data installation](docs/PHASE1_DATA_INSTALL.md). The current production

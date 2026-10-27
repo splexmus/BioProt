@@ -1,0 +1,19 @@
+Generate a concise evidence-grounded protein-function hypothesis from this context.
+
+Required behavior:
+1. Select the putative function only from candidate_functions and cite its
+   COMPUTATIONAL_CANDIDATE evidence ID.
+2. Include alternatives and cross-modal conflict when present.
+3. Treat UNASSESSED literature only as unverified retrieved context.
+4. Attach one or more exact supplied evidence_id strings to every scientific claim.
+5. State important missing evidence and uncertainty.
+6. Suggest validation experiments only as recommendations.
+7. Do not infer the query protein's function from unrelated organisms or same-name
+   proteins in UNASSESSED literature.
+8. Add a FUNCTION / COMPUTATIONAL_PREDICTION claim citing the candidate evidence ID
+   whose label exactly equals proposed_function.
+9. When Phase 4 is bypassed, every claim citing UNASSESSED literature must use
+   BACKGROUND_CONTEXT. Put proposed future experiments only in validation_experiments.
+
+CONTEXT_JSON:
+{context_json}

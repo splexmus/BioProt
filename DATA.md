@@ -52,6 +52,34 @@ the source database. Maintain a manifest with lookup status, accession, API endp
 model version/source, download timestamp, checksum, and local path. Define cache
 retention separately from preservation of published-run artifacts.
 
+## Literature data policy
+
+Phase 4 uses PubMed for bibliographic metadata/abstracts and PMC Open Access for legally
+available full text. A PMID is not evidence of full-text availability. Preserve raw API
+responses separately from normalized `ArticleMetadata` and `LiteratureChunk` records,
+and record `ABSTRACT_ONLY`, `NOT_OPEN_ACCESS`, `NOT_FOUND`, or `RETRIEVAL_ERROR`
+explicitly. These are access states, not biological results.
+
+Deduplicate articles by PMID, then PMCID, DOI, and source article ID. Persist passage
+text with its section, character offsets, checksum, source URL, retrieval time, and
+chunker version. Do not store or distribute publisher full text without an applicable
+license. The normative rules are in `docs/LITERATURE_CONTRACT.md`.
+
+Phase 4.2 outputs `literature_queries.jsonl` and
+`literature_query_manifest.json`. The manifest checksums the fixed upstream artifacts,
+optional context table, builder parameters, and output. Query construction does not
+read benchmark labels or evaluation results. Phase 4.3 stores immutable raw PubMed
+ESearch/EFetch and PMC OA/XML responses below each literature run's `raw/` directory,
+with normalized article and access-state records stored separately. The HDD runner
+refuses to fall back to internal storage if the configured external mount is absent or
+read-only.
+
+Phase 4 pooled evaluation additionally preserves `literature_candidates.jsonl`. Unlike
+the bounded final-hit packet, this file contains every scored passage in the PubMed
+candidate pool with lexical, vector, hybrid, and reranker ranks. Its enriched
+`manual_pool_labels.tsv` must be completely judged to provide a valid pooled-recall
+denominator. See `docs/PHASE4_EXIT_BENCHMARK.md`.
+
 ## Proposed storage tree
 
 ```text

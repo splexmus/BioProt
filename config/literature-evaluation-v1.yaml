@@ -1,0 +1,27 @@
+contract_id: phase4-literature-v1
+evaluation_version: literature-evaluation-v1
+status: frozen-before-final-scoring
+unit: query-passage
+minimum_manually_labeled_queries: 20
+metrics:
+  - precision_at_1
+  - precision_at_5
+  - precision_at_10
+  - recall_at_1
+  - recall_at_5
+  - recall_at_10
+  - mrr
+  - ndcg_at_10
+  - citation_precision
+  - citation_recall
+  - entity_correctness
+  - organism_correctness
+  - primary_experiment_retrieval_rate
+  - contradiction_recall_at_10
+acceptance_policy:
+  mode: descriptive-pilot
+  reason: Numeric pass thresholds require expert-labelled development data and must not be invented.
+  final_thresholds: null
+leakage_controls:
+  labels_must_not_construct_queries: true
+  thresholds_must_be_frozen_before_final_test_scoring: true
