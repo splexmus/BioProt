@@ -17,7 +17,12 @@ from dualrag.literature.schemas import (
     SectionType,
 )
 from dualrag.rag.context import build_generation_context
-from dualrag.rag.ollama import OllamaClient, OllamaConfig
+from dualrag.rag.ollama import (
+    DEFAULT_OLLAMA_MODEL,
+    OllamaClient,
+    OllamaConfig,
+    OllamaResponseError,
+)
 from dualrag.rag.pipeline import run_generation_pipeline
 from dualrag.rag.schemas import (
     ClaimType,
@@ -197,6 +202,11 @@ class _Session:
         )
 
 
+def test_default_ollama_model_is_gemma4_more() -> None:
+    assert DEFAULT_OLLAMA_MODEL == "gemma4:more"
+    assert OllamaConfig().model == DEFAULT_OLLAMA_MODEL
+
+
 def test_ollama_adapter_requests_schema_constrained_json() -> None:
     session = _Session(_report())
     client = OllamaClient(OllamaConfig(model="test-model"), session=session)
@@ -214,11 +224,43 @@ def test_ollama_adapter_requests_schema_constrained_json() -> None:
     assert report.claims[0].evidence_ids == ["candidate:2"]
     assert session.last_payload is not None
     assert isinstance(session.last_payload["format"], dict)
+    assert session.last_payload["think"] is False
     assert session.last_payload["format"]["properties"]["proposed_function"]["enum"] == [
         "GO:0004869",
         "cysteine-type endopeptidase inhibitor activity",
     ]
-    assert session.last_payload["options"] == {"temperature": 0.0, "seed": 42}
+    assert session.last_payload["options"] == {
+        "temperature": 0.0,
+        "seed": 42,
+        "num_predict": 8192,
+    }
+
+
+def test_pipeline_preserves_invalid_raw_ollama_response(tmp_path: Path) -> None:
+    run_dir = tmp_path / "phase4"
+    run_dir.mkdir()
+    packets = run_dir / "evidence_packets.jsonl"
+    write_jsonl(packets, [_packet()])
+    system = tmp_path / "system.txt"
+    prompt = tmp_path / "report.txt"
+    system.write_text("system", encoding="utf-8")
+    prompt.write_text("{context_json}", encoding="utf-8")
+    invalid = _report().model_copy(update={"query_id": "WRONG"})
+    client = OllamaClient(OllamaConfig(model="test-model"), session=_Session(invalid))
+    output = tmp_path / "output"
+
+    with pytest.raises(OllamaResponseError, match="does not match"):
+        run_generation_pipeline(
+            packets_path=packets,
+            output_dir=output,
+            client=client,
+            system_prompt_path=system,
+            report_prompt_path=prompt,
+            allow_unvalidated_phase4=True,
+        )
+
+    raw = json.loads((output / "raw/P01040.json").read_text(encoding="utf-8"))
+    assert raw["message"]["content"] == invalid.model_dump_json()
 
 
 def test_ollama_adapter_adds_missing_biological_modality_claims() -> None:
@@ -338,6 +380,8 @@ def test_pipeline_writes_experimental_override_manifest(tmp_path: Path) -> None:
     )
     assert manifest["scientific_status"] == "EXPERIMENTAL_UNVALIDATED_PHASE4_OVERRIDE"
     assert manifest["verification_status_counts"] == {"PASS_WITH_WARNINGS": 1}
+    assert manifest["num_predict"] == 8192
+    assert manifest["think"] is False
     assert (tmp_path / "output/reports/P01040.md").is_file()
 
 

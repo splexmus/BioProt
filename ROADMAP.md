@@ -214,11 +214,18 @@ Exit criteria:
 
 1. Complete the 20-report Phase 5 human-review table and summarize acceptance,
    unsupported claims, modality interpretation, citation grounding, and usefulness.
+   **(complete for the preserved `gemma3:4b` development run: 16 accept, 2 revise,
+   2 reject; a new `gemma4:more` variant requires its own review)**
 2. Freeze the current development system: Git commit, Pixi lock, contracts, prompts,
-   Ollama model, database releases, manifests, and checksums.
+   Ollama model, database releases, manifests, and checksums. **(blocked from freeze:
+   `gemma4:more` is selected but repeated schema-constrained smokes timed out or
+   truncated; complete a small reliability pilot, full run, and review first)**
 3. Build a new characterized panel of at least 200 reviewed proteins with experimental
    Tier-A EC or GO-MF labels, taxonomic/function diversity, and substantial low-identity
    representation. Exclude the existing 60 proteins and prohibited homolog clusters.
+   Treat 200 proteins as a floor and expand the panel until Step 4 has at least 100
+   validation and 100 untouched-test query-namespace examples. See
+   `docs/SCIENTIFIC_VALIDATION_PANEL.md`.
 4. Assign cluster-aware development/validation/test splits. Target at least 100
    query-namespace examples in validation and 100 in a completely untouched test set.
 5. Freeze Phase 6 scientific thresholds before revealing new evaluation labels: improved

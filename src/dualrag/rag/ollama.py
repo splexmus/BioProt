@@ -15,15 +15,27 @@ from dualrag.rag.schemas import (
     ReportReference,
 )
 
+DEFAULT_OLLAMA_MODEL = "gemma4:more"
+
+
+class OllamaResponseError(ValueError):
+    """An Ollama response that could not satisfy the report contract."""
+
+    def __init__(self, message: str, raw_response: dict[str, Any]):
+        super().__init__(message)
+        self.raw_response = raw_response
+
 
 class OllamaConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     base_url: str = "http://127.0.0.1:11434"
-    model: str = "gemma3:4b"
+    model: str = DEFAULT_OLLAMA_MODEL
     timeout_seconds: float = Field(default=300.0, gt=0)
     temperature: float = Field(default=0.0, ge=0)
     seed: int = 42
+    num_predict: int = Field(default=8192, gt=0)
+    think: bool = False
 
 
 class OllamaClient:
@@ -71,6 +83,7 @@ class OllamaClient:
         payload = {
             "model": self.config.model,
             "stream": False,
+            "think": self.config.think,
             "format": output_schema,
             "messages": [
                 {"role": "system", "content": system_prompt},
@@ -79,6 +92,7 @@ class OllamaClient:
             "options": {
                 "temperature": self.config.temperature,
                 "seed": self.config.seed,
+                "num_predict": self.config.num_predict,
             },
         }
         response = self.session.post(
@@ -90,12 +104,16 @@ class OllamaClient:
         raw = dict(response.json())
         content = raw.get("message", {}).get("content")
         if not isinstance(content, str) or not content.strip():
-            raise ValueError("Ollama response has no message.content JSON")
-        report = GroundedProteinReport.model_validate_json(content)
+            raise OllamaResponseError("Ollama response has no message.content JSON", raw)
+        try:
+            report = GroundedProteinReport.model_validate_json(content)
+        except ValueError as exc:
+            raise OllamaResponseError("Ollama response failed report validation", raw) from exc
         if report.query_id != context.query_id:
-            raise ValueError(
+            raise OllamaResponseError(
                 f"Ollama report query_id {report.query_id!r} does not match "
-                f"context {context.query_id!r}"
+                f"context {context.query_id!r}",
+                raw,
             )
         report = _canonicalize_claim_roles(report, context)
         evidence = {item.evidence_id: item for item in context.evidence}

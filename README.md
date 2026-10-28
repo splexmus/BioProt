@@ -113,7 +113,7 @@ sequence hits and five Foldseek structure hits to each compact packet while pres
 raw metrics and provenance. Run:
 
 ```bash
-pixi run python -m dualrag init-ollama --model gemma3:4b
+pixi run python -m dualrag init-ollama --model gemma4:more
 scripts/enrich_phase5_biological_evidence.sh
 scripts/run_phase5_ollama.sh smoke \
   --run-name phase5-ollama-biological-v1 \

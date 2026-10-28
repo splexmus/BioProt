@@ -19,7 +19,7 @@ from dualrag.literature.pubmed import PubMedConfig
 from dualrag.literature.query_builder import build_literature_queries
 from dualrag.pipeline import run_pipeline
 from dualrag.rag.biological_evidence import enrich_evidence_packets
-from dualrag.rag.ollama import OllamaClient, OllamaConfig
+from dualrag.rag.ollama import DEFAULT_OLLAMA_MODEL, OllamaClient, OllamaConfig
 from dualrag.rag.pipeline import run_generation_pipeline
 from dualrag.reproducibility import compare_runs
 from dualrag.storage import initialize_storage
@@ -245,7 +245,7 @@ def enrich_phase5_evidence_command(
 
 @app.command("init-ollama")
 def init_ollama_command(
-    model: Annotated[str, typer.Option("--model")] = "gemma3:4b",
+    model: Annotated[str, typer.Option("--model")] = DEFAULT_OLLAMA_MODEL,
     base_url: Annotated[str, typer.Option("--base-url")] = "http://127.0.0.1:11434",
     pull: Annotated[bool, typer.Option("--pull")] = False,
 ) -> None:
@@ -300,11 +300,12 @@ def calibrate_confidence_command(
 def generate_reports_command(
     packets: Annotated[Path, typer.Option("--packets", exists=True, dir_okay=False)],
     output: Annotated[Path, typer.Option("--output", "-o")],
-    model: Annotated[str, typer.Option("--model")] = "gemma3:4b",
+    model: Annotated[str, typer.Option("--model")] = DEFAULT_OLLAMA_MODEL,
     base_url: Annotated[str, typer.Option("--base-url")] = "http://127.0.0.1:11434",
     temperature: Annotated[float, typer.Option("--temperature", min=0)] = 0.0,
     seed: Annotated[int, typer.Option("--seed")] = 42,
-    timeout: Annotated[float, typer.Option("--timeout", min=1)] = 300.0,
+    timeout: Annotated[float, typer.Option("--timeout", min=1)] = 1800.0,
+    max_output_tokens: Annotated[int, typer.Option("--max-output-tokens", min=1)] = 8192,
     system_prompt: Annotated[
         Path, typer.Option("--system-prompt", exists=True, dir_okay=False)
     ] = Path("prompts/phase5-system-v3.txt"),
@@ -326,6 +327,7 @@ def generate_reports_command(
                 timeout_seconds=timeout,
                 temperature=temperature,
                 seed=seed,
+                num_predict=max_output_tokens,
             )
         ),
         system_prompt_path=system_prompt,

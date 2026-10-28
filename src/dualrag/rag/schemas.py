@@ -148,5 +148,7 @@ class GenerationRecord(RagModel):
     generated_at: datetime
     temperature: float
     seed: int
+    num_predict: int
+    think: bool
     phase4_exit_override: bool
     verification_status: VerificationStatus

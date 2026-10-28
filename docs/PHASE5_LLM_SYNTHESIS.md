@@ -40,10 +40,36 @@ ollama serve
 Initialize the default local model:
 
 ```bash
-pixi run python -m dualrag init-ollama --model gemma3:4b
+pixi run python -m dualrag init-ollama --model gemma4:more
 ```
 
 The model download is stored by Ollama, not inside the repository or Pixi environment.
+`gemma4:more` is the default for new runs. The completed 20-report human review applies
+only to the preserved `gemma3:4b` run; a Gemma 4 run is a new system variant and must
+receive its own smoke test, full-run manifest, and human review before it is frozen.
+The runner uses a 1,800-second request timeout because the larger model can exceed the old
+300-second limit during report generation; override it with `--timeout SECONDS` when
+appropriate.
+The local `gemma4:more` Modelfile requests up to 16,384 output tokens. BioProt caps each
+report request at 8,192 with Ollama's `num_predict` option so a malformed or non-terminating
+structured response cannot consume that entire budget. Override the cap explicitly with
+`--max-output-tokens N`; changing it creates a new generation configuration.
+BioProt also sends `think: false`. Hidden reasoning from this custom model consumed the
+entire output budget without emitting `message.content`; report generation requires the
+auditable schema-bounded final answer, not an unrecorded reasoning stream.
+Generation pipeline v5 records `think` and `num_predict` in every query record, the run
+manifest, and the parameters hash because changing either setting creates a distinct
+model configuration.
+
+### Gemma 4 compatibility status
+
+`gemma4:more` is installed and selected for new experimental runs, but it is not frozen.
+The original thinking-enabled requests timed out at both 300 and 900 seconds. With
+`think: false`, one 4,096-token smoke generated a valid report, while later 4,096- and
+8,192-token repetitions produced truncated JSON after consuming their full budgets.
+Do not start the 20-report run until a small repeated-query pilot establishes an
+acceptable completion rate. Pipeline v5 preserves the raw Ollama response even when
+schema validation fails so truncation and repetition remain auditable.
 
 ## One-query experimental smoke run
 

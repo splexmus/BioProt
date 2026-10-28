@@ -350,3 +350,19 @@ When a durable decision changes, append a short entry below rather than silently
   claim counts, cross-modal status, and verifier findings while leaving controlled human
   judgments blank; six structure-unavailable cases are prefilled `NA`. Added the review
   guide and a ten-step post-Phase-6 scientific-validation plan to `ROADMAP.md`.
+- 2026-10-28: the project owner completed all 20 Phase 5 development-review rows for the
+  preserved `gemma3:4b` run: 16 accept, 2 revise, 2 reject; 14 useful, 3 partly useful,
+  3 not useful; all rows recorded no unsupported claims. This does not transfer to a new
+  model variant or replace blinded validation. New Phase 5 runs now default to the locally
+  installed `gemma4:more`; the old run remains immutable and the Gemma 4 variant requires
+  its own smoke/full run and review before freeze. Step 3 now has a detailed scientific
+  panel plan: 200 proteins is a floor, with adaptive expansion (expected near 800) until
+  cluster-aware validation and untouched-test splits each contain at least 100
+  query-namespace examples.
+- 2026-10-28: changed new Phase 5 runs to the installed custom `gemma4:more` model and
+  generation pipeline v5. The model's default hidden reasoning and 16,384-token budget
+  caused 300/900-second timeouts; `think=false` produced one valid smoke, but repeated
+  4,096- and 8,192-token runs truncated JSON after consuming their budgets. The model is
+  selected but not frozen and must pass a repeated-query reliability pilot before a full
+  run. V5 records thinking/output limits in provenance and preserves invalid raw Ollama
+  responses. The reviewed `gemma3:4b` run remains the accepted development reference.

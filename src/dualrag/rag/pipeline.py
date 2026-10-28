@@ -13,12 +13,12 @@ from dualrag.io import file_sha256, stable_hash, write_json
 from dualrag.literature.io import read_jsonl, write_jsonl
 from dualrag.literature.schemas import EvidencePacket
 from dualrag.rag.context import build_generation_context
-from dualrag.rag.ollama import OllamaClient
+from dualrag.rag.ollama import OllamaClient, OllamaResponseError
 from dualrag.rag.render import render_markdown
 from dualrag.rag.schemas import GenerationRecord, GroundedProteinReport, ReportVerification
 from dualrag.rag.verifier import verify_report
 
-GENERATION_PIPELINE_VERSION = "phase5-ollama-generation-v4"
+GENERATION_PIPELINE_VERSION = "phase5-ollama-generation-v5"
 PROMPT_VERSION = "phase5-grounded-report-v3"
 
 
@@ -83,12 +83,16 @@ def run_generation_pipeline(
         )
         context_path = contexts_dir / f"{query_id}.json"
         write_json(context_path, context.model_dump(mode="json"))
-        report, raw_response = client.generate_report(
-            context=context,
-            system_prompt=system_prompt,
-            report_prompt=report_prompt,
-        )
         raw_path = raw_dir / f"{query_id}.json"
+        try:
+            report, raw_response = client.generate_report(
+                context=context,
+                system_prompt=system_prompt,
+                report_prompt=report_prompt,
+            )
+        except OllamaResponseError as exc:
+            write_json(raw_path, exc.raw_response)
+            raise
         write_json(raw_path, raw_response)
         verification = verify_report(report, context)
         report_path = reports_dir / f"{query_id}.json"
@@ -111,6 +115,8 @@ def run_generation_pipeline(
                 generated_at=datetime.now(UTC),
                 temperature=client.config.temperature,
                 seed=client.config.seed,
+                num_predict=client.config.num_predict,
+                think=client.config.think,
                 phase4_exit_override=phase4_status != "PASS",
                 verification_status=verification.status,
             )
@@ -129,6 +135,8 @@ def run_generation_pipeline(
         "ollama_version": ollama_version,
         "temperature": client.config.temperature,
         "seed": client.config.seed,
+        "num_predict": client.config.num_predict,
+        "think": client.config.think,
         "report_count": len(reports),
         "verification_status_counts": dict(sorted(status_counts.items())),
         "phase4_exit_status": phase4_status,
@@ -163,6 +171,8 @@ def run_generation_pipeline(
                 "model": client.config.model,
                 "temperature": client.config.temperature,
                 "seed": client.config.seed,
+                "num_predict": client.config.num_predict,
+                "think": client.config.think,
                 "prompt_version": PROMPT_VERSION,
             }
         ),

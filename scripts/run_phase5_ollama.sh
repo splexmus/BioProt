@@ -13,7 +13,9 @@ Options:
   --phase4-run NAME     default: phase4-exit-development-v4
   --run-name NAME       default: phase5-ollama-development-v1
   --packets FILE        optional explicit packet file; otherwise prefer biological-v1
-  --model MODEL         default: gemma3:4b
+  --model MODEL         default: gemma4:more
+  --timeout SECONDS     default: 1800 (Gemma 4 report generation is slow locally)
+  --max-output-tokens N default: 8192 (overrides the model's 16384-token setting)
   --query-id ID         smoke default: first packet
   --base-url URL        default: http://127.0.0.1:11434
 
@@ -32,9 +34,11 @@ shift
 data_root="${DUALRAG_DATA_ROOT:-/media/splexmus/4TB_HDD1/dualrag}"
 phase4_run="phase4-exit-development-v4"
 run_name="phase5-ollama-development-v1"
-model="gemma3:4b"
+model="gemma4:more"
 query_id=""
 base_url="http://127.0.0.1:11434"
+timeout="1800"
+max_output_tokens="8192"
 packets_override=""
 while (($#)); do
   case "$1" in
@@ -42,6 +46,8 @@ while (($#)); do
     --phase4-run) phase4_run="$2"; shift 2 ;;
     --run-name) run_name="$2"; shift 2 ;;
     --model) model="$2"; shift 2 ;;
+    --timeout) timeout="$2"; shift 2 ;;
+    --max-output-tokens) max_output_tokens="$2"; shift 2 ;;
     --query-id) query_id="$2"; shift 2 ;;
     --base-url) base_url="$2"; shift 2 ;;
     --packets) packets_override="$2"; shift 2 ;;
@@ -58,6 +64,8 @@ fi
 [[ "$data_root" = /* ]] || { echo "--data-root must be absolute" >&2; exit 2; }
 [[ "$phase4_run" != */* && "$phase4_run" != *..* ]] || { echo "unsafe --phase4-run" >&2; exit 2; }
 [[ "$run_name" != */* && "$run_name" != *..* ]] || { echo "unsafe --run-name" >&2; exit 2; }
+[[ "$timeout" =~ ^[1-9][0-9]*([.][0-9]+)?$ ]] || { echo "--timeout must be positive" >&2; exit 2; }
+[[ "$max_output_tokens" =~ ^[1-9][0-9]*$ ]] || { echo "--max-output-tokens must be a positive integer" >&2; exit 2; }
 phase4_dir="$data_root/literature/runs/$phase4_run"
 if [[ -n "$packets_override" ]]; then
   packets="$packets_override"
@@ -86,5 +94,7 @@ pixi run python -m dualrag generate-reports \
   --output "$output" \
   --model "$model" \
   --base-url "$base_url" \
+  --timeout "$timeout" \
+  --max-output-tokens "$max_output_tokens" \
   --allow-unvalidated-phase4 \
   "${args[@]}"
