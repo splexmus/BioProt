@@ -43,23 +43,23 @@ step "3/7" "CLI and external-tool diagnostics"
 pixi run python -m dualrag --help >/dev/null
 pixi run python -m dualrag check-tools
 
-step "4/7" "Offline Phase 1-2 dual-retrieval fixture"
+step "4/7" "User interface and offline Phase 1-2 fixture"
 for run in first second; do
-  pixi run python -m dualrag run \
+  pixi run python -m dualrag analyze \
     --config config/config.yaml \
-    --input tests/fixtures/queries.fasta \
+    --fasta tests/fixtures/queries.fasta \
     --output "$work_dir/$run"
 done
 
 step "5/7" "Reproducibility comparison"
 pixi run python -m dualrag compare-runs \
-  --first "$work_dir/first" \
-  --second "$work_dir/second" \
+  --first "$work_dir/first/biological" \
+  --second "$work_dir/second/biological" \
   --output "$work_dir/reproducibility.json"
 
 step "6/7" "Phase 4 leakage-safe query construction"
 pixi run python -m dualrag build-literature-queries \
-  --run "$work_dir/first" \
+  --run "$work_dir/first/biological" \
   --output "$work_dir/literature-queries" \
   --context tests/fixtures/literature_query_context.tsv
 
@@ -79,6 +79,7 @@ Covered:
   PASS  Python unit and contract tests, including the literature vector index
   PASS  Ruff static checks
   PASS  CLI loading and tool diagnostics
+  PASS  FASTA user interface, status, input manifest, and summary
   PASS  Phase 1 sequence/structure fixture retrieval
   PASS  Phase 2 normalization, fusion, conflict, and audit outputs
   PASS  Repeat-run reproducibility

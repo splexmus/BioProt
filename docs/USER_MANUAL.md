@@ -64,21 +64,17 @@ channel, but structure acquisition can remain unavailable.
 
 ### Option B — You only have a UniProt accession
 
-The current `run` command does not accept a bare accession. Download the canonical
-FASTA from UniProt first and inspect it:
+The user interface accepts one validated UniProt accession and downloads the canonical
+FASTA while preserving its URL, retrieval time, and checksums:
 
 ```bash
-mkdir -p inputs
-ACCESSION=P69905
-curl --fail --location \
-  "https://rest.uniprot.org/uniprotkb/${ACCESSION}.fasta" \
-  --output "inputs/${ACCESSION}.fasta"
-head -n 2 "inputs/${ACCESSION}.fasta"
+pixi run python -m dualrag analyze \
+  --uniprot P69905 \
+  --config config/4tb-hdd.yaml \
+  --output /media/splexmus/4TB_HDD1/dualrag/analyses/P69905-v1
 ```
 
-Do not continue if the request fails, returns an obsolete/replaced accession without a
-documented mapping, or returns a sequence different from the sequence you intend to
-study. Direct, validated accession input is planned but not implemented yet.
+Invalid, missing, or mismatched accessions fail before biological interpretation.
 
 ## Phase 1 — Retrieve sequence and structure evidence
 
@@ -89,17 +85,20 @@ export DUALRAG_DATA_ROOT=/media/splexmus/4TB_HDD1/dualrag
 export DUALRAG_RESULTS="$DUALRAG_DATA_ROOT/results"
 ```
 
-Run the real-data profile. This command also performs Phase 2 fusion after retrieval:
+Run the user interface with a FASTA file. It also performs Phase 2 fusion:
 
 ```bash
 INPUT=inputs/P69905.fasta
 RUN_NAME=P69905-analysis-v1
 
-pixi run python -m dualrag run \
+pixi run python -m dualrag analyze \
   --config config/4tb-hdd.yaml \
-  --input "$INPUT" \
-  --output "$DUALRAG_RESULTS/$RUN_NAME"
+  --fasta "$INPUT" \
+  --output "$DUALRAG_DATA_ROOT/analyses/$RUN_NAME"
 ```
+
+The top-level directory contains `summary.md`, `status.json`, and the validated input
+manifest. Detailed Phase 1-2 files are under `biological/`.
 
 Phase 1 outputs:
 
@@ -164,7 +163,7 @@ general dual-retrieval benefit on the newest independent cohort.
 ### 4.1 Build literature queries
 
 ```bash
-BIO_RUN="$DUALRAG_RESULTS/P69905-analysis-v1"
+BIO_RUN="$DUALRAG_DATA_ROOT/analyses/P69905-analysis-v1/biological"
 QUERY_RUN="$DUALRAG_RESULTS/P69905-literature-queries-v1"
 
 pixi run python -m dualrag build-literature-queries \

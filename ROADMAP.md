@@ -334,9 +334,9 @@ Plan: `docs/USER_INTERFACE_PLAN.md`
 
 Implementation order:
 
-1. validated FASTA/UniProt input resolver;
-2. one resumable `dualrag analyze` command over existing Phase 1-2 modules;
-3. deterministic `summary.md` and `status.json`;
+1. validated FASTA/UniProt input resolver **(complete)**;
+2. one `dualrag analyze` command over existing Phase 1-2 modules **(complete; resume pending)**;
+3. deterministic `summary.md` and `status.json` **(initial version complete)**;
 4. optional local literature search;
 5. ordinary-run biological evidence packets for Phase 5;
 6. optional online literature and Ollama generation;

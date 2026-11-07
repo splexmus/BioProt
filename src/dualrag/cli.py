@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from dualrag.analysis import AnalysisError, run_analysis
 from dualrag.calibration import run_confidence_calibration
 from dualrag.config import load_config
 from dualrag.io import write_json
@@ -29,6 +30,35 @@ from dualrag.storage import initialize_storage
 from dualrag.tools import check_tools
 
 app = typer.Typer(no_args_is_help=True, help="Dual-retrieval protein evidence and fusion pipeline.")
+
+
+@app.command("analyze")
+def analyze_command(
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    fasta: Annotated[Path | None, typer.Option("--fasta", exists=True, dir_okay=False)] = None,
+    uniprot: Annotated[str | None, typer.Option("--uniprot")] = None,
+    config: Annotated[
+        Path, typer.Option("--config", "-c", exists=True, dir_okay=False)
+    ] = Path("config/4tb-hdd.yaml"),
+) -> None:
+    """Analyze FASTA or one UniProt accession through Phase 1-2."""
+    source = f"UniProt {uniprot}" if uniprot else str(fasta)
+    typer.echo(f"[1/2] Validating input: {source}")
+    typer.echo("[2/2] Running sequence, structure, mapping, and fusion")
+    try:
+        result = run_analysis(
+            config=load_config(config),
+            output_dir=output,
+            fasta_path=fasta,
+            uniprot_accession=uniprot,
+        )
+    except AnalysisError as exc:
+        typer.echo(f"Analysis failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(
+        f"Analysis complete: {result['query_count']} query(s) -> {output}\n"
+        f"Summary: {result['summary']}"
+    )
 
 
 @app.command("run")

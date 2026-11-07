@@ -480,3 +480,8 @@ When a durable decision changes, append a short entry below rather than silently
   `dualrag analyze` command with exactly one FASTA/accession input, deterministic summary,
   optional local/online literature, and optional Ollama. A normal single-protein Phase 5
   evidence adapter is required before the planned interface is complete.
+- 2026-11-07: implemented the first `dualrag analyze` interface. It requires exactly one
+  `--fasta` or `--uniprot`, validates/caches the canonical input and checksums, refuses
+  overwrite, runs existing Phase 1-2 modules, and writes `summary.md`, `status.json`, and
+  failure logs. Literature/Ollama orchestration, resume, ordinary-run Phase 5 enrichment,
+  and a graphical UI remain pending.

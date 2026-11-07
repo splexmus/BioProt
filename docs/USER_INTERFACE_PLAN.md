@@ -1,6 +1,7 @@
 # Plan: user-friendly BioProt interface
 
-Status: planned; commands in this document do not exist unless marked implemented
+Status: CLI milestones 1, 2, and the initial deterministic summary are implemented;
+literature/report orchestration and graphical UI remain planned
 
 ## Goal
 
@@ -17,12 +18,10 @@ without exposing internal file wiring or weakening scientific boundaries.
 Build one orchestration command on top of the existing typed modules:
 
 ```bash
-# Planned, not implemented
 pixi run python -m dualrag analyze \
   --fasta my_protein.fasta \
   --output /media/splexmus/4TB_HDD1/dualrag/analyses/my-protein-v1
 
-# Planned, not implemented
 pixi run python -m dualrag analyze \
   --uniprot P69905 \
   --output /media/splexmus/4TB_HDD1/dualrag/analyses/P69905-v1
@@ -70,7 +69,7 @@ Optional grounded Ollama report
 summary.md + status.json + complete phase artifacts
 ```
 
-## Milestone 1 — Unified input resolver
+## Milestone 1 — Unified input resolver (implemented)
 
 Implement first because every later screen and command depends on trustworthy identity.
 
@@ -93,7 +92,7 @@ For `--fasta`:
 Tests must mock UniProt HTTP responses and cover valid, obsolete, missing, malformed,
 multi-record, and sequence-mismatch cases.
 
-## Milestone 2 — Single-run orchestrator
+## Milestone 2 — Single-run orchestrator (Phase 1-2 implemented)
 
 Add an `analyze` service that calls existing Phase 1, Phase 2, and Phase 4 functions. It
 should not duplicate eggNOG, Foldseek, fusion, or literature logic.
@@ -148,7 +147,7 @@ The adapter must:
 - keep sequence and structure topics separate;
 - exclude gold labels and never manufacture missing annotations.
 
-## Milestone 4 — Human-readable summary
+## Milestone 4 — Human-readable summary (initial version implemented)
 
 Always generate `summary.md`, even when Ollama is disabled. It should contain:
 
@@ -225,10 +224,10 @@ The interface is ready for ordinary users only when all of these pass:
 
 ## Recommended implementation order
 
-1. Unified input resolver and tests.
-2. `dualrag analyze` orchestration with Phase 1-2 only.
-3. Deterministic `summary.md` and `status.json`.
-4. Local literature-index option.
+1. Unified input resolver and tests. **Complete**
+2. `dualrag analyze` orchestration with Phase 1-2 only. **Complete**
+3. Initial deterministic `summary.md` and `status.json`. **Complete**
+4. Local literature-index option. **Next**
 5. New-protein Phase 5 evidence-packet adapter.
 6. Optional online PubMed/PMC and Ollama switches.
 7. Repeated novice usability test.

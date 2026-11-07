@@ -48,9 +48,17 @@ pixi run test-all-processes
 
 See `docs/TESTING_ALL_PROCESSES.md` for real-database, literature, Ollama, calibration,
 and exploratory Phase 8 testing steps and their scientific interpretation boundaries.
-For a phase-by-phase operator walkthrough, use `docs/USER_MANUAL.md`. The planned
-single-command FASTA/UniProt experience is specified in `docs/USER_INTERFACE_PLAN.md`;
-its proposed `dualrag analyze` command is not implemented yet.
+For a phase-by-phase operator walkthrough, use `docs/USER_MANUAL.md`. The implemented
+`dualrag analyze` command accepts FASTA or one UniProt accession, runs Phase 1-2, and
+writes a deterministic summary/status. Remaining literature/report orchestration and
+graphical-interface work is tracked in `docs/USER_INTERFACE_PLAN.md`.
+
+```bash
+pixi run python -m dualrag analyze \
+  --uniprot P69905 \
+  --config config/4tb-hdd.yaml \
+  --output /media/splexmus/4TB_HDD1/dualrag/analyses/P69905-v1
+```
 
 `check-tools` is diagnostic: missing executables are reported, but fixture mode remains
 fully usable. External mode fails closed until real database versions replace the
