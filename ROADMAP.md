@@ -164,6 +164,9 @@ thresholds.**
 - identifier deduplication and section-aware chunking **(4.4 implemented)**
 - BM25 lexical/character-vector/hybrid retrieval and deterministic reranking
   **(4.5 implemented as baseline)**
+- persistent checksummed SQLite chunk/vector index with offline hybrid search and
+  unchanged evidence-packet contracts **(implemented as experimental ablation;
+  labelled comparison pending)**
 - compact evidence packet builder **(4.6 implemented)**
 - complete candidate-pool review table; lexical/vector/hybrid/reranked pooled metrics;
   retrieval/citation/entity/organism/experiment/contradiction checks; and frozen pilot

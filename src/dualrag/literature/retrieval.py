@@ -19,6 +19,7 @@ from dualrag.literature.schemas import (
     OrganismMatch,
     SectionType,
 )
+from dualrag.literature.vector_store import read_literature_index
 
 RETRIEVER_VERSION = "hybrid-bm25-char3-v1"
 RERANKER_VERSION = "biological-rule-v1"
@@ -47,13 +48,20 @@ _SECTION_PRIOR = {
 def retrieve_and_rerank(
     *,
     queries_path: Path,
-    chunks_path: Path,
+    chunks_path: Path | None = None,
+    index_path: Path | None = None,
     output_dir: Path,
     query_article_links_path: Path | None = None,
     top_k: int = 20,
 ) -> dict[str, Any]:
+    if (chunks_path is None) == (index_path is None):
+        raise ValueError("provide exactly one of chunks_path or index_path")
     queries = read_jsonl(queries_path, LiteratureQuery)
-    chunks = read_jsonl(chunks_path, LiteratureChunk)
+    chunks = read_jsonl(chunks_path, LiteratureChunk) if chunks_path else []
+    stored_vectors: dict[str, Counter[str]] = {}
+    index_metadata: dict[str, str] = {}
+    if index_path:
+        _, _, index_metadata = read_literature_index(index_path, allowed_pmids=set())
     now = datetime.now(UTC)
     hits: list[LiteratureHit] = []
     candidates: list[LiteratureCandidate] = []
@@ -64,10 +72,20 @@ def retrieve_and_rerank(
     )
     for query in queries:
         allowed_pmids = set(links.get(query.query_id, {})) if links is not None else None
-        query_chunks = [
-            chunk for chunk in chunks if allowed_pmids is None or chunk.pmid in allowed_pmids
-        ]
-        scored = _score_query(query, query_chunks)
+        if index_path:
+            query_chunks, stored_vectors, _ = read_literature_index(
+                index_path, allowed_pmids=allowed_pmids
+            )
+        else:
+            query_chunks = [
+                chunk for chunk in chunks if allowed_pmids is None or chunk.pmid in allowed_pmids
+            ]
+        scored = _score_query(query, query_chunks, stored_vectors or None)
+        retriever_version = (
+            f"{RETRIEVER_VERSION}+{index_metadata['index_version']}"
+            if index_path
+            else RETRIEVER_VERSION
+        )
         rank_maps = {
             "lexical": _rank_map(scored, 1),
             "vector": _rank_map(scored, 2),
@@ -93,7 +111,7 @@ def retrieve_and_rerank(
                     entity_match_basis=basis,
                     organism_match=organism,
                     is_primary_experiment=primary,
-                    retriever_version=RETRIEVER_VERSION,
+                    retriever_version=retriever_version,
                     reranker_version=RERANKER_VERSION,
                     scored_at=now,
                 )
@@ -112,7 +130,7 @@ def retrieve_and_rerank(
                     vector_score=vector,
                     reranker_score=reranker,
                     retrieval_method="hybrid",
-                    retriever_version=RETRIEVER_VERSION,
+                    retriever_version=retriever_version,
                     reranker_version=RERANKER_VERSION,
                     query_terms=query.query_terms,
                     retrieved_at=now,
@@ -132,17 +150,22 @@ def retrieve_and_rerank(
     write_jsonl(output_dir / "literature_hits.jsonl", hits)
     manifest = {
         "schema_version": 1,
-        "retriever_version": RETRIEVER_VERSION,
+        "retriever_version": (
+            f"{RETRIEVER_VERSION}+{index_metadata['index_version']}"
+            if index_path
+            else RETRIEVER_VERSION
+        ),
         "reranker_version": RERANKER_VERSION,
         "created_at": now.isoformat(),
         "query_count": len(queries),
-        "chunk_count": len(chunks),
+        "chunk_count": int(index_metadata["chunk_count"]) if index_path else len(chunks),
         "hit_count": len(hits),
         "candidate_count": len(candidates),
         "top_k": top_k,
         "inputs": {
             "queries": file_sha256(queries_path),
-            "chunks": file_sha256(chunks_path),
+            "chunks": file_sha256(chunks_path) if chunks_path else None,
+            "index": file_sha256(index_path) if index_path else None,
             "query_article_links": (
                 file_sha256(query_article_links_path) if query_article_links_path else None
             ),
@@ -163,7 +186,11 @@ def retrieve_and_rerank(
     return manifest
 
 
-def _score_query(query: LiteratureQuery, chunks: list[LiteratureChunk]) -> list[tuple[Any, ...]]:
+def _score_query(
+    query: LiteratureQuery,
+    chunks: list[LiteratureChunk],
+    stored_vectors: dict[str, Counter[str]] | None = None,
+) -> list[tuple[Any, ...]]:
     query_tokens = _tokens(" ".join(query.query_terms))
     documents = [_tokens(chunk.text) for chunk in chunks]
     document_frequency = Counter(term for terms in documents for term in set(terms))
@@ -173,7 +200,15 @@ def _score_query(query: LiteratureQuery, chunks: list[LiteratureChunk]) -> list[
         for terms in documents
     ]
     query_chars = Counter(_chargrams(" ".join(query.query_terms)))
-    vector_values = [_cosine(query_chars, Counter(_chargrams(chunk.text))) for chunk in chunks]
+    vector_values = [
+        _cosine(
+            query_chars,
+            stored_vectors[chunk.chunk_id]
+            if stored_vectors is not None
+            else Counter(_chargrams(chunk.text)),
+        )
+        for chunk in chunks
+    ]
     lexical_norm = _normalize(lexical_values)
     vector_norm = _normalize(vector_values)
     scored: list[tuple[Any, ...]] = []

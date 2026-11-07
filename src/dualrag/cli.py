@@ -14,9 +14,12 @@ from dualrag.literature.evaluation import (
     write_candidate_label_template,
     write_label_template,
 )
+from dualrag.literature.packets import build_evidence_packets
 from dualrag.literature.pipeline import run_literature_pipeline
 from dualrag.literature.pubmed import PubMedConfig
 from dualrag.literature.query_builder import build_literature_queries
+from dualrag.literature.retrieval import retrieve_and_rerank
+from dualrag.literature.vector_store import build_literature_index
 from dualrag.pipeline import run_pipeline
 from dualrag.rag.biological_evidence import enrich_evidence_packets
 from dualrag.rag.ollama import DEFAULT_OLLAMA_MODEL, OllamaClient, OllamaConfig
@@ -134,6 +137,49 @@ def run_literature_command(
     )
     typer.echo(f"Phase {manifest['phase']} pipeline complete -> {output}")
     typer.echo("Scientific evaluation is pending manual Phase 4.7 labels.")
+
+
+@app.command("build-literature-index")
+def build_literature_index_command(
+    chunks: Annotated[Path, typer.Option("--chunks", exists=True, dir_okay=False)],
+    index: Annotated[Path, typer.Option("--index")],
+    replace: Annotated[bool, typer.Option("--replace")] = False,
+) -> None:
+    """Build a persistent local Phase 4 chunk/vector index."""
+    try:
+        manifest = build_literature_index(
+            chunks_path=chunks, index_path=index, replace=replace
+        )
+    except FileExistsError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--index") from exc
+    typer.echo(f"indexed {manifest['chunk_count']} literature chunks -> {index}")
+
+
+@app.command("search-literature-index")
+def search_literature_index_command(
+    queries: Annotated[Path, typer.Option("--queries", exists=True, dir_okay=False)],
+    index: Annotated[Path, typer.Option("--index", exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    query_article_links: Annotated[
+        Path | None,
+        typer.Option("--query-article-links", exists=True, dir_okay=False),
+    ] = None,
+    top_k: Annotated[int, typer.Option("--top-k", min=1, max=20)] = 20,
+) -> None:
+    """Search a local literature index without calling PubMed or PMC."""
+    manifest = retrieve_and_rerank(
+        queries_path=queries,
+        index_path=index,
+        query_article_links_path=query_article_links,
+        output_dir=output,
+        top_k=top_k,
+    )
+    build_evidence_packets(
+        queries_path=queries,
+        hits_path=output / "literature_hits.jsonl",
+        output_dir=output,
+    )
+    typer.echo(f"retrieved {manifest['hit_count']} indexed literature passages -> {output}")
 
 
 @app.command("build-literature-benchmark-queries")

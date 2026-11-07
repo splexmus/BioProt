@@ -460,3 +460,12 @@ When a durable decision changes, append a short entry below rather than silently
   and ECE 0.2333 to 0.1377, but missed all absolute limits and produced only seven HIGH
   and zero LOW cases. Status remains `FAIL_SCIENTIFIC_CALIBRATION_GATE`; test gold was
   not accessed and is still prohibited.
+- 2026-11-07: added a dependency-free persistent Phase 4 SQLite index. It stores
+  validated literature chunks and deterministic character-trigram vectors, refuses
+  overwrite without `--replace`, and reuses the existing BM25/vector/biological
+  reranker plus evidence-packet contracts for offline search. It is an exact-search
+  experimental ablation, not a semantic embedding, Phase 4 scientific pass, or
+  replacement for periodic PubMed/PMC corpus acquisition.
+  The 1,569-chunk HDD index was built and controlled retrieval exactly reproduced the
+  failed v4 metrics. Unrestricted search emitted 31,380 candidates and 352 hits; it is
+  unlabelled and cannot yet support a retrieval-quality claim.

@@ -327,6 +327,13 @@ section features without assigning support. The packet builder enforces the froz
 article/chunk limits and retains `UNASSESSED` roles. Phase 4.7 reads manual labels only
 after retrieval and emits descriptive metrics; it never feeds labels back into queries.
 
+An optional persistent Phase 4 index stores validated chunks and their deterministic
+character-trigram vectors in SQLite. `build-literature-index` creates an atomic,
+checksummed index; `search-literature-index` performs the existing BM25/vector/reranker
+flow without a network call and emits the same hits and evidence-packet contracts. This
+is an exact local baseline, not a semantic embedding or calibrated evidence score. The
+online adapters remain responsible for acquiring and legally recording new corpus data.
+
 Inputs:
 - query protein
 - organism/taxonomy

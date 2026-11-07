@@ -6,6 +6,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from dualrag.literature.chunking import normalize_and_chunk
 from dualrag.literature.evaluation import (
     evaluate_literature,
@@ -23,6 +25,7 @@ from dualrag.literature.schemas import (
     LiteratureHit,
     LiteratureQuery,
 )
+from dualrag.literature.vector_store import build_literature_index
 
 
 class FakeResponse:
@@ -197,6 +200,47 @@ def test_chunk_retrieve_packet_and_evaluate(tmp_path: Path) -> None:
     )
     assert result["status"] == "INSUFFICIENT_MANUAL_LABELS"
     assert result["metrics"]["precision_at_1"] == 1.0
+
+
+def test_local_vector_index_round_trip_and_requires_explicit_replace(tmp_path: Path) -> None:
+    query_path = tmp_path / "queries.jsonl"
+    article_path = tmp_path / "articles.jsonl"
+    write_jsonl(query_path, [_query()])
+    write_jsonl(
+        article_path,
+        [
+            ArticleMetadata(
+                source_article_id="123",
+                source="PUBMED",
+                pmid="123",
+                title="Hemoglobin experiment",
+                abstract="P69905 oxygen carrier activity was measured in Homo sapiens.",
+                source_url="https://pubmed.ncbi.nlm.nih.gov/123/",
+                full_text_status="ABSTRACT_ONLY",
+                retrieved_at=datetime(2026, 10, 26, tzinfo=UTC),
+            )
+        ],
+    )
+    normalize_and_chunk(article_path=article_path, output_dir=tmp_path)
+    index = tmp_path / "literature.sqlite3"
+    manifest = build_literature_index(
+        chunks_path=tmp_path / "literature_chunks.jsonl", index_path=index
+    )
+    assert manifest["chunk_count"] == 1
+    with pytest.raises(FileExistsError):
+        build_literature_index(
+            chunks_path=tmp_path / "literature_chunks.jsonl", index_path=index
+        )
+
+    result = retrieve_and_rerank(
+        queries_path=query_path,
+        index_path=index,
+        output_dir=tmp_path / "indexed-search",
+    )
+    hits = read_jsonl(tmp_path / "indexed-search/literature_hits.jsonl", LiteratureHit)
+    assert result["hit_count"] == 1
+    assert hits[0].chunk.pmid == "123"
+    assert "sqlite-char3-v1" in hits[0].retriever_version
 
 
 def test_pooled_evaluation_requires_complete_candidate_labels(tmp_path: Path) -> None:

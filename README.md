@@ -103,7 +103,12 @@ chunks, hits, and compact evidence packets live in `dualrag.literature.schemas`.
 Phase 4.3-4.7 is now implemented as an executable, evaluation-gated pipeline. PubMed
 provides metadata/abstracts, PMC OA provides eligible full text, and all retrieved
 passages remain `UNASSESSED` until explicit annotation. No LLM claim generation is
-enabled.
+enabled inside Phase 4.
+
+Phase 4 also supports a persistent, checksummed SQLite chunk/vector index for offline
+hybrid search without repeated PubMed calls. Build and search instructions are in
+`docs/LITERATURE_VECTOR_INDEX.md`. The current overall evidence and failed scientific
+gates are summarized in `docs/SCIENTIFIC_STATUS_REPORT.md`.
 
 Phase 5 now has an experimental local-Ollama path. It rejects unvalidated Phase 4 input
 by default; the explicit development override keeps literature as background, records
