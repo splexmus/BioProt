@@ -469,3 +469,14 @@ When a durable decision changes, append a short entry below rather than silently
   The 1,569-chunk HDD index was built and controlled retrieval exactly reproduced the
   failed v4 metrics. Unrestricted search emitted 31,380 candidates and 352 hits; it is
   unlabelled and cannot yet support a retrieval-quality claim.
+- 2026-11-07: added `pixi run test-all-processes` as the safe routine engineering test.
+  It runs unit/lint/CLI checks, external-tool diagnostics, two reproducible Phase 1-2
+  fixture runs, Phase 4 query construction, and Phase 4-6 runner syntax without network,
+  HDD writes, Ollama, real databases, or sealed labels. Real scientific stages remain
+  separately documented manual checks and cannot inherit the engineering PASS.
+- 2026-11-07: added a phase-by-phase operator manual and a user-interface plan. The
+  current entry point remains FASTA; bare UniProt accessions must first be resolved to a
+  verified canonical FASTA. The planned smallest interface is one resumable
+  `dualrag analyze` command with exactly one FASTA/accession input, deterministic summary,
+  optional local/online literature, and optional Ollama. A normal single-protein Phase 5
+  evidence adapter is required before the planned interface is complete.

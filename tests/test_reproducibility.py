@@ -96,6 +96,19 @@ def test_compare_runs_ignores_only_expected_volatile_fields(tmp_path: Path) -> N
     assert all(item["equivalent"] for item in report["artifacts"].values())
 
 
+def test_compare_fixture_runs_without_alphafold_acquisition_table(tmp_path: Path) -> None:
+    first, second = tmp_path / "first", tmp_path / "second"
+    _make_run(first, "/first/raw")
+    _make_run(second, "/second/raw")
+    (first / "alphafold_acquisition.tsv").unlink()
+    (second / "alphafold_acquisition.tsv").unlink()
+
+    report = compare_runs(first, second)
+
+    assert report["equivalent"] is True
+    assert "alphafold_acquisition.tsv" not in report["artifacts"]
+
+
 def test_compare_runs_detects_biological_output_change(tmp_path: Path) -> None:
     first, second = tmp_path / "first", tmp_path / "second"
     _make_run(first, "/first/raw")

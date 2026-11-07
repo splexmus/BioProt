@@ -39,6 +39,19 @@ Validation:
 pixi run validate
 ```
 
+Run the complete safe offline process test, including two reproducible Phase 1-2 fixture
+runs and Phase 4 query construction:
+
+```bash
+pixi run test-all-processes
+```
+
+See `docs/TESTING_ALL_PROCESSES.md` for real-database, literature, Ollama, calibration,
+and exploratory Phase 8 testing steps and their scientific interpretation boundaries.
+For a phase-by-phase operator walkthrough, use `docs/USER_MANUAL.md`. The planned
+single-command FASTA/UniProt experience is specified in `docs/USER_INTERFACE_PLAN.md`;
+its proposed `dualrag analyze` command is not implemented yet.
+
 `check-tools` is diagnostic: missing executables are reported, but fixture mode remains
 fully usable. External mode fails closed until real database versions replace the
 `UNVERIFIED` placeholders.

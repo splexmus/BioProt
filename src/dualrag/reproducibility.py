@@ -108,9 +108,19 @@ def compare_runs(first: Path, second: Path) -> dict[str, Any]:
         {field: right_metadata.get(field) for field in METADATA_FIELDS},
     )
 
-    left_acquisition = _stable_acquisitions(first / "alphafold_acquisition.tsv")
-    right_acquisition = _stable_acquisitions(second / "alphafold_acquisition.tsv")
-    artifacts["alphafold_acquisition.tsv"] = _comparison(left_acquisition, right_acquisition)
+    left_acquisition = first / "alphafold_acquisition.tsv"
+    right_acquisition = second / "alphafold_acquisition.tsv"
+    if left_acquisition.exists() and right_acquisition.exists():
+        artifacts["alphafold_acquisition.tsv"] = _comparison(
+            _stable_acquisitions(left_acquisition),
+            _stable_acquisitions(right_acquisition),
+        )
+    elif left_acquisition.exists() or right_acquisition.exists():
+        artifacts["alphafold_acquisition.tsv"] = {
+            "equivalent": False,
+            "first_digest": _digest("present" if left_acquisition.exists() else "missing"),
+            "second_digest": _digest("present" if right_acquisition.exists() else "missing"),
+        }
 
     return {
         "schema_version": 1,

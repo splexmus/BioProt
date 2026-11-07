@@ -327,3 +327,21 @@ Exit criteria:
 - documented limitations
 - code tests
 - no hidden dependence on a private local path/database
+
+## User-facing analysis interface
+
+Plan: `docs/USER_INTERFACE_PLAN.md`
+
+Implementation order:
+
+1. validated FASTA/UniProt input resolver;
+2. one resumable `dualrag analyze` command over existing Phase 1-2 modules;
+3. deterministic `summary.md` and `status.json`;
+4. optional local literature search;
+5. ordinary-run biological evidence packets for Phase 5;
+6. optional online literature and Ollama generation;
+7. novice usability test;
+8. local graphical interface only if still needed.
+
+The interface must not change frozen scientific gates, hide unavailable modalities, or
+attach calibrated confidence before Phase 6 passes.

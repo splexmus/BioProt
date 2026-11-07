@@ -30,4 +30,5 @@ smoke-literature-query = { cmd = "python -m dualrag build-literature-queries --r
 phase4-hdd-help = "bash scripts/run_phase4_on_hdd.sh --help"
 phase5-ollama-help = "bash scripts/run_phase5_ollama.sh --help"
 phase6-calibration-help = "bash scripts/run_phase6_calibration.sh --help"
+test-all-processes = "bash scripts/test_all_processes.sh"
 validate = { depends-on = ["test", "lint", "cli", "check-tools"] }
