@@ -176,6 +176,19 @@ approved context TSV described in `docs/PHASE4_QUERY_BUILDER.md`.
 
 ### 4.2 Search the existing local literature index
 
+The simplest route is to include local literature in the original analysis command:
+
+```bash
+pixi run python -m dualrag analyze \
+  --uniprot P69905 \
+  --config config/4tb-hdd.yaml \
+  --output /media/splexmus/4TB_HDD1/dualrag/analyses/P69905-literature-v1 \
+  --literature local \
+  --literature-index /media/splexmus/4TB_HDD1/dualrag/literature/indexes/phase4-exit-development-v4.sqlite3
+```
+
+For manual stage-by-stage operation, use:
+
 ```bash
 INDEX=/media/splexmus/4TB_HDD1/dualrag/literature/indexes/phase4-exit-development-v4.sqlite3
 LIT_RUN=/media/splexmus/4TB_HDD1/dualrag/literature/runs/P69905-vector-v1
@@ -190,6 +203,21 @@ pixi run python -m dualrag search-literature-index \
 This performs no network requests and searches only the stored corpus.
 
 ### 4.3 Acquire new PubMed/PMC records when needed
+
+The integrated online path is:
+
+```bash
+export NCBI_API_KEY="your-existing-key"
+
+pixi run python -m dualrag analyze \
+  --uniprot P69905 \
+  --config config/4tb-hdd.yaml \
+  --output /media/splexmus/4TB_HDD1/dualrag/analyses/P69905-online-v1 \
+  --literature online \
+  --email YOUR_REAL_EMAIL@example.org
+```
+
+The stage-by-stage runner remains available:
 
 ```bash
 export NCBI_API_KEY="your-existing-key"
@@ -212,8 +240,7 @@ recall. The current frozen Phase 4 scientific exit remains `FAIL`.
 
 ## Phase 5 — Generate a grounded draft report
 
-The current generic Phase 5 runner is best supported by the preserved Phase 4 benchmark
-packet layout. Start with one report:
+Start Ollama:
 
 ```bash
 ollama serve
@@ -222,10 +249,16 @@ ollama serve
 In another terminal:
 
 ```bash
-scripts/run_phase5_ollama.sh smoke \
-  --phase4-run phase4-exit-development-v4 \
-  --run-name phase5-manual-smoke-v1 \
-  --model gemma4:more
+pixi run python -m dualrag analyze \
+  --uniprot P69905 \
+  --config config/4tb-hdd.yaml \
+  --output /media/splexmus/4TB_HDD1/dualrag/analyses/P69905-report-v1 \
+  --literature local \
+  --literature-index /media/splexmus/4TB_HDD1/dualrag/literature/indexes/phase4-exit-development-v4.sqlite3 \
+  --report ollama \
+  --model gemma4:more \
+  --max-output-tokens 4096 \
+  --allow-unvalidated-phase4
 ```
 
 Check the Markdown report and verifier result. It must discuss sequence evidence,
@@ -233,10 +266,9 @@ structure evidence, cross-modal state, literature, alternatives, and uncertainty
 separate topics. Current reports retain the Phase 4 development override and
 `NOT_CALIBRATED` confidence.
 
-For a new single-protein run, automatic biological-evidence enrichment is a known
-interface gap: the existing convenience script expects the Phase 3 benchmark layout.
-Do not manually copy incompatible tables merely to make generation run; this is included
-in the interface plan.
+The interface automatically builds bounded Phase 5 biological evidence from the normal
+single-protein output. The override is mandatory because the current Phase 4 scientific
+gate failed; generated reports remain experimental and `NOT_CALIBRATED`.
 
 ## Phase 6 — Calibrate confidence on a cohort
 

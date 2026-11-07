@@ -5,15 +5,23 @@ import tempfile
 import traceback
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import requests
 
 from dualrag.config import AppConfig
 from dualrag.fasta import read_fasta
 from dualrag.io import file_sha256, read_tsv, write_json
+from dualrag.literature.packets import build_evidence_packets
+from dualrag.literature.pipeline import run_literature_pipeline
+from dualrag.literature.pubmed import PubMedConfig
+from dualrag.literature.query_builder import build_literature_queries
+from dualrag.literature.retrieval import retrieve_and_rerank
 from dualrag.models import ProteinQuery
 from dualrag.pipeline import run_pipeline
+from dualrag.rag.biological_evidence import enrich_evidence_packets
+from dualrag.rag.ollama import DEFAULT_OLLAMA_MODEL, OllamaClient, OllamaConfig
+from dualrag.rag.pipeline import run_generation_pipeline
 from dualrag.structure.alphafold import resolve_accession
 
 UNIPROT_FASTA_URL = "https://rest.uniprot.org/uniprotkb/{accession}.fasta"
@@ -31,10 +39,33 @@ def run_analysis(
     uniprot_accession: str | None = None,
     uniprot_url: str = UNIPROT_FASTA_URL,
     session: Any | None = None,
+    literature: Literal["none", "local", "online"] = "none",
+    literature_index: Path | None = None,
+    literature_context: Path | None = None,
+    email: str | None = None,
+    api_key_env: str = "NCBI_API_KEY",
+    report: Literal["none", "ollama"] = "none",
+    allow_unvalidated_phase4: bool = False,
+    ollama_model: str = DEFAULT_OLLAMA_MODEL,
+    ollama_base_url: str = "http://127.0.0.1:11434",
+    ollama_timeout: float = 1800.0,
+    max_output_tokens: int = 8192,
+    ollama_client: OllamaClient | None = None,
 ) -> dict[str, Any]:
-    """Validate one input source, run Phase 1-2, and write a deterministic summary."""
+    """Run biological retrieval with optional literature and grounded reporting."""
     if (fasta_path is None) == (uniprot_accession is None):
         raise AnalysisError("provide exactly one of --fasta or --uniprot")
+    if literature == "local" and (literature_index is None or not literature_index.is_file()):
+        raise AnalysisError("--literature local requires an existing --literature-index")
+    if literature == "online" and not email:
+        raise AnalysisError("--literature online requires --email for NCBI")
+    if report == "ollama" and literature == "none":
+        raise AnalysisError("--report ollama requires --literature local or online")
+    if report == "ollama" and not allow_unvalidated_phase4:
+        raise AnalysisError(
+            "current Phase 4 is not scientifically validated; experimental reports require "
+            "--allow-unvalidated-phase4"
+        )
     output_dir = output_dir.resolve()
     if output_dir.exists():
         raise AnalysisError(f"output already exists; choose a new directory: {output_dir}")
@@ -99,6 +130,79 @@ def run_analysis(
         metadata = run_pipeline(config, canonical_fasta, biological_dir)
         summary = _build_summary(manifest, metadata, biological_dir)
         (output_dir / "summary.md").write_text(summary, encoding="utf-8")
+        stages = {"biological": "COMPLETE", "literature": "SKIPPED", "report": "SKIPPED"}
+        literature_manifest: dict[str, Any] | None = None
+        generation_manifest: dict[str, Any] | None = None
+        packets_path: Path | None = None
+        if literature != "none":
+            literature_dir = output_dir / "literature"
+            query_dir = literature_dir / "queries"
+            build_literature_queries(
+                run_dir=biological_dir,
+                output_dir=query_dir,
+                context_path=literature_context,
+            )
+            queries_path = query_dir / "literature_queries.jsonl"
+            if literature == "local":
+                assert literature_index is not None
+                literature_manifest = retrieve_and_rerank(
+                    queries_path=queries_path,
+                    index_path=literature_index,
+                    output_dir=literature_dir,
+                    top_k=20,
+                )
+                build_evidence_packets(
+                    queries_path=queries_path,
+                    hits_path=literature_dir / "literature_hits.jsonl",
+                    output_dir=literature_dir,
+                )
+            else:
+                assert email is not None
+                literature_manifest = run_literature_pipeline(
+                    queries_path=queries_path,
+                    output_dir=literature_dir,
+                    config=PubMedConfig(email=email, api_key_env=api_key_env),
+                    fetch_pmc=True,
+                    top_k=20,
+                )
+            packets_path = literature_dir / "evidence_packets.biological-v1.jsonl"
+            enrich_evidence_packets(
+                packets_path=literature_dir / "evidence_packets.jsonl",
+                sequence_evidence_path=biological_dir / "sequence_results.tsv",
+                structure_evidence_path=biological_dir / "structure_results.tsv",
+                output_path=packets_path,
+                manifest_path=literature_dir / "evidence_packets.biological-v1.manifest.json",
+                max_per_modality=5,
+                source_manifest_path=biological_dir / "run_metadata.json",
+            )
+            stages["literature"] = "COMPLETE"
+        if report == "ollama":
+            assert packets_path is not None
+            generation_manifest = run_generation_pipeline(
+                packets_path=packets_path,
+                output_dir=output_dir / "report",
+                client=ollama_client
+                or OllamaClient(
+                    OllamaConfig(
+                        model=ollama_model,
+                        base_url=ollama_base_url,
+                        timeout_seconds=ollama_timeout,
+                        num_predict=max_output_tokens,
+                    )
+                ),
+                system_prompt_path=Path("prompts/phase5-system-v3.txt"),
+                report_prompt_path=Path("prompts/phase5-report-v3.txt"),
+                allow_unvalidated_phase4=allow_unvalidated_phase4,
+            )
+            stages["report"] = "COMPLETE"
+        summary = _build_summary(
+            manifest,
+            metadata,
+            biological_dir,
+            literature_manifest=literature_manifest,
+            generation_manifest=generation_manifest,
+        )
+        (output_dir / "summary.md").write_text(summary, encoding="utf-8")
         status = {
             "schema_version": 1,
             "status": "COMPLETE",
@@ -106,6 +210,7 @@ def run_analysis(
             "run_id": metadata["run_id"],
             "query_count": metadata["query_count"],
             "scientific_status": "PUTATIVE_HYPOTHESES_NOT_CALIBRATED",
+            "stages": stages,
             "biological_output": str(biological_dir),
             "summary": str(output_dir / "summary.md"),
         }
@@ -167,7 +272,12 @@ def _write_status(output_dir: Path, status: str, message: str) -> None:
 
 
 def _build_summary(
-    input_manifest: dict[str, Any], metadata: dict[str, object], biological_dir: Path
+    input_manifest: dict[str, Any],
+    metadata: dict[str, object],
+    biological_dir: Path,
+    *,
+    literature_manifest: dict[str, Any] | None = None,
+    generation_manifest: dict[str, Any] | None = None,
 ) -> str:
     summaries = read_tsv(biological_dir / "fusion_summary.tsv")
     lines = [
@@ -206,6 +316,21 @@ def _build_summary(
         )
     lines.extend(
         [
+            "## Literature and report",
+            "",
+            (
+                f"- Literature retrieval: complete; hits: "
+                f"{_manifest_count(literature_manifest, 'hit_count')}"
+                if literature_manifest is not None
+                else "- Literature retrieval: skipped"
+            ),
+            (
+                f"- Ollama report: complete; reports: {generation_manifest['report_count']}"
+                if generation_manifest is not None
+                else "- Ollama report: skipped"
+            ),
+            "- Literature passages remain UNASSESSED unless manually labelled.",
+            "",
             "## Next steps",
             "",
             "- Inspect `biological/sequence_results.tsv` and `structure_results.tsv` separately.",
@@ -216,3 +341,10 @@ def _build_summary(
         ]
     )
     return "\n".join(lines)
+
+
+def _manifest_count(manifest: dict[str, Any], key: str) -> object:
+    if key in manifest:
+        return manifest[key]
+    retrieval = manifest.get("stages", {}).get("retrieval", {})
+    return retrieval.get(key, "unknown") if isinstance(retrieval, dict) else "unknown"

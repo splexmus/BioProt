@@ -337,10 +337,10 @@ Implementation order:
 1. validated FASTA/UniProt input resolver **(complete)**;
 2. one `dualrag analyze` command over existing Phase 1-2 modules **(complete; resume pending)**;
 3. deterministic `summary.md` and `status.json` **(initial version complete)**;
-4. optional local literature search;
-5. ordinary-run biological evidence packets for Phase 5;
-6. optional online literature and Ollama generation;
-7. novice usability test;
+4. optional local literature search **(complete)**;
+5. ordinary-run biological evidence packets for Phase 5 **(complete)**;
+6. optional online literature and Ollama generation **(complete)**;
+7. resume support and novice usability test;
 8. local graphical interface only if still needed.
 
 The interface must not change frozen scientific gates, hide unavailable modalities, or

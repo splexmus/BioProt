@@ -143,6 +143,14 @@ class OllamaClient:
 
 def _contextual_output_schema(context: GenerationContext) -> dict[str, Any]:
     schema = GroundedProteinReport.model_json_schema()
+    schema["properties"]["claims"]["maxItems"] = 8
+    schema["properties"]["alternatives"]["maxItems"] = 3
+    schema["properties"]["conflicts"]["maxItems"] = 3
+    schema["properties"]["uncertainty"]["maxItems"] = 5
+    schema["properties"]["validation_experiments"]["maxItems"] = 5
+    schema["properties"]["references"]["maxItems"] = 12
+    schema["properties"]["summary"]["maxLength"] = 1200
+    schema["$defs"]["ReportClaim"]["properties"]["text"]["maxLength"] = 800
     schema["properties"]["query_id"]["enum"] = [context.query_id]
     allowed_functions = context.candidate_functions or ["INSUFFICIENT_EVIDENCE"]
     schema["properties"]["proposed_function"]["enum"] = allowed_functions

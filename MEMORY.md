@@ -485,3 +485,14 @@ When a durable decision changes, append a short entry below rather than silently
   overwrite, runs existing Phase 1-2 modules, and writes `summary.md`, `status.json`, and
   failure logs. Literature/Ollama orchestration, resume, ordinary-run Phase 5 enrichment,
   and a graphical UI remain pending.
+- 2026-11-08: extended `dualrag analyze` with `--literature local|online` and
+  `--report ollama`. Local mode uses the persistent vector index; online mode uses the
+  existing PubMed/PMC adapters and requires an NCBI email. Ordinary Phase 1-2 TSVs are
+  enriched into bounded, modality-separated Phase 5 packets before Ollama generation.
+  Because Phase 4 remains failed/not evaluated for new runs, report generation requires
+  the explicit `--allow-unvalidated-phase4` flag and retains `NOT_CALIBRATED` status.
+- 2026-11-08: live-tested the integrated interface on one synthetic query with the HDD
+  SQLite literature index and local `gemma4:more`. The first request generated 29
+  repetitive claims and truncated at 4,096 tokens. Added contextual JSON-schema bounds
+  of eight claims and smaller auxiliary lists; the repeated live run completed one
+  report with `PASS_WITH_WARNINGS` and preserved the experimental Phase 4 override.

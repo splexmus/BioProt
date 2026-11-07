@@ -22,6 +22,8 @@ Required behavior:
     an explicit cross-modal agreement or conflict statement.
 13. Treat normalized scores as ranking values, not confidence probabilities.
 14. Begin the summary with biological retrieval evidence; literature is secondary context.
+15. Return at most eight non-repetitive claims, three alternatives, three conflicts, five
+    uncertainties, and five recommended experiments.
 
 CONTEXT_JSON:
 {context_json}

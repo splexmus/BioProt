@@ -1,7 +1,7 @@
 # Plan: user-friendly BioProt interface
 
-Status: CLI milestones 1, 2, and the initial deterministic summary are implemented;
-literature/report orchestration and graphical UI remain planned
+Status: CLI biological analysis, local/online literature, biological packet enrichment,
+and Ollama reporting are implemented; resume and graphical UI remain planned
 
 ## Goal
 
@@ -133,7 +133,7 @@ analysis-run/
 └── run_manifest.json
 ```
 
-## Milestone 3 — New-protein evidence packet adapter
+## Milestone 3 — New-protein evidence packet adapter (implemented)
 
 Remove the current Phase 5 gap by building biological references directly from a normal
 single-protein run rather than requiring the Phase 3 benchmark directory layout.
@@ -227,11 +227,20 @@ The interface is ready for ordinary users only when all of these pass:
 1. Unified input resolver and tests. **Complete**
 2. `dualrag analyze` orchestration with Phase 1-2 only. **Complete**
 3. Initial deterministic `summary.md` and `status.json`. **Complete**
-4. Local literature-index option. **Next**
-5. New-protein Phase 5 evidence-packet adapter.
-6. Optional online PubMed/PMC and Ollama switches.
-7. Repeated novice usability test.
+4. Local literature-index option. **Complete**
+5. New-protein Phase 5 evidence-packet adapter. **Complete**
+6. Optional online PubMed/PMC and Ollama switches. **Complete**
+7. Resume support and repeated novice usability test. **Next**
 8. Local graphical interface only if the CLI remains a practical barrier.
 
 This plan improves usability without changing scientific thresholds or claiming that the
 current Phase 4 or Phase 6 gates passed.
+
+## Live integration verification
+
+On 2026-11-08, a one-query synthetic fixture completed through biological retrieval,
+the HDD local literature index, `gemma4:more`, Markdown rendering, and deterministic
+verification. The first live attempt exposed unbounded repetitive claims and truncated
+JSON; the contextual output schema now limits claims and auxiliary lists. The repeated
+run completed with `PASS_WITH_WARNINGS`, while correctly recording
+`EXPERIMENTAL_UNVALIDATED_PHASE4_OVERRIDE` and `NOT_CALIBRATED`.

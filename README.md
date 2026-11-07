@@ -60,6 +60,19 @@ pixi run python -m dualrag analyze \
   --output /media/splexmus/4TB_HDD1/dualrag/analyses/P69905-v1
 ```
 
+Add local literature and an explicitly experimental grounded Ollama report with:
+
+```bash
+pixi run python -m dualrag analyze \
+  --uniprot P69905 \
+  --config config/4tb-hdd.yaml \
+  --output /media/splexmus/4TB_HDD1/dualrag/analyses/P69905-report-v1 \
+  --literature local \
+  --literature-index /media/splexmus/4TB_HDD1/dualrag/literature/indexes/phase4-exit-development-v4.sqlite3 \
+  --report ollama \
+  --allow-unvalidated-phase4
+```
+
 `check-tools` is diagnostic: missing executables are reported, but fixture mode remains
 fully usable. External mode fails closed until real database versions replace the
 `UNVERIFIED` placeholders.

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
@@ -40,17 +40,51 @@ def analyze_command(
     config: Annotated[
         Path, typer.Option("--config", "-c", exists=True, dir_okay=False)
     ] = Path("config/4tb-hdd.yaml"),
+    literature: Annotated[Literal["none", "local", "online"], typer.Option("--literature")] = (
+        "none"
+    ),
+    literature_index: Annotated[
+        Path | None, typer.Option("--literature-index", exists=True, dir_okay=False)
+    ] = None,
+    literature_context: Annotated[
+        Path | None, typer.Option("--literature-context", exists=True, dir_okay=False)
+    ] = None,
+    email: Annotated[str | None, typer.Option("--email")] = None,
+    api_key_env: Annotated[str, typer.Option("--api-key-env")] = "NCBI_API_KEY",
+    report: Annotated[Literal["none", "ollama"], typer.Option("--report")] = "none",
+    model: Annotated[str, typer.Option("--model")] = DEFAULT_OLLAMA_MODEL,
+    ollama_base_url: Annotated[str, typer.Option("--ollama-base-url")] = (
+        "http://127.0.0.1:11434"
+    ),
+    ollama_timeout: Annotated[float, typer.Option("--ollama-timeout", min=1)] = 1800.0,
+    max_output_tokens: Annotated[int, typer.Option("--max-output-tokens", min=1)] = 8192,
+    allow_unvalidated_phase4: Annotated[
+        bool, typer.Option("--allow-unvalidated-phase4")
+    ] = False,
 ) -> None:
-    """Analyze FASTA or one UniProt accession through Phase 1-2."""
+    """Analyze FASTA or UniProt with optional literature and Ollama reporting."""
     source = f"UniProt {uniprot}" if uniprot else str(fasta)
-    typer.echo(f"[1/2] Validating input: {source}")
-    typer.echo("[2/2] Running sequence, structure, mapping, and fusion")
+    typer.echo(f"[1/4] Validating input: {source}")
+    typer.echo("[2/4] Running sequence, structure, mapping, and fusion")
+    typer.echo(f"[3/4] Literature: {literature}")
+    typer.echo(f"[4/4] Report: {report}")
     try:
         result = run_analysis(
             config=load_config(config),
             output_dir=output,
             fasta_path=fasta,
             uniprot_accession=uniprot,
+            literature=literature,
+            literature_index=literature_index,
+            literature_context=literature_context,
+            email=email,
+            api_key_env=api_key_env,
+            report=report,
+            allow_unvalidated_phase4=allow_unvalidated_phase4,
+            ollama_model=model,
+            ollama_base_url=ollama_base_url,
+            ollama_timeout=ollama_timeout,
+            max_output_tokens=max_output_tokens,
         )
     except AnalysisError as exc:
         typer.echo(f"Analysis failed: {exc}", err=True)

@@ -229,6 +229,7 @@ def test_ollama_adapter_requests_schema_constrained_json() -> None:
         "GO:0004869",
         "cysteine-type endopeptidase inhibitor activity",
     ]
+    assert session.last_payload["format"]["properties"]["claims"]["maxItems"] == 8
     assert session.last_payload["options"] == {
         "temperature": 0.0,
         "seed": 42,
