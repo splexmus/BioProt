@@ -61,7 +61,7 @@ def apply_exact_mappings(
     mapped_count = 0
     for contribution in contributions:
         current = contribution.candidate_id
-        provenance: list[str] = []
+        provenance = [value for value in contribution.mapping_provenance.split(";") if value]
         seen: set[str] = set()
         while current in exact:
             if current in seen:

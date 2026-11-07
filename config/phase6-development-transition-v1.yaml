@@ -1,0 +1,40 @@
+schema_version: 1
+decision_id: phase6-ranking-sufficiency-development-transition-v1
+status: PASS_FOR_NEW_VALIDATION_BUILD
+scientific_calibration_status: FAIL_SCIENTIFIC_CALIBRATION_GATE
+test_access_authorized: false
+purpose: allow the improved pipeline to proceed to a new independent validation cohort
+
+required_checks:
+  ranking_recall_at_10_gain_ci_lower_above_zero: true
+  ranking_recall_at_1_not_below_sequence: true
+  ranking_mrr_not_below_sequence: true
+  accepted_coverage_minimum: 0.80
+  abstained_would_be_correct_rate_maximum: 0.10
+  brier_improves_over_previous_pipeline: true
+  log_loss_improves_over_previous_pipeline: true
+  ece_improves_over_previous_pipeline: true
+  unit_tests_and_lint_pass: true
+
+observed_previous_benchmark:
+  confirmatory: false
+  ranking_recall_at_10_gain: 0.025555555555555554
+  ranking_recall_at_10_gain_ci_95: [0.004444444444444444, 0.05222222222222222]
+  sequence_recall_at_1: 0.36477777777777776
+  dual_recall_at_1: 0.3781111111111111
+  sequence_mrr: 0.5360396825396826
+  dual_mrr: 0.5444722222222222
+  accepted_coverage: 0.8624338624338624
+  abstained_would_be_correct_rate: 0.038461538461538464
+  previous_brier: 0.25813513820029665
+  improved_brier: 0.2469605823413518
+  previous_log_loss: 0.7089458528252712
+  improved_log_loss: 0.6865216951967814
+  previous_ece: 0.16609585406725885
+  improved_ece: 0.10603189338897201
+
+claim_boundary:
+  - This is an engineering and development-transition pass only.
+  - The previous benchmark was already revealed and influenced the coverage revision.
+  - Calibrated confidence remains not scientifically validated.
+  - A new frozen independent validation must pass before test-gold access.

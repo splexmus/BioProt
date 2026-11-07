@@ -89,7 +89,11 @@ class StructureEvidence:
     go_terms: list[str] = field(default_factory=list)
     ec_numbers: list[str] = field(default_factory=list)
     interpro_ids: list[str] = field(default_factory=list)
+    pfam_ids: list[str] = field(default_factory=list)
     supfam_ids: list[str] = field(default_factory=list)
+    domain_projected_go_terms: list[str] = field(default_factory=list)
+    ec_projected_go_terms: list[str] = field(default_factory=list)
+    annotation_provenance: list[str] = field(default_factory=list)
     structure_source: str | None = None
     experimental_structure: bool | None = None
     raw_output_path: str = ""

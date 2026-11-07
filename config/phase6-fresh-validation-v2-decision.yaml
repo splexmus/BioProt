@@ -1,0 +1,39 @@
+schema_version: 1
+decision_id: phase6-fresh-validation-v2-frozen-decision
+status: FAIL_SCIENTIFIC_CALIBRATION_GATE
+development_transition_status: COMPLETED
+test_access_authorized: false
+confirmatory: true
+
+sample:
+  query_count: 300
+  eligible_query_namespace_count: 403
+  accepted_count: 324
+  accepted_protein_count: 243
+  accepted_coverage: 0.8039702233250621
+  sample_size_gate_passed: true
+
+ranking:
+  recall_at_10_dual_minus_sequence: 0.004611111111111112
+  bootstrap_ci_95: [-0.013999999999999999, 0.023333333333333334]
+  conclusion: NO_MEASURABLE_OVERALL_BENEFIT
+
+calibration:
+  raw:
+    brier_score: 0.3138019920130441
+    log_loss: 0.9924574557986692
+    expected_calibration_error: 0.2332987080243312
+  calibrated:
+    brier_score: 0.2571445826123517
+    log_loss: 0.7075973793411601
+    expected_calibration_error: 0.137666776260144
+  high_example_count: 7
+  low_example_count: 0
+  high_accuracy: 1.0
+  high_wilson_95_lower: 0.6456695649333126
+
+boundaries:
+  - Calibration improved over raw scores but missed every absolute metric limit.
+  - Ranking improvement was not statistically measurable on the new cohort.
+  - The abstention rule retained sufficient coverage and rejected mostly incorrect calls.
+  - No test gold was accessed; further changes require another new validation cohort.

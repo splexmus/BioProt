@@ -21,10 +21,12 @@ HEADER = [
     "go_terms",
     "ec_numbers",
     "interpro_ids",
+    "pfam_ids",
     "supfam_ids",
     "structure_source",
     "experimental_structure",
     "source_accession",
+    "annotation_provenance",
 ]
 TARGET_PATTERN = re.compile(
     r"^(?P<pdb>[0-9A-Za-z]{4})-assembly[0-9]+_(?P<chain>.+)$"
@@ -42,6 +44,7 @@ class BuildResult:
     go_mapped_count: int
     ec_mapped_count: int
     interpro_mapped_count: int
+    pfam_mapped_count: int
     malformed_target_count: int
     duplicate_target_count: int
 
@@ -53,6 +56,8 @@ def build_metadata(
     sifts_go: Path,
     sifts_enzyme: Path,
     sifts_interpro: Path,
+    sifts_pfam: Path,
+    go_obo: Path,
     swissprot_fasta: Path,
     output: Path,
     work_dir: Path | None = None,
@@ -64,6 +69,8 @@ def build_metadata(
         sifts_go,
         sifts_enzyme,
         sifts_interpro,
+        sifts_pfam,
+        go_obo,
         swissprot_fasta,
     ]
     for path in inputs:
@@ -78,6 +85,7 @@ def build_metadata(
         connection = sqlite3.connect(database)
         try:
             _configure_database(connection)
+            molecular_function_ids = _go_molecular_function_ids(go_obo)
             sifts_releases = {
                 "pdb_chain_uniprot": _load_sifts(
                     connection,
@@ -99,6 +107,7 @@ def build_metadata(
                     expected_value_column="GO_ID",
                     table="go_mapping",
                     value_column="go_id",
+                    allowed_values=molecular_function_ids,
                 ),
                 "pdb_chain_enzyme": _load_sifts(
                     connection,
@@ -106,6 +115,13 @@ def build_metadata(
                     expected_value_column="EC_NUMBER",
                     table="ec_mapping",
                     value_column="ec_number",
+                ),
+                "pdb_chain_pfam": _load_sifts(
+                    connection,
+                    sifts_pfam,
+                    expected_value_column="PFAM_ID",
+                    table="pfam_mapping",
+                    value_column="pfam_id",
                 ),
             }
             _load_swissprot_names(connection, swissprot_fasta)
@@ -147,6 +163,12 @@ def _configure_database(connection: sqlite3.Connection) -> None:
             go_id TEXT NOT NULL,
             PRIMARY KEY (pdb, chain, go_id)
         ) WITHOUT ROWID;
+        CREATE TABLE pfam_mapping (
+            pdb TEXT NOT NULL,
+            chain TEXT NOT NULL,
+            pfam_id TEXT NOT NULL,
+            PRIMARY KEY (pdb, chain, pfam_id)
+        ) WITHOUT ROWID;
         CREATE TABLE ec_mapping (
             pdb TEXT NOT NULL,
             chain TEXT NOT NULL,
@@ -180,6 +202,7 @@ def _load_sifts(
     expected_value_column: str,
     table: str,
     value_column: str,
+    allowed_values: set[str] | None = None,
 ) -> str:
     statement = (
         f"INSERT OR IGNORE INTO {table} (pdb, chain, {value_column}) VALUES (?, ?, ?)"
@@ -199,7 +222,12 @@ def _load_sifts(
                 pdb = row["PDB"].strip().lower()
                 chain = row["CHAIN"].strip()
                 value = row[expected_value_column].strip()
-                if not pdb or not chain or not value:
+                if (
+                    not pdb
+                    or not chain
+                    or not value
+                    or (allowed_values is not None and value not in allowed_values)
+                ):
                     continue
                 batch.append((pdb, chain, value))
                 if len(batch) >= 50_000:
@@ -212,6 +240,30 @@ def _load_sifts(
         connection.executemany(statement, batch)
     connection.commit()
     return " | ".join(comments)
+
+
+def _go_molecular_function_ids(path: Path) -> set[str]:
+    identifiers: set[str] = set()
+    current_id = ""
+    molecular_function = False
+    obsolete = False
+    for line in path.read_text(encoding="utf-8").splitlines() + ["[Term]"]:
+        if line == "[Term]":
+            if current_id and molecular_function and not obsolete:
+                identifiers.add(current_id)
+            current_id = ""
+            molecular_function = False
+            obsolete = False
+        elif line.startswith("id: GO:"):
+            current_id = line.removeprefix("id: ")
+        elif line == "namespace: molecular_function":
+            molecular_function = True
+        elif line == "is_obsolete: true":
+            obsolete = True
+    identifiers.discard("GO:0003674")
+    if not identifiers:
+        raise ValueError(f"no non-root GO Molecular Function terms found in {path}")
+    return identifiers
 
 
 def _load_swissprot_names(connection: sqlite3.Connection, path: Path) -> None:
@@ -321,6 +373,12 @@ def _aggregate_chain_metadata(connection: sqlite3.Connection) -> None:
         FROM (SELECT pdb, chain, ec_number FROM ec_mapping ORDER BY pdb, chain, ec_number)
         GROUP BY pdb, chain;
         CREATE UNIQUE INDEX ec_agg_key ON ec_agg (pdb, chain);
+
+        CREATE TABLE pfam_agg AS
+        SELECT pdb, chain, group_concat(pfam_id, ';') AS pfam_ids
+        FROM (SELECT pdb, chain, pfam_id FROM pfam_mapping ORDER BY pdb, chain, pfam_id)
+        GROUP BY pdb, chain;
+        CREATE UNIQUE INDEX pfam_agg_key ON pfam_agg (pdb, chain);
         """
     )
 
@@ -329,7 +387,15 @@ def _write_output(
     connection: sqlite3.Connection, output: Path, malformed: int, duplicates: int
 ) -> BuildResult:
     temporary = output.with_name(f".{output.name}.tmp")
-    counts = {"target": 0, "uniprot": 0, "name": 0, "go": 0, "ec": 0, "interpro": 0}
+    counts = {
+        "target": 0,
+        "uniprot": 0,
+        "name": 0,
+        "go": 0,
+        "ec": 0,
+        "interpro": 0,
+        "pfam": 0,
+    }
     query = """
         SELECT
             targets.target,
@@ -338,7 +404,8 @@ def _write_output(
             COALESCE(name_exact.names, name_base.names, ''),
             COALESCE(go_exact.go_terms, go_base.go_terms, ''),
             COALESCE(ec_exact.ec_numbers, ec_base.ec_numbers, ''),
-            COALESCE(interpro_exact.interpro_ids, interpro_base.interpro_ids, '')
+            COALESCE(interpro_exact.interpro_ids, interpro_base.interpro_ids, ''),
+            COALESCE(pfam_exact.pfam_ids, pfam_base.pfam_ids, '')
         FROM foldseek_target AS targets
         LEFT JOIN uniprot_agg AS uniprot_exact
           ON uniprot_exact.pdb = targets.pdb AND uniprot_exact.chain = targets.chain_exact
@@ -360,6 +427,10 @@ def _write_output(
           ON ec_exact.pdb = targets.pdb AND ec_exact.chain = targets.chain_exact
         LEFT JOIN ec_agg AS ec_base
           ON ec_base.pdb = targets.pdb AND ec_base.chain = targets.chain_base
+        LEFT JOIN pfam_agg AS pfam_exact
+          ON pfam_exact.pdb = targets.pdb AND pfam_exact.chain = targets.chain_exact
+        LEFT JOIN pfam_agg AS pfam_base
+          ON pfam_base.pdb = targets.pdb AND pfam_base.chain = targets.chain_base
         ORDER BY targets.ordinal
     """
     try:
@@ -374,7 +445,17 @@ def _write_output(
                 go_terms,
                 ec_numbers,
                 interpro_ids,
+                pfam_ids,
             ) in connection.execute(query):
+                provenance = ["PDBe_SIFTS:pdb_chain_uniprot"] if accessions else []
+                for value, source in (
+                    (go_terms, "PDBe_SIFTS:pdb_chain_go"),
+                    (ec_numbers, "PDBe_SIFTS:pdb_chain_enzyme"),
+                    (interpro_ids, "PDBe_SIFTS:pdb_chain_interpro"),
+                    (pfam_ids, "PDBe_SIFTS:pdb_chain_pfam"),
+                ):
+                    if value:
+                        provenance.append(source)
                 writer.writerow(
                     [
                         target,
@@ -383,10 +464,12 @@ def _write_output(
                         _clean_output_field(go_terms),
                         _clean_output_field(ec_numbers),
                         _clean_output_field(interpro_ids),
+                        _clean_output_field(pfam_ids),
                         "",
                         "PDB",
                         "true",
                         pdb or "",
+                        ";".join(provenance),
                     ]
                 )
                 counts["target"] += 1
@@ -395,6 +478,7 @@ def _write_output(
                 counts["go"] += bool(go_terms)
                 counts["ec"] += bool(ec_numbers)
                 counts["interpro"] += bool(interpro_ids)
+                counts["pfam"] += bool(pfam_ids)
         temporary.replace(output)
     finally:
         temporary.unlink(missing_ok=True)
@@ -409,6 +493,7 @@ def _write_output(
         go_mapped_count=counts["go"],
         ec_mapped_count=counts["ec"],
         interpro_mapped_count=counts["interpro"],
+        pfam_mapped_count=counts["pfam"],
         malformed_target_count=malformed,
         duplicate_target_count=duplicates,
     )
@@ -449,6 +534,7 @@ def _write_manifest(
             "targets_with_go": result.go_mapped_count,
             "targets_with_ec": result.ec_mapped_count,
             "targets_with_interpro": result.interpro_mapped_count,
+            "targets_with_pfam": result.pfam_mapped_count,
             "malformed_target_ids": result.malformed_target_count,
             "duplicate_lookup_rows_collapsed": result.duplicate_target_count,
         },
@@ -459,8 +545,9 @@ def _write_manifest(
         "source_release_headers": sifts_releases,
         "notes": [
             "Foldseek target IDs are preserved exactly from the lookup file.",
-            "UniProt and InterPro mappings are chain-level SIFTS annotations.",
+            "UniProt, InterPro, and Pfam mappings are chain-level SIFTS annotations.",
             "Protein names are available only for reviewed Swiss-Prot accessions.",
+            "GO annotations are non-root Molecular Function terms filtered with GO OBO.",
             "GO and EC annotations are chain-level SIFTS mappings.",
             "supfam_ids is blank because no SUPFAM mapping source was supplied.",
         ],
@@ -481,6 +568,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--work-dir", type=Path)
+    parser.add_argument("--go-obo", type=Path, required=True)
     return parser
 
 
@@ -499,6 +587,8 @@ def main(argv: list[str] | None = None) -> int:
             sifts_interpro=(
                 data_root / "databases/metadata/sifts/pdb_chain_interpro.tsv.gz"
             ),
+            sifts_pfam=data_root / "databases/metadata/sifts/pdb_chain_pfam.tsv.gz",
+            go_obo=args.go_obo,
             swissprot_fasta=(
                 data_root
                 / "databases/uniprot/swissprot/current/uniprot_sprot.fasta.gz"
@@ -515,7 +605,8 @@ def main(argv: list[str] | None = None) -> int:
         f"names {result.protein_name_mapped_count:,}; "
         f"GO {result.go_mapped_count:,}; "
         f"EC {result.ec_mapped_count:,}; "
-        f"InterPro {result.interpro_mapped_count:,}"
+        f"InterPro {result.interpro_mapped_count:,}; "
+        f"Pfam {result.pfam_mapped_count:,}"
     )
     print(f"provenance: {result.manifest}")
     return 0

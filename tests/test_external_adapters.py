@@ -105,15 +105,38 @@ def test_alphafold_404_is_model_unavailable(tmp_path: Path) -> None:
     assert records[0].http_status == 404
 
 
+def test_alphafold_sequence_mismatch_is_model_unavailable(tmp_path: Path) -> None:
+    query = ProteinQuery("P69905", "MPEPTIDE")
+    metadata = {
+        "uniprotAccession": "P69905",
+        "uniprotSequence": "MDIFFERENT",
+        "entryId": "AF-P69905-F1",
+        "latestVersion": 4,
+        "cifUrl": "https://example.test/model.cif",
+    }
+    models, records = acquire_models(
+        [query],
+        tmp_path / "cache",
+        tmp_path / "raw",
+        AlphaFoldApiConfig(enabled=True, request_interval_seconds=0),
+        _Session(metadata),
+    )
+
+    assert models == {}
+    assert records[0].status == "SEQUENCE_MISMATCH"
+    assert records[0].sequence_compatible is False
+
+
 def test_parse_foldseek_results_with_metadata(tmp_path: Path, monkeypatch) -> None:
     results = tmp_path / "hits.tsv"
     results.write_text("q000000\t1abc_A\t1e-8\t80\t0.72\t100\t0.8\t0.7\t0.25\n")
     metadata = tmp_path / "metadata.tsv"
     metadata.write_text(
         "target_structure_id\ttarget_uniprot_id\tprotein_name\tinterpro_ids\t"
-        "go_terms\tec_numbers\tsupfam_ids\tstructure_source\texperimental_structure\t"
-        "source_accession\n"
-        "1abc_A\tP1\tDemo enzyme\tIPR1\tGO:0000001\t1.2.3.4\tSSF1\tPDB\ttrue\t1abc\n"
+        "go_terms\tec_numbers\tpfam_ids\tsupfam_ids\tstructure_source\t"
+        "experimental_structure\tsource_accession\tannotation_provenance\n"
+        "1abc_A\tP1\tDemo enzyme\tIPR1\tGO:0000001\t1.2.3.4\tPF1\tSSF1\t"
+        "PDB\ttrue\t1abc\tPDBe_SIFTS:pdb_chain_go\n"
     )
     monkeypatch.setattr(foldseek, "_tool_version", lambda executable: "foldseek-test")
     config = StructureConfig(
@@ -132,3 +155,5 @@ def test_parse_foldseek_results_with_metadata(tmp_path: Path, monkeypatch) -> No
     assert hits[0].structure_source == "PDB"
     assert hits[0].go_terms == ["GO:0000001"]
     assert hits[0].ec_numbers == ["1.2.3.4"]
+    assert hits[0].pfam_ids == ["PF1"]
+    assert hits[0].annotation_provenance == ["PDBe_SIFTS:pdb_chain_go"]

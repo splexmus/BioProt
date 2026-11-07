@@ -24,6 +24,10 @@ EXAMPLE_FIELDS = [
     "modalities",
     "sequence_score",
     "structure_score",
+    "sequence_max_score",
+    "structure_max_score",
+    "sequence_best_hit_rank",
+    "structure_best_hit_rank",
     "structure_reliability_score",
     "agreement_reliability_score",
     "modality_support",
@@ -32,6 +36,10 @@ EXAMPLE_FIELDS = [
     "sequence_evidence_count",
     "structure_evidence_count",
     "cross_modal_status",
+    "direct_structure_support",
+    "domain_projection_support",
+    "consensus_support",
+    "structure_only_support",
     "difficulty_stratum",
 ]
 
@@ -206,6 +214,11 @@ def _build_examples(
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     examples: list[dict[str, Any]] = []
     exclusions: list[dict[str, str]] = []
+    features = _prediction_feature_rows(
+        predictions=predictions,
+        candidates=candidates,
+        difficulties=difficulties,
+    )
     eligible_keys = [
         key for key in sorted(gold) if splits.get(key[0]) in {"development", "validation"}
     ]
@@ -235,8 +248,8 @@ def _build_examples(
                 }
             )
             continue
-        ranked = predictions.get((accession, namespace), [])
-        if not ranked:
+        feature = features.get((accession, namespace))
+        if feature is None:
             exclusions.append(
                 {
                     "accession": accession,
@@ -246,43 +259,73 @@ def _build_examples(
                 }
             )
             continue
+        examples.append(
+            {
+                **feature,
+                "split": split,
+                "gold_identifiers": ";".join(sorted(identifiers)),
+                "correct": feature["predicted_identifier"] in identifiers,
+                "sample_weight": 1.0 / per_accession[accession],
+                "calibrated_probability": None,
+                "confidence_label": None,
+            }
+        )
+    return examples, exclusions
+
+
+def _prediction_feature_rows(
+    *,
+    predictions: dict[tuple[str, str], list[dict[str, str]]],
+    candidates: dict[tuple[str, str], dict[str, str]],
+    difficulties: dict[str, str] | None = None,
+) -> dict[tuple[str, str], dict[str, Any]]:
+    result: dict[tuple[str, str], dict[str, Any]] = {}
+    for (accession, namespace), ranked in predictions.items():
+        if not ranked:
+            continue
         top = ranked[0]
         second_score = float(ranked[1]["score"]) if len(ranked) > 1 else 0.0
         candidate = candidates.get((accession, top["identifier"]))
         if candidate is None:
             raise ValueError(f"missing candidate row for {accession} {top['identifier']}")
-        examples.append(
-            {
-                "accession": accession,
-                "split": split,
-                "namespace": namespace,
-                "predicted_identifier": top["identifier"],
-                "gold_identifiers": ";".join(sorted(identifiers)),
-                "correct": top["identifier"] in identifiers,
-                "sample_weight": 1.0 / per_accession[accession],
-                "top1_score": float(top["score"]),
-                "top1_top2_margin": float(top["score"]) - second_score,
-                "calibrated_probability": None,
-                "confidence_label": None,
-                "modalities": top["modalities"],
-                "sequence_score": _number(candidate.get("sequence_score")),
-                "structure_score": _number(candidate.get("structure_score")),
-                "structure_reliability_score": _number(
-                    candidate.get("structure_reliability_score")
-                ),
-                "agreement_reliability_score": _number(
-                    candidate.get("agreement_reliability_score")
-                ),
-                "modality_support": _number(candidate.get("modality_support")),
-                "hit_support": _number(candidate.get("hit_support")),
-                "evidence_quality_score": _number(candidate.get("evidence_quality_score")),
-                "sequence_evidence_count": int(candidate.get("sequence_evidence_count") or 0),
-                "structure_evidence_count": int(candidate.get("structure_evidence_count") or 0),
-                "cross_modal_status": candidate.get("cross_modal_status", ""),
-                "difficulty_stratum": difficulties.get(accession, "UNKNOWN"),
-            }
-        )
-    return examples, exclusions
+        result[(accession, namespace)] = {
+            "accession": accession,
+            "namespace": namespace,
+            "predicted_identifier": top["identifier"],
+            "top1_score": float(top["score"]),
+            "top1_top2_margin": float(top["score"]) - second_score,
+            "modalities": top["modalities"],
+            "sequence_score": _number(candidate.get("sequence_score")),
+            "structure_score": _number(candidate.get("structure_score")),
+            "sequence_max_score": _number(candidate.get("sequence_max_score")),
+            "structure_max_score": _number(candidate.get("structure_max_score")),
+            "sequence_best_hit_rank": _number(candidate.get("sequence_best_hit_rank")),
+            "structure_best_hit_rank": _number(candidate.get("structure_best_hit_rank")),
+            "structure_reliability_score": _number(
+                candidate.get("structure_reliability_score")
+            ),
+            "agreement_reliability_score": _number(
+                candidate.get("agreement_reliability_score")
+            ),
+            "modality_support": _number(candidate.get("modality_support")),
+            "hit_support": _number(candidate.get("hit_support")),
+            "evidence_quality_score": _number(candidate.get("evidence_quality_score")),
+            "sequence_evidence_count": int(candidate.get("sequence_evidence_count") or 0),
+            "structure_evidence_count": int(candidate.get("structure_evidence_count") or 0),
+            "cross_modal_status": candidate.get("cross_modal_status", ""),
+            "direct_structure_support": float(
+                "DIRECT_STRUCTURE_TARGET" in candidate.get("mapping_provenance", "")
+            ),
+            "domain_projection_support": float(
+                "DOMAIN_PROJECTION:INTERPRO2GO" in candidate.get("mapping_provenance", "")
+            ),
+            "consensus_support": float(
+                candidate.get("modalities", "") == "sequence;structure"
+            ),
+            "structure_only_support": float(candidate.get("modalities", "") == "structure"),
+            "difficulty_stratum": (difficulties or {}).get(accession, "UNKNOWN"),
+        }
+    return result
 
 
 def _fit_platt(rows: list[dict[str, Any]]) -> dict[str, Any]:

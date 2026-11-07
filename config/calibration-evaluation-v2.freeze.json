@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "freeze_id": "phase6-scientific-calibration-gate-v2-freeze-1",
+  "frozen_at": "2026-10-28T15:29:45Z",
+  "status": "THRESHOLDS_FROZEN_SYSTEM_NOT_YET_FROZEN",
+  "contract": {
+    "path": "config/calibration-evaluation-v2.yaml",
+    "sha256": "0a7214a05d34d159a57129b8b104c5974118b8ac8b97308f42144fb3801d0cab"
+  },
+  "dataset": {
+    "id": "step3-merged-reviewed-v1",
+    "pipeline_view": "/media/splexmus/4TB_HDD1/dualrag/benchmarks/step3-merged-reviewed-v1-pipeline",
+    "source_manifest_sha256": "3991f6e950a252c5aaa88997f681840ae8e5f46b4d21b27e102caf39134155b1",
+    "queries_tsv_sha256": "648c19f193522c89bde68601fe72e1d76ca1a1d9852e963d13684a95100d3e82",
+    "splits_tsv_sha256": "cbddef8a6cc2376104143f52e8017676f26d151d019665e475390b11026d4170",
+    "difficulty_strata_tsv_sha256": "cfcb100325898724af139e82bfc5919820687f11191c1938fadf18d5eb78a6a2",
+    "development_validation_gold_sha256": "840b5d09f52d29c9189f6f788d8d39984573911a5d7ee4f19012607ce91e60de",
+    "test_label_seal_manifest_sha256": "14dc94f64439bfd0a31b5ce405cf856740f62259d0e90e4db78a41bc19a7b08c"
+  },
+  "environment": {
+    "pixi_lock_sha256": "7b4dc617f8734e8a123ce6d030625948ca7a0faec594431188d9cb17dc7f9215"
+  },
+  "repository": {
+    "base_commit": "4c4ced1c7d57bf7c9881274ff8663321f6fdacc8",
+    "worktree_dirty": true,
+    "pre_freeze_record_worktree_status_sha256": "0ceefb863989ede9ef687731bea19e6a4427248c0c96ad2e4f3d408811cb98b4"
+  },
+  "boundaries": [
+    "This freezes threshold definitions, not the complete retrieval or generation system.",
+    "The worktree is dirty and gemma4:more reliability remains unresolved.",
+    "Validation gold was materialized, but no new validation predictions or correctness outcomes existed.",
+    "No sealed test-gold evaluation was used to choose these thresholds."
+  ]
+}

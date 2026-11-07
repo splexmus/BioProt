@@ -98,7 +98,16 @@ def _acquire_one(
         entry = _first_entry(payload)
         compatible = _sequence_compatible(query.sequence, entry)
         if compatible is False:
-            raise ValueError(f"cached AlphaFold sequence does not match query {query.query_id}")
+            return None, _sequence_mismatch_record(
+                query,
+                accession,
+                method,
+                config,
+                request_url,
+                retrieved_at,
+                entry,
+                model_path,
+            )
         return model_path, _record(
             query, accession, method, config, request_url, None, entry, model_path,
             "CACHED", retrieved_at, compatible
@@ -127,7 +136,9 @@ def _acquire_one(
         raise ValueError(f"AlphaFold returned {returned_accession!r} for requested {accession!r}")
     compatible = _sequence_compatible(query.sequence, entry)
     if compatible is False:
-        raise ValueError(f"AlphaFold sequence does not match query {query.query_id}")
+        return None, _sequence_mismatch_record(
+            query, accession, method, config, request_url, retrieved_at, entry
+        )
     structure_url = _structure_url(entry, config.structure_format)
     structure_response = _get_with_retries(session, structure_url, config)
     if structure_response is None or structure_response.status_code != 200:
@@ -259,4 +270,33 @@ def _entry_error_record(
         None,
         "HTTP_ERROR",
         _sequence_compatible(query.sequence, entry),
+    )
+
+
+def _sequence_mismatch_record(
+    query: ProteinQuery,
+    accession: str,
+    method: str,
+    config: AlphaFoldApiConfig,
+    request_url: str,
+    retrieved_at: str,
+    entry: dict[str, Any],
+    model_path: Path | None = None,
+) -> AcquisitionRecord:
+    return AcquisitionRecord(
+        query.query_id,
+        accession,
+        method,
+        config.base_url,
+        request_url,
+        None,
+        entry.get("entryId"),
+        str(entry.get("latestVersion")) if entry.get("latestVersion") else None,
+        config.structure_format,
+        _structure_url(entry, config.structure_format),
+        retrieved_at,
+        file_sha256(model_path) if model_path else None,
+        str(model_path) if model_path else None,
+        "SEQUENCE_MISMATCH",
+        False,
     )

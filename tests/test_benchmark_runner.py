@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from dualrag.benchmark.runner import (
+    _project_structure_hits,
     _read_acquisition_records,
     _read_sequence_evidence,
     _read_structure_evidence,
@@ -33,6 +34,7 @@ def test_raw_evidence_round_trip_preserves_typed_fields(tmp_path: Path) -> None:
         database_version="1",
         sequence_identity=0.42,
         go_terms=["GO:0005524"],
+        pfam_ids=["PF00001"],
         ec_numbers=["1.1.1.1"],
         normalized_score=0.8,
     )
@@ -48,6 +50,9 @@ def test_raw_evidence_round_trip_preserves_typed_fields(tmp_path: Path) -> None:
         query_coverage=0.5,
         experimental_structure=True,
         go_terms=["GO:0005524"],
+        pfam_ids=["PF00001"],
+        domain_projected_go_terms=["GO:0004672"],
+        annotation_provenance=["PDBe_SIFTS:pdb_chain_go"],
         normalized_score=0.7,
     )
     acquisition = AcquisitionRecord(
@@ -83,6 +88,8 @@ def test_raw_evidence_round_trip_preserves_typed_fields(tmp_path: Path) -> None:
     assert restored_sequence.sequence_identity == 0.42
     assert restored_structure.alignment_length == 100
     assert restored_structure.experimental_structure is True
+    assert restored_structure.pfam_ids == ["PF00001"]
+    assert restored_structure.domain_projected_go_terms == ["GO:0004672"]
     assert restored_acquisition.http_status == 404
     assert restored_acquisition.sequence_compatible is None
 
@@ -90,3 +97,25 @@ def test_raw_evidence_round_trip_preserves_typed_fields(tmp_path: Path) -> None:
 def test_raw_evidence_reuse_requires_preserved_file(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError, match="raw evidence reuse requested"):
         _read_sequence_evidence(tmp_path / "missing.tsv")
+
+
+def test_structure_projection_normalizes_interpro_prefix_and_keeps_tier() -> None:
+    hit = StructureEvidence(
+        query_id="q",
+        target_structure_id="1abc_A",
+        target_uniprot_id="P1",
+        tool="Foldseek",
+        tool_version="1",
+        database="PDB",
+        database_version="1",
+        interpro_ids=["IPR000092"],
+    )
+    projected = _project_structure_hits(
+        [hit],
+        {"INTERPRO2GO": {"InterPro:IPR000092": {"GO:0004659"}}},
+        use_interpro=True,
+        use_ec=False,
+    )[0]
+
+    assert projected.go_terms == []
+    assert projected.domain_projected_go_terms == ["GO:0004659"]

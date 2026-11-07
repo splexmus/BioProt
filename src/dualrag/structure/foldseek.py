@@ -102,7 +102,9 @@ def parse_results(
                 go_terms=terms(target_meta.get("go_terms")),
                 ec_numbers=terms(target_meta.get("ec_numbers")),
                 interpro_ids=terms(target_meta.get("interpro_ids")),
+                pfam_ids=terms(target_meta.get("pfam_ids")),
                 supfam_ids=terms(target_meta.get("supfam_ids")),
+                annotation_provenance=terms(target_meta.get("annotation_provenance")),
                 structure_source=target_meta.get("structure_source") or config.database_name,
                 experimental_structure=_bool_or_none(
                     target_meta.get("experimental_structure")

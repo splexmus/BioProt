@@ -198,8 +198,34 @@ Exit criteria:
 
 ## Phase 6 — Confidence calibration
 
-Status: **engineering-complete development pilot. Platt calibration fitted on 51
-development examples and evaluated on 15 validation examples; exposed test excluded.**
+Status: **retrieval ranking has prospective validation support, but calibrated
+confidence failed the frozen scientific gate. Test labels remain sealed.**
+
+Ranking/sufficiency update (2026-11-07): sequence-anchored ranking v3 prevents weak
+dual candidates from displacing a sequence-supported top-1 while preserving structure
+rescue below rank 1. On the already-revealed 150-protein benchmark it improved Recall@1,
+Recall@10, MRR, and coverage over sequence-only; Recall@10 gain was 0.0256 (95% CI
+0.0044-0.0522), while Precision@10 remained lower. A development-selected evidence
+sufficiency gate now emits either top-1 or `ABSTAIN`, followed by calibration only for
+accepted calls. The recommended high-coverage exploratory revision accepted 86.2% of
+eligible previous-benchmark cases, and only one of 26 abstentions would have been
+correct. Calibration improved but still missed Brier/log-loss/ECE limits. See
+`docs/PHASE6_RANKING_SUFFICIENCY_RESULTS.md`. This is retrospective reuse, not a new
+scientific pass; sealed test labels remain prohibited.
+
+Development transition: **`PASS_FOR_NEW_VALIDATION_BUILD`** under
+`config/phase6-development-transition-v1.yaml`. This authorizes freezing the improved
+ranking/sufficiency/calibration bundle and constructing a new independent validation
+cohort. It does not authorize report confidence as scientifically calibrated and does
+not authorize sealed test-gold access.
+
+New validation outcome: **`FAIL_SCIENTIFIC_CALIBRATION_GATE`**. The transition was
+completed on a new 300-protein, 403-example cohort excluding all 938 previously used
+proteins. The sample gate passed at 80.4% coverage, and abstention rejected mostly
+incorrect calls. Calibration improved over raw scores but produced Brier 0.2571,
+log-loss 0.7076, and ECE 0.1377. Dual Recall@10 gain was only 0.0046 with a 95% CI from
+-0.0140 to 0.0233. The retrospective slight improvement therefore did not generalize
+as a measurable new-cohort benefit. Test labels remain sealed.
 
 - collect prediction/evidence features **(complete)**
 - fit external Platt calibrator on development data **(complete)**
@@ -225,17 +251,48 @@ Exit criteria:
    representation. Exclude the existing 60 proteins and prohibited homolog clusters.
    Treat 200 proteins as a floor and expand the panel until Step 4 has at least 100
    validation and 100 untouched-test query-namespace examples. See
-   `docs/SCIENTIFIC_VALIDATION_PANEL.md`.
+   `docs/SCIENTIFIC_VALIDATION_PANEL.md`. **(development dataset complete: 788 proteins,
+   171 validation and 172 test query-namespace examples; only 10 proteins in the 20-30%
+   stratum, so remote-homology power remains limited; test labels are now procedurally
+   separated, but historical untouched status cannot be restored)**
 4. Assign cluster-aware development/validation/test splits. Target at least 100
    query-namespace examples in validation and 100 in a completely untouched test set.
+   **(cluster-aware split complete: 171 validation and 172 test query-namespace
+   examples; procedural test-label vault complete, but not historically untouched
+   because full gold existed before sealing)**
 5. Freeze Phase 6 scientific thresholds before revealing new evaluation labels: improved
    Brier/log-loss over raw scores, ECE target, monotonic confidence-group accuracy,
-   minimum group sizes, and a predeclared high-confidence accuracy target.
+   minimum group sizes, and a predeclared high-confidence accuracy target. **(complete:
+   `phase6-scientific-calibration-gate-v2` frozen before new validation predictions or
+   correctness outcomes; validation gold was already materialized, so this is not
+   blinded label custody; thresholds and one-time test rules documented)**
 6. Run Phase 1-5 without gold-label access, freeze predictions/reports/confidence, then
    reveal validation labels. Compare raw score, Platt, isotonic, and multifeature logistic
-   calibration using development/validation only.
+   calibration using development/validation only. **(retrieval/calibration branch run on
+   2026-11-07: 670 development/validation queries, 666 AlphaFold models, 31,718 allowed
+   structure hits; the frozen validation gate failed. Dual and sequence-only EC/GO-MF
+   predictions were identical, while InterPro Recall@10 improved from 0.8717 to 0.9236.
+   No calibrator met all frozen confidence-group requirements. Step 7 remains locked;
+   the Gemma 4 Phase 5 report branch is still not frozen or rerun.)**
+   **Development repair update (2026-11-07): priorities 1-3 are implemented. The
+   InterPro prefix mismatch is fixed; PDB metadata v2 adds GO-MF, EC, Pfam and explicit
+   SIFTS provenance; domain-derived GO is separately tagged and reliability-limited.
+   On 552 development proteins, dual Recall@10 improved from 0.7549 to 0.8090
+   (difference 0.0541; 95% bootstrap CI 0.0379-0.0712), with 25 structure rescues.
+   This is development evidence only and does not reverse the frozen validation fail.)**
+   **Prospective recovery update (2026-11-07): Priority 4 selected one ranking profile
+   on cluster-aware development folds and Priority 5 selected one multifeature calibrator
+   using development-only CV. A new 150-protein cluster-independent cohort was retrieved
+   and all predictions, parameters, mappings, manifests, lockfile, and code hashes were
+   frozen before its gold was revealed. Frozen dual Recall@10 was 0.6402 versus 0.6047
+   for sequence-only (difference 0.0356; 95% bootstrap CI 0.0117-0.0639), but Precision@10,
+   top-1 recall, and MRR were lower. Calibration had 175 examples from 138 proteins and
+   92.6% coverage, yet Brier 0.2581, log-loss 0.7089, ECE 0.1661, and confidence-group
+   sizes failed the contract. Status remains `FAIL_SCIENTIFIC_CALIBRATION_GATE`.)**
 7. Freeze the selected calibrator and evaluate the untouched test set exactly once,
-   including EC, GO-MF, difficulty, taxonomy, and cross-modal subgroups.
+   including EC, GO-MF, difficulty, taxonomy, and cross-modal subgroups. **(blocked:
+   the prospective fresh-validation calibration gate failed; do not access the sealed
+   test labels.)**
 8. Add calibrated confidence to future reports only after the unseen evaluation passes;
    keep confidence separate from experimental confirmation and literature truthfulness.
 9. Evaluate optional Phase 7 GraphRAG only through an ablation against this non-graph

@@ -31,6 +31,7 @@ GENERIC_LABEL_PATTERNS = (
     re.compile(r"^.+ domain containing protein$"),
     re.compile(r"^.+ family protein$"),
 )
+DOMAIN_FUNCTION_RELIABILITY = 0.75
 
 
 def extract_contributions(
@@ -74,28 +75,62 @@ def extract_contributions(
     for hit in structure_hits:
         structure_ranks[hit.query_id] += 1
         reliability, flags = structure_reliability(hit, config or FusionConfig())
-        values = []
-        values.extend((CandidateKind.EC, value) for value in hit.ec_numbers)
-        values.extend((CandidateKind.GO, value) for value in hit.go_terms)
-        values.extend((CandidateKind.INTERPRO, value) for value in hit.interpro_ids)
-        values.extend((CandidateKind.SUPFAM, value) for value in hit.supfam_ids)
+        annotation_provenance = ",".join(hit.annotation_provenance)
+        common = {
+            "query_id": hit.query_id,
+            "modality": "structure",
+            "source_id": hit.target_structure_id,
+            "provenance": _provenance(
+                hit.tool, hit.tool_version, hit.database, hit.database_version
+            ),
+            "score": hit.normalized_score,
+            "protein_name": hit.protein_name,
+            "support_id": hit.target_uniprot_id or hit.target_structure_id,
+            "source_rank": structure_ranks[hit.query_id],
+        }
+        direct_values = []
+        direct_values.extend((CandidateKind.EC, value) for value in hit.ec_numbers)
+        direct_values.extend((CandidateKind.GO, value) for value in hit.go_terms)
+        direct_values.extend((CandidateKind.INTERPRO, value) for value in hit.interpro_ids)
+        direct_values.extend((CandidateKind.PFAM, value) for value in hit.pfam_ids)
+        direct_values.extend((CandidateKind.SUPFAM, value) for value in hit.supfam_ids)
         if hit.protein_name:
-            values.append((CandidateKind.LABEL, hit.protein_name))
+            direct_values.append((CandidateKind.LABEL, hit.protein_name))
         contributions.extend(
             _from_values(
-                query_id=hit.query_id,
-                modality="structure",
-                source_id=hit.target_structure_id,
-                provenance=_provenance(
-                    hit.tool, hit.tool_version, hit.database, hit.database_version
-                ),
-                score=hit.normalized_score,
-                protein_name=hit.protein_name,
-                values=values,
-                support_id=hit.target_uniprot_id or hit.target_structure_id,
+                **common,
+                values=direct_values,
                 evidence_reliability=reliability,
                 quality_flags=flags,
-                source_rank=structure_ranks[hit.query_id],
+                mapping_provenance=(
+                    f"DIRECT_STRUCTURE_TARGET:{annotation_provenance}"
+                    if annotation_provenance
+                    else "DIRECT_STRUCTURE_TARGET"
+                ),
+            )
+        )
+        contributions.extend(
+            _from_values(
+                **common,
+                values=[
+                    (CandidateKind.GO, value)
+                    for value in hit.domain_projected_go_terms
+                ],
+                evidence_reliability=min(reliability, DOMAIN_FUNCTION_RELIABILITY),
+                quality_flags=(*flags, "DOMAIN_DERIVED_FUNCTION"),
+                mapping_provenance="DOMAIN_PROJECTION:INTERPRO2GO",
+                reason_suffix="domain-derived projection, not complete-function equivalence",
+            )
+        )
+        contributions.extend(
+            _from_values(
+                **common,
+                values=[
+                    (CandidateKind.GO, value) for value in hit.ec_projected_go_terms
+                ],
+                evidence_reliability=reliability,
+                quality_flags=flags,
+                mapping_provenance="FUNCTION_PROJECTION:EC2GO",
             )
         )
     return contributions
@@ -114,6 +149,8 @@ def _from_values(
     evidence_reliability: float = 1.0,
     quality_flags: tuple[str, ...] = (),
     source_rank: int,
+    mapping_provenance: str = "",
+    reason_suffix: str = "",
 ) -> list[CandidateContribution]:
     contributions: list[CandidateContribution] = []
     seen: set[str] = set()
@@ -126,6 +163,8 @@ def _from_values(
             continue
         seen.add(candidate_id)
         informative, reason = assess_informativeness(kind, value)
+        if reason_suffix:
+            reason = f"{reason}; {reason_suffix}"
         contributions.append(
             CandidateContribution(
                 query_id=query_id,
@@ -139,6 +178,7 @@ def _from_values(
                 informative=informative,
                 informativeness_reason=reason,
                 original_candidate_id=candidate_id,
+                mapping_provenance=mapping_provenance,
                 support_id=support_id,
                 evidence_reliability=evidence_reliability,
                 quality_flags=quality_flags,

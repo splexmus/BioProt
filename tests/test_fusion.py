@@ -57,6 +57,37 @@ def test_candidate_extraction_marks_generic_annotations_unclear() -> None:
     assert {"OG:OG1", "OG:OG2"} <= by_id.keys()
 
 
+def test_domain_projected_function_is_explicit_and_attenuated() -> None:
+    contributions = extract_contributions(
+        [],
+        [
+            structure(
+                domain_projected_go_terms=["GO:0004659"],
+                annotation_provenance=["PDBe_SIFTS:pdb_chain_interpro"],
+            )
+        ],
+    )
+
+    candidate = contributions[0]
+    assert candidate.candidate_id == "GO:0004659"
+    assert candidate.mapping_provenance == "DOMAIN_PROJECTION:INTERPRO2GO"
+    assert candidate.evidence_reliability == 0.75
+    assert "DOMAIN_DERIVED_FUNCTION" in candidate.quality_flags
+    assert "not complete-function equivalence" in candidate.informativeness_reason
+
+    result = fuse_candidates(
+        [ProteinQuery("q", "MA")],
+        [],
+        [structure(domain_projected_go_terms=["GO:0004659"])],
+        FusionConfig(),
+        run_id="run",
+        parameters_hash="parameters",
+    )
+    assert result.candidates[0].mapping_provenance == [
+        "DOMAIN_PROJECTION:INTERPRO2GO"
+    ]
+
+
 def test_specific_label_consensus_scores_above_shared_family() -> None:
     result = fuse_candidates(
         [ProteinQuery("q", "MA")],
@@ -142,7 +173,10 @@ def test_exact_cross_namespace_mapping_consolidates_and_keeps_provenance(
     candidate = result.candidates[0]
     assert candidate.candidate_id == "INTERPRO:IPR1"
     assert candidate.candidate_aliases == ["INTERPRO:IPR1", "PFAM:PF1"]
-    assert candidate.mapping_provenance == ["test-map@2026-01:EXACT"]
+    assert candidate.mapping_provenance == [
+        "DIRECT_STRUCTURE_TARGET",
+        "test-map@2026-01:EXACT",
+    ]
     assert result.summaries[0]["cross_modal_status"] == "PARTIAL_CONSENSUS"
     assert result.audit["mapped_contribution_count"] == 1
     assert result.audit["mapping_inputs"][0]["sha256"]

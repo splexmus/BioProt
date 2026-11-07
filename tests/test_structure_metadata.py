@@ -56,6 +56,23 @@ def test_build_metadata_preserves_foldseek_targets_and_joins_annotations(
         "PDB\tCHAIN\tACCESSION\tEC_NUMBER\n"
         "1abc\tA\tP00001\t1.2.3.4\n",
     )
+    sifts_pfam = tmp_path / "pdb_chain_pfam.tsv.gz"
+    _gzip(
+        sifts_pfam,
+        "# 2026/10/04 | PDB: 40.26 | UniProt: 2026.03\n"
+        "PDB\tCHAIN\tSP_PRIMARY\tPFAM_ID\n"
+        "1abc\tA\tP00001\tPF00001\n",
+    )
+    go_obo = tmp_path / "go-basic.obo"
+    go_obo.write_text(
+        "[Term]\n"
+        "id: GO:0000001\n"
+        "namespace: molecular_function\n"
+        "[Term]\n"
+        "id: GO:0000002\n"
+        "namespace: biological_process\n",
+        encoding="utf-8",
+    )
     swissprot = tmp_path / "uniprot_sprot.fasta.gz"
     _gzip(
         swissprot,
@@ -70,6 +87,8 @@ def test_build_metadata_preserves_foldseek_targets_and_joins_annotations(
         sifts_go=sifts_go,
         sifts_enzyme=sifts_enzyme,
         sifts_interpro=sifts_interpro,
+        sifts_pfam=sifts_pfam,
+        go_obo=go_obo,
         swissprot_fasta=swissprot,
         output=output,
         work_dir=tmp_path,
@@ -85,10 +104,16 @@ def test_build_metadata_preserves_foldseek_targets_and_joins_annotations(
         "go_terms": "GO:0000001",
         "ec_numbers": "1.2.3.4",
         "interpro_ids": "IPR000001;IPR000002",
+        "pfam_ids": "PF00001",
         "supfam_ids": "",
         "structure_source": "PDB",
         "experimental_structure": "true",
         "source_accession": "1abc",
+        "annotation_provenance": (
+            "PDBe_SIFTS:pdb_chain_uniprot;PDBe_SIFTS:pdb_chain_go;"
+            "PDBe_SIFTS:pdb_chain_enzyme;PDBe_SIFTS:pdb_chain_interpro;"
+            "PDBe_SIFTS:pdb_chain_pfam"
+        ),
     }
     assert rows[1]["target_structure_id"] == "1abc-assembly2_A-2"
     assert rows[1]["target_uniprot_id"] == "P00001;P00002"
@@ -102,6 +127,7 @@ def test_build_metadata_preserves_foldseek_targets_and_joins_annotations(
     assert manifest["counts"]["targets_with_interpro"] == 2
     assert manifest["counts"]["targets_with_go"] == 2
     assert manifest["counts"]["targets_with_ec"] == 2
+    assert manifest["counts"]["targets_with_pfam"] == 2
     assert manifest["source_release_headers"]["pdb_chain_uniprot"].startswith(
         "2026/10/04"
     )

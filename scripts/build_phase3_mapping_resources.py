@@ -22,11 +22,13 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def external2go_rows(path: Path, mapping_type: str) -> list[dict[str, str]]:
+def external2go_rows(
+    path: Path, mapping_type: str, molecular_function_ids: set[str]
+) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         match = EXTERNAL2GO_RE.match(line)
-        if not match or line.startswith("!"):
+        if not match or line.startswith("!") or match.group(2) not in molecular_function_ids:
             continue
         source, target = match.groups()
         rows.append(
@@ -102,6 +104,27 @@ def go_synonyms(path: Path) -> tuple[list[dict[str, str]], str]:
     return rows, version
 
 
+def molecular_function_ids(path: Path) -> set[str]:
+    identifiers: set[str] = set()
+    current: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines() + ["[Term]"]:
+        if line == "[Term]":
+            if (
+                current.get("namespace") == "molecular_function"
+                and current.get("is_obsolete") != "true"
+                and current.get("id") != "GO:0003674"
+            ):
+                identifiers.add(current["id"])
+            current = {}
+            continue
+        key, separator, value = line.partition(": ")
+        if separator and key in {"id", "namespace", "is_obsolete"}:
+            current[key] = value
+    if not identifiers:
+        raise ValueError(f"no non-root GO Molecular Function terms found in {path}")
+    return identifiers
+
+
 def normalize_label(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
 
@@ -124,8 +147,9 @@ def sha256(path: Path) -> str:
 def main() -> None:
     args = parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    projections = external2go_rows(args.interpro2go, "INTERPRO2GO")
-    projections.extend(external2go_rows(args.ec2go, "EC2GO"))
+    allowed_go_ids = molecular_function_ids(args.go_obo)
+    projections = external2go_rows(args.interpro2go, "INTERPRO2GO", allowed_go_ids)
+    projections.extend(external2go_rows(args.ec2go, "EC2GO", allowed_go_ids))
     synonyms, go_version = go_synonyms(args.go_obo)
     write_tsv(
         args.output / "mapping_projections.tsv",

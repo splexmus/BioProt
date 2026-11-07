@@ -238,7 +238,16 @@ def _read_structure_evidence(path: Path) -> list[StructureEvidence]:
         StructureEvidence(
             **_decode_evidence_row(
                 row,
-                list_fields={"go_terms", "ec_numbers", "interpro_ids", "supfam_ids"},
+                list_fields={
+                    "go_terms",
+                    "ec_numbers",
+                    "interpro_ids",
+                    "pfam_ids",
+                    "supfam_ids",
+                    "domain_projected_go_terms",
+                    "ec_projected_go_terms",
+                    "annotation_provenance",
+                },
                 float_fields={
                     "foldseek_evalue",
                     "foldseek_score",
@@ -501,14 +510,30 @@ def _project_structure_hits(
 ) -> list[StructureEvidence]:
     projected: list[StructureEvidence] = []
     for hit in hits:
-        go_terms = set(hit.go_terms)
+        domain_projected_go_terms: set[str] = set()
+        ec_projected_go_terms: set[str] = set()
         if use_interpro:
             for interpro_id in hit.interpro_ids:
-                go_terms.update(projections["INTERPRO2GO"].get(interpro_id, set()))
+                source_id = (
+                    interpro_id
+                    if interpro_id.startswith("InterPro:")
+                    else f"InterPro:{interpro_id}"
+                )
+                domain_projected_go_terms.update(
+                    projections["INTERPRO2GO"].get(source_id, set())
+                )
         if use_ec:
             for ec_number in hit.ec_numbers:
-                go_terms.update(projections["EC2GO"].get(f"EC:{ec_number}", set()))
-        projected.append(replace(hit, go_terms=sorted(go_terms)))
+                ec_projected_go_terms.update(
+                    projections["EC2GO"].get(f"EC:{ec_number}", set())
+                )
+        projected.append(
+            replace(
+                hit,
+                domain_projected_go_terms=sorted(domain_projected_go_terms),
+                ec_projected_go_terms=sorted(ec_projected_go_terms),
+            )
+        )
     return projected
 
 

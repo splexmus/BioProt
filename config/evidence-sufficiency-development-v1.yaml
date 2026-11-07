@@ -1,0 +1,12 @@
+schema_version: 1
+selection_data: development_only_cluster_aware
+folds: 5
+seed: 42
+minimum_candidate_coverage: 0.80
+minimum_namespace_coverage: 0.75
+minimum_accepted_proteins: 75
+calibration_methods:
+  - platt_logistic
+  - isotonic_regression
+  - multifeature_l2_logistic
+claim_boundary: development_selection_only

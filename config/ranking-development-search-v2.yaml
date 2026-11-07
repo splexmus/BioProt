@@ -1,0 +1,21 @@
+schema_version: 1
+profile_family: phase6-direct-evidence-rerank-v2
+selection_data: development_only_cluster_aware
+folds: 5
+seed: 42
+grid:
+  consensus_bonus: [0.0, 0.03, 0.06]
+  direct_structure_bonus: [0.0, 0.02, 0.04]
+  structure_only_penalty: [0.0, 0.05, 0.10, 0.15]
+  domain_projection_penalty: [0.0, 0.05, 0.10]
+  max_structure_only_per_namespace: [2, 3, 5, 10]
+constraints:
+  minimum_recall_at_10_gain_over_sequence: 0.03
+  maximum_recall_at_1_loss_vs_sequence: 0.01
+  maximum_mrr_loss_vs_sequence: 0.01
+selection_order:
+  - highest_precision_at_10
+  - highest_recall_at_10
+  - highest_mrr
+  - least_restrictive_profile
+claim_boundary: development_profile_selection_only

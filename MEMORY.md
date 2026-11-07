@@ -366,3 +366,97 @@ When a durable decision changes, append a short entry below rather than silently
   selected but not frozen and must pass a repeated-query reliability pilot before a full
   run. V5 records thinking/output limits in provenance and preserves invalid raw Ollama
   responses. The reviewed `gemma3:4b` run remains the accepted development reference.
+- 2026-10-28: merged the three user-supplied UniProt nomination exports into
+  `step3-merged-reviewed-v1`. Supplied review status, explicitly including v2, is accepted
+  only from the `Reviewed` column; frozen Swiss-Prot 2026_03 supplies all scientific
+  eligibility and gold provenance. After Tier-A screening and exposed-cluster exclusion,
+  the HDD dataset contains 788 proteins in 660 intact clusters: 552 development, 118
+  validation, and 118 test, with 171 validation and 172 test query-namespace examples.
+  Checksums and independent invariants pass with no exposed accession/checksum overlap.
+  Status remains development-only until test labels are moved to controlled storage;
+  remote-homology power is limited because only 10 queries fall in the 20-30% stratum.
+- 2026-10-28: created a non-overwriting pipeline-facing view of the merged Step 3 dataset
+  with zero test-gold rows and a separate mode-0700 test-label vault. The vault contains
+  792 rows for 118 proteins; SHA-256 is
+  `b4e18359502e860bb52e9b30914e21e80cb31d5ff0bf5ebfc2b890bb22568904`.
+  This is procedural filesystem separation, not historical third-party blinding, because
+  the complete gold file existed before sealing and accessions/names remain visible.
+  Never use vault contents to tune retrieval, mappings, prompts, or thresholds.
+- 2026-10-28: completed scientific-validation Step 5 by freezing
+  `phase6-scientific-calibration-gate-v2` before new validation predictions. The gate
+  requires at least 100 evaluable examples/75 proteins, at least 80% prediction coverage,
+  Brier <=0.22, log-loss <=0.65, ECE <=0.10, and at least 0.02 improvement over raw for
+  each metric. LOW/MODERATE/HIGH accuracy must be monotonic; HIGH requires at least 30
+  examples, 85% point accuracy, and a 70% Wilson lower bound. The thresholds are a
+  project-specific conservative predeclaration, not a universal standard. Test remains
+  one-time-only after validation model selection and parameter freeze.
+- 2026-11-07: ran the Step 6 development/validation retrieval and frozen calibration
+  gate without test-gold access. The 670-query run acquired 666 AlphaFold models (313
+  cached, 353 downloaded, four unavailable), retained 17,679 sequence and 31,718
+  structure hits, and excluded 7,576 prohibited or unresolved structure hits. On 118
+  validation proteins, B4 dual and B2 sequence-only EC/GO-MF metrics were identical:
+  Recall@10 0.6864 and paired difference 0.0 (95% bootstrap CI 0.0 to 0.0). Structure
+  improved InterPro Recall@10 from 0.8717 to 0.9236 but produced no EC/GO-MF structure
+  rescue. The calibration sample gate passed (155 examples, 111 proteins, 90.6%
+  coverage), but Platt, isotonic, and multifeature logistic each failed at least one
+  frozen requirement. Status is `FAIL_SCIENTIFIC_CALIBRATION_GATE`; no calibrator was
+  selected, test gold remains unopened, and Step 7 is prohibited.
+- 2026-11-07: completed Phase 6 recovery priorities 1-3 without using validation/test
+  outcomes for the new comparison. Fixed the `IPR...` versus `InterPro:IPR...`
+  projection-key mismatch. Built `pdb_metadata.v2.tsv` for 1,562,650 targets with
+  GO-MF-only SIFTS annotations (1,028,244 targets), EC (549,754), InterPro (1,467,150),
+  Pfam (853,806), and row-level source provenance. Mapping bundle v2 filters all
+  projections to non-root GO Molecular Function. Domain-derived GO candidates remain
+  separate from direct GO, carry `DOMAIN_PROJECTION:INTERPRO2GO`, a
+  `DOMAIN_DERIVED_FUNCTION` flag, and a 0.75 reliability cap. Development-only
+  evaluation on 552 proteins improved dual versus sequence Recall@10 from 0.7549 to
+  0.8090 (difference 0.0541; 95% bootstrap CI 0.0379-0.0712) and produced 25 structure
+  rescues. Top-1 recall was slightly lower and precision@10 fell, so ranking and
+  calibration remain development tasks. The old validation failure is unchanged and
+  sealed test labels remain prohibited.
+- 2026-11-07: completed recovery priorities 4-5 prospectively. A development-only,
+  five-fold cluster-aware search selected the direct-evidence ranking profile, and
+  development CV selected a multifeature L2 logistic calibrator fitted on 821 examples
+  from 552 proteins. A new cluster-independent cohort of 150 reviewed proteins was run
+  without gold access; 125 AlphaFold models were usable, 22 were unavailable, and three
+  sequence mismatches were explicitly retained as sequence-only cases. Predictions,
+  model parameters, mappings, Foldseek metadata provenance, contracts, Pixi lock, and
+  the Python code tree were hashed before validation gold was revealed. Frozen dual
+  Recall@10 improved from 0.6047 sequence-only to 0.6402 (paired difference 0.0356; 95%
+  bootstrap CI 0.0117-0.0639), but top-1 recall, MRR, and Precision@10 declined. The
+  calibration sample gate passed with 175 examples from 138 proteins and 92.6% coverage,
+  while Brier 0.2581, log-loss 0.7089, ECE 0.1661, and LOW/HIGH group sizes failed the
+  frozen contract. Final status remains `FAIL_SCIENTIFIC_CALIBRATION_GATE`; validation
+  gold was accessed once, original test gold was not accessed, and test evaluation is
+  still prohibited.
+- 2026-11-07: added sequence-anchored ranking v3 and an explicit
+  ranking -> evidence sufficiency -> top-1-or-abstain -> calibration pipeline. The
+  development-selected ranker keeps the sequence top-1, admits at most one
+  structure-only candidate per namespace, and improved development Recall@1, Recall@10,
+  and MRR over sequence-only. On the previously revealed 150-protein cohort, ranking
+  alone improved Recall@10 from 0.6047 to 0.6302 (difference 0.0256; 95% CI
+  0.0044-0.0522) and improved Recall@1/MRR, while Precision@10 remained lower. The first
+  80%-coverage sufficiency policy transferred at only 59.8% and was rejected. A revised
+  development policy targeting 95% coverage accepted 86.2% of the old cohort; only one
+  of 26 abstained calls would have been correct. Accepted-call Brier 0.2470, log-loss
+  0.6865, and ECE 0.1060 improved over the previous frozen model but still fail the
+  scientific gate. This revision was influenced by already-revealed validation results,
+  is exploratory only, and requires a new frozen validation cohort. Test gold remains
+  unopened and prohibited.
+- 2026-11-07: recorded `PASS_FOR_NEW_VALIDATION_BUILD` for the improved Phase 6
+  ranking/sufficiency branch. The pass is limited to development continuation: ranking
+  Recall@10 has a positive bootstrap interval, Recall@1 and MRR exceed sequence-only,
+  accepted coverage is 86.2%, only 3.8% of abstentions would have been correct, and all
+  three calibration metrics improved modestly. Scientific calibration remains
+  `FAIL_SCIENTIFIC_CALIBRATION_GATE`; confidence is not production-ready and sealed
+  test access remains prohibited. The next allowed action is a fully frozen run on a
+  new cluster-independent validation cohort.
+- 2026-11-07: completed that new frozen validation on 300 reviewed proteins and 403
+  eligible query-namespace cases, excluding all 938 proteins used previously. The
+  sample gate passed with 324 accepted cases from 243 proteins and 80.4% coverage;
+  only 6.3% of abstentions would have been correct. The retrospective ranking gain did
+  not replicate: dual-minus-sequence Recall@10 was 0.0046 with 95% CI -0.0140 to
+  0.0233. Calibration improved raw Brier 0.3138 to 0.2571, log-loss 0.9925 to 0.7076,
+  and ECE 0.2333 to 0.1377, but missed all absolute limits and produced only seven HIGH
+  and zero LOW cases. Status remains `FAIL_SCIENTIFIC_CALIBRATION_GATE`; test gold was
+  not accessed and is still prohibited.

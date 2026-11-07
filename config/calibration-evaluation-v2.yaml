@@ -1,0 +1,137 @@
+schema_version: 1
+evaluation_version: phase6-scientific-calibration-gate-v2
+status: FROZEN_BEFORE_NEW_VALIDATION_PREDICTIONS
+frozen_on: 2026-10-28
+purpose: prospective_acceptance_gate_for_step3_merged_reviewed_v1
+
+target:
+  unit: query_namespace_top1_prediction
+  namespaces: [EC, GO_MF]
+  outcome: exact_match_to_admissible_tier_a_gold
+  condition: a_top1_prediction_exists
+  interpretation: probability_top_ranked_identifier_is_exactly_correct
+
+data_boundaries:
+  dataset_id: step3-merged-reviewed-v1
+  development_split: fit_and_model_development
+  validation_split: model_selection_and_gate_evaluation
+  test_split: one_time_frozen_model_evaluation_only
+  pipeline_gold_splits: [development, validation]
+  validation_gold_materialized_before_threshold_freeze: true
+  validation_prediction_results_available_at_freeze: false
+  test_gold_access_prohibited_until:
+    - predictions_are_frozen
+    - selected_calibrator_is_frozen
+    - validation_gate_decision_is_recorded
+  prohibited_inputs:
+    - test_gold_labels
+    - phase4_literature_labels
+    - llm_self_reported_confidence
+    - free_text_report_judgments
+
+minimum_evaluation_size:
+  validation:
+    evaluable_query_namespace_examples: 100
+    unique_proteins: 75
+  test:
+    evaluable_query_namespace_examples: 100
+    unique_proteins: 75
+  candidate_prediction_coverage: 0.80
+
+methods_to_compare:
+  - clipped_raw_ranking_score
+  - platt_logistic
+  - isotonic_regression
+  - multifeature_l2_logistic
+
+model_selection:
+  use_split: validation
+  primary_metric: log_loss
+  direction: lower_is_better
+  tie_tolerance: 0.01
+  tie_breakers:
+    - brier_score
+    - expected_calibration_error
+    - lower_model_complexity
+  complexity_order:
+    - platt_logistic
+    - isotonic_regression
+    - multifeature_l2_logistic
+  raw_score_is_baseline_not_selectable_calibrator: true
+  test_metrics_must_not_affect_selection: true
+
+acceptance_policy:
+  mode: all_required_checks_must_pass
+  insufficient_sample_status: INSUFFICIENT_EVIDENCE
+  failure_status: FAIL_SCIENTIFIC_CALIBRATION_GATE
+  pass_status: PASS_SCIENTIFIC_CALIBRATION_GATE
+  overall_metrics:
+    brier_score:
+      maximum: 0.22
+      minimum_improvement_over_raw: 0.02
+    log_loss:
+      maximum: 0.65
+      minimum_improvement_over_raw: 0.02
+    expected_calibration_error:
+      maximum: 0.10
+      minimum_improvement_over_raw: 0.02
+  confidence_groups:
+    boundaries:
+      LOW: [0.0, 0.5]
+      MODERATE: [0.5, 0.75]
+      HIGH: [0.75, 1.0]
+    interval_convention: lower_inclusive_upper_exclusive_except_final
+    minimum_examples:
+      LOW: 20
+      MODERATE: 20
+      HIGH: 30
+    monotonic_accuracy_required: true
+    monotonic_order: [LOW, MODERATE, HIGH]
+    high_confidence:
+      minimum_point_accuracy: 0.85
+      minimum_wilson_95_lower_bound: 0.70
+  probability_sanity:
+    finite_values_only: true
+    range: [0.0, 1.0]
+    nonzero_probability_variance_required: true
+
+uncertainty:
+  aggregate_metric_confidence_interval:
+    method: protein_cluster_bootstrap
+    confidence_level: 0.95
+    replicates: 2000
+    random_seed: 42
+  confidence_group_accuracy_interval:
+    method: wilson
+    confidence_level: 0.95
+
+subgroup_reporting:
+  dimensions:
+    - namespace
+    - difficulty_stratum
+    - taxonomy_superkingdom
+    - cross_modal_status
+  minimum_examples_for_inferential_claim: 30
+  smaller_groups: descriptive_only
+  subgroup_failure_does_not_override_overall_gate: true
+  mandatory_limitation_when_remote_strata_underpowered: true
+
+decision_rules:
+  - If any minimum evaluation size is unmet, return INSUFFICIENT_EVIDENCE, not PASS.
+  - If no calibrated method passes every required validation check, retain NOT_FOR_PRODUCTION.
+  - Select exactly one calibrator using validation only, then freeze its parameters and hash.
+  - Evaluate the frozen calibrator on test exactly once after the validation decision is recorded.
+  - Test failure cannot trigger threshold, feature, prompt, or model retuning followed by reuse of the same test as confirmatory.
+  - Calibration estimates exact top-1 identifier correctness, not experimental truth or report truthfulness.
+
+provenance:
+  threshold_origin: project_specific_conservative_predeclaration
+  universal_standard_claimed: false
+  informed_by:
+    - phase6-development-v1_descriptive_metrics
+    - step3-merged-reviewed-v1_sample_sizes
+  not_informed_by:
+    - new_validation_prediction_results
+    - sealed_test_gold_evaluation
+  test_gold_sha256_from_seal_manifest: b4e18359502e860bb52e9b30914e21e80cb31d5ff0bf5ebfc2b890bb22568904
+
