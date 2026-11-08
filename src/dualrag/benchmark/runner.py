@@ -48,12 +48,20 @@ def run_phase3_benchmark(
     alphafold_cache: Path | None,
     tmp_dir: Path,
     mapping_projection_path: Path | None = None,
+    fusion_mapping_path: Path | None = None,
     synonym_path: Path | None = None,
     structure_enabled: bool = True,
     resume: bool = False,
     reuse_raw_evidence: bool = False,
     target_pool_k: int = 10,
     quality_gated_fusion: bool = False,
+    sequence_weight: float | None = None,
+    structure_weight: float | None = None,
+    agreement_weight: float | None = None,
+    base_score_weight: float | None = None,
+    quality_weight: float | None = None,
+    fusion_version: str | None = None,
+    rerank_version: str | None = None,
 ) -> dict[str, object]:
     if target_pool_k < 10:
         raise ValueError("target_pool_k must be at least the reported top-K of 10")
@@ -141,8 +149,16 @@ def run_phase3_benchmark(
             ("B4_DUAL_DETERMINISTIC", seq_variant, struct_variant),
         ):
             config = _fusion_config(
+                mapping_path=fusion_mapping_path,
                 synonym_path=current_synonyms,
                 quality_gated=quality_gated_fusion,
+                sequence_weight=sequence_weight,
+                structure_weight=structure_weight,
+                agreement_weight=agreement_weight,
+                base_score_weight=base_score_weight,
+                quality_weight=quality_weight,
+                fusion_version=fusion_version,
+                rerank_version=rerank_version,
             )
             result = fuse_candidates(
                 queries,
@@ -157,7 +173,15 @@ def run_phase3_benchmark(
                         "baseline": baseline,
                         "ablation": ablation,
                         "projection": str(mapping_projection_path),
+                        "fusion_mapping": str(fusion_mapping_path),
                         "synonyms": str(current_synonyms),
+                        "fusion_weights": {
+                            "sequence": config.sequence_weight,
+                            "structure": config.structure_weight,
+                            "agreement": config.agreement_weight,
+                            "base_score": config.base_score_weight,
+                            "quality": config.quality_weight,
+                        },
                     }
                 ),
             )
@@ -191,7 +215,8 @@ def run_phase3_benchmark(
         "query_count": len(query_accessions),
         "target_pool_k": target_pool_k,
         "raw_evidence_reused": reuse_raw_evidence,
-        "fusion_profile": ("quality-gated-v2" if quality_gated_fusion else "fixed-weight-v1"),
+        "fusion_profile": fusion_version
+        or ("quality-gated-v2" if quality_gated_fusion else "fixed-weight-v1"),
         "sequence_allowed_hit_count": len(sequence_hits),
         "structure_allowed_hit_count": len(structure_hits),
         "structure_exclusion_count": len(structure_exclusions),
@@ -199,7 +224,17 @@ def run_phase3_benchmark(
         "principal_prediction_count": len(principal),
         "ablation_prediction_count": len(all_predictions),
         "mapping_projection": _input_record(mapping_projection_path),
+        "fusion_mapping": _input_record(fusion_mapping_path),
         "synonyms": _input_record(synonym_path),
+        "fusion_weights": {
+            "sequence": sequence_weight,
+            "structure": structure_weight,
+            "agreement": agreement_weight,
+            "base_score": base_score_weight,
+            "quality": quality_weight,
+        },
+        "fusion_version": fusion_version,
+        "rerank_version": rerank_version,
         "strict_primary_limitations": [
             "B2 uses MMseqs2 against frozen Swiss-Prot rather than eggNOG seed-ortholog output, "
             "because eggNOG-mapper does not expose a rankable leakage-filterable hit list.",
@@ -449,17 +484,57 @@ def _structure_hits(
     return [hit for query in queries for hit in allowed[query.query_id]], acquisitions, exclusions
 
 
-def _fusion_config(*, synonym_path: Path | None, quality_gated: bool) -> FusionConfig:
+def _fusion_config(
+    *,
+    mapping_path: Path | None,
+    synonym_path: Path | None,
+    quality_gated: bool,
+    sequence_weight: float | None = None,
+    structure_weight: float | None = None,
+    agreement_weight: float | None = None,
+    base_score_weight: float | None = None,
+    quality_weight: float | None = None,
+    fusion_version: str | None = None,
+    rerank_version: str | None = None,
+) -> FusionConfig:
+    defaults = (
+        (0.50, 0.30, 0.20, 0.80, 0.20)
+        if quality_gated
+        else (0.40, 0.40, 0.20, 0.80, 0.20)
+    )
+    weights = [
+        sequence_weight,
+        structure_weight,
+        agreement_weight,
+        base_score_weight,
+        quality_weight,
+    ]
+    resolved = [
+        default if value is None else value
+        for value, default in zip(weights, defaults, strict=True)
+    ]
     if not quality_gated:
-        return FusionConfig(mapping_path=None, synonym_path=synonym_path)
+        return FusionConfig(
+            version=fusion_version or "fixed-weight-v1",
+            rerank_version=rerank_version or "evidence-quality-v1",
+            mapping_path=mapping_path,
+            synonym_path=synonym_path,
+            sequence_weight=resolved[0],
+            structure_weight=resolved[1],
+            agreement_weight=resolved[2],
+            base_score_weight=resolved[3],
+            quality_weight=resolved[4],
+        )
     return FusionConfig(
-        version="quality-gated-v2",
-        rerank_version="support-aggregated-v2",
-        sequence_weight=0.50,
-        structure_weight=0.30,
-        agreement_weight=0.20,
-        mapping_path=None,
+        version=fusion_version or "quality-gated-v2",
+        rerank_version=rerank_version or "support-aggregated-v2",
+        sequence_weight=resolved[0],
+        structure_weight=resolved[1],
+        agreement_weight=resolved[2],
+        mapping_path=mapping_path,
         synonym_path=synonym_path,
+        base_score_weight=resolved[3],
+        quality_weight=resolved[4],
         support_aggregation_enabled=True,
         support_bonus_max=0.15,
         support_saturation=3,

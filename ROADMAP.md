@@ -230,6 +230,17 @@ log-loss 0.7076, and ECE 0.1377. Dual Recall@10 gain was only 0.0046 with a 95% 
 -0.0140 to 0.0233. The retrospective slight improvement therefore did not generalize
 as a measurable new-cohort benefit. Test labels remain sealed.
 
+InterPro-weighted follow-up (2026-11-08): a third 300-protein cluster-independent
+cohort excluded all 1,238 proteins used by the original benchmark and both earlier
+fresh-validation cohorts. The pipeline was frozen before gold reveal. Dual Recall@10
+was 0.6004 versus 0.5578 for sequence-only, a gain of 0.0426 with a 95% bootstrap CI
+of 0.0257-0.0619. This supports the retrieval-ranking benefit on this cohort. The
+scientific calibration gate still failed: accepted coverage was 80.5%, Brier was
+0.2392 (required at most 0.22), log-loss was 0.6698 (required at most 0.65), ECE was
+0.0807 (passed the 0.10 maximum), and the output contained only one HIGH and zero LOW
+examples. Do not retune and reuse this cohort as confirmatory evidence; test labels
+remain sealed.
+
 - collect prediction/evidence features **(complete)**
 - fit external Platt calibrator on development data **(complete)**
 - validation reliability diagram / Brier score / ECE / log-loss **(complete)**

@@ -6,6 +6,9 @@ evidence channels, normalized separately, grouped into function candidates, clas
 and ranked without hiding modality-specific evidence. Both an offline fixture backend
 and real eggNOG-mapper + AlphaFold DB REST + local Foldseek adapters are available.
 
+The release-pinned full Pfam-to-InterPro mapping workflow is documented in
+[`docs/INTERPRO_PFAM_MAPPING.md`](docs/INTERPRO_PFAM_MAPPING.md).
+
 The default `fixture` backend requires no biological databases, downloads, or network
 access. Its records are synthetic and exist only to exercise schemas, provenance,
 agreement states, and reproducibility. It does **not** predict the supplied sequence's
@@ -50,8 +53,10 @@ See `docs/TESTING_ALL_PROCESSES.md` for real-database, literature, Ollama, calib
 and exploratory Phase 8 testing steps and their scientific interpretation boundaries.
 For a phase-by-phase operator walkthrough, use `docs/USER_MANUAL.md`. The implemented
 `dualrag analyze` command accepts FASTA or one UniProt accession, runs Phase 1-2, and
-writes a deterministic summary/status. Remaining literature/report orchestration and
-graphical-interface work is tracked in `docs/USER_INTERFACE_PLAN.md`.
+writes a deterministic summary/status with sequence and structure support separated,
+provisional ranking scores labelled as non-probabilities, and the failed Phase 6
+calibration status exposed explicitly. Graphical-interface work is tracked in
+`docs/USER_INTERFACE_PLAN.md`.
 
 ```bash
 pixi run python -m dualrag analyze \

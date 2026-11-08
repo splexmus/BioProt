@@ -100,6 +100,13 @@ pixi run python -m dualrag analyze \
 The top-level directory contains `summary.md`, `status.json`, and the validated input
 manifest. Detailed Phase 1-2 files are under `biological/`.
 
+The summary reports sequence and structure support separately for each query. Its
+candidate score is explicitly a provisional ranking feature, not a probability.
+`status.json` records `confidence_status: NOT_CALIBRATED`,
+`calibration_gate_status: FAIL_SCIENTIFIC_CALIBRATION_GATE`, and
+`decision_use: HYPOTHESIS_GENERATION_ONLY`; the ordinary single-protein interface does
+not apply the incompatible cohort benchmark calibrator.
+
 Phase 1 outputs:
 
 | File | Meaning |

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from dualrag.benchmark.runner import (
+    _fusion_config,
     _project_structure_hits,
     _read_acquisition_records,
     _read_sequence_evidence,
@@ -119,3 +120,35 @@ def test_structure_projection_normalizes_interpro_prefix_and_keeps_tier() -> Non
 
     assert projected.go_terms == []
     assert projected.domain_projected_go_terms == ["GO:0004659"]
+
+
+def test_benchmark_accepts_explicit_fusion_and_rerank_weights(tmp_path: Path) -> None:
+    mapping = tmp_path / "mappings.tsv"
+    mapping.write_text(
+        "source_candidate_id\tcanonical_candidate_id\trelation\tsource\tsource_version\n"
+        "PFAM:PF00107\tINTERPRO:IPR013149\tEXACT\ttest\t1\n",
+        encoding="utf-8",
+    )
+
+    config = _fusion_config(
+        mapping_path=mapping,
+        synonym_path=None,
+        quality_gated=True,
+        sequence_weight=0.4,
+        structure_weight=0.3,
+        agreement_weight=0.3,
+        base_score_weight=0.7,
+        quality_weight=0.3,
+        fusion_version="quality-gated-v3-test",
+        rerank_version="support-aggregated-v3-test",
+    )
+
+    assert config.mapping_path == mapping
+    assert (config.sequence_weight, config.structure_weight, config.agreement_weight) == (
+        0.4,
+        0.3,
+        0.3,
+    )
+    assert (config.base_score_weight, config.quality_weight) == (0.7, 0.3)
+    assert config.version == "quality-gated-v3-test"
+    assert config.rerank_version == "support-aggregated-v3-test"

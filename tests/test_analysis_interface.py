@@ -79,7 +79,18 @@ def test_analyze_fasta_runs_existing_pipeline_and_writes_summary(tmp_path: Path)
     assert result["status"] == "COMPLETE"
     assert result["query_count"] == 5
     assert (output / "biological/function_candidates.tsv").is_file()
-    assert "confidence NOT_CALIBRATED" in (output / "summary.md").read_text()
+    summary = (output / "summary.md").read_text()
+    assert "confidence NOT_CALIBRATED" in summary
+    assert "Phase 6 calibration gate: **FAIL_SCIENTIFIC_CALIBRATION_GATE**" in summary
+    assert "#### Sequence support" in summary
+    assert "`TEST_SEQ_001`" in summary
+    assert "#### Structure support" in summary
+    assert "`TEST_AF_001`" in summary
+    assert "Provisional ranking score" in summary
+    status = json.loads((output / "status.json").read_text())
+    assert status["confidence_status"] == "NOT_CALIBRATED"
+    assert status["calibration_gate_status"] == "FAIL_SCIENTIFIC_CALIBRATION_GATE"
+    assert status["decision_use"] == "HYPOTHESIS_GENERATION_ONLY"
     manifest = json.loads((output / "input/input_manifest.json").read_text())
     assert manifest["source_type"] == "FASTA_FILE"
 

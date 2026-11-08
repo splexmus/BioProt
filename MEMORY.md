@@ -169,6 +169,18 @@ sequence-only query; unconfigured namespace gaps are not biological conclusions.
 When a durable decision changes, append a short entry below rather than silently rewriting history.
 
 ### Decision log
+- 2026-11-08: added a full release-pinned InterPro/Pfam mapping builder. The verified
+  temporary bundle used InterPro 111.0 and Pfam 39.0 and emitted 94,286 exact
+  accession/name mappings for 47,143 integrated Pfam signatures. A development-only
+  rerun of the requested 0.4/0.3/0.3 fusion and 0.7/0.3 reranking weights slightly
+  reduced all principal dual ranking metrics versus the previous profile, so the new
+  weights remain an ablation and do not replace frozen settings. The HDD was read-only;
+  permanent bundle installation remains an operator step after a safe read-write mount.
+- 2026-11-08: the Phase 3 runner now accepts `--config` for Foldseek paths, mapping and
+  synonym inputs, quality gating, fusion/reranking weights, and version labels. The
+  current config-driven development rescore used 0.55/0.20/0.25 fusion and 0.75/0.25
+  reranking. It slightly improved Recall@1, Recall@5, MRR, and nDCG but reduced
+  Recall@10 from 0.8090 to 0.8077; it remains an ablation and no sealed labels were read.
 - Initial project memory created: dual retrieval first; LLM second; external SSD database layout; graph layer deferred.
 - 2026-09-04: added an offline synthetic-fixture PoC so schemas, provenance,
   reproducibility, and merge behavior can be tested without downloading databases.
@@ -460,6 +472,19 @@ When a durable decision changes, append a short entry below rather than silently
   and ECE 0.2333 to 0.1377, but missed all absolute limits and produced only seven HIGH
   and zero LOW cases. Status remains `FAIL_SCIENTIFIC_CALIBRATION_GATE`; test gold was
   not accessed and is still prohibited.
+- 2026-11-08: prospectively evaluated the InterPro 111.0/Pfam 39.0 weighted pipeline
+  on a third 300-protein cluster-independent cohort after excluding all 1,238 proteins
+  used by the original benchmark and the first two fresh-validation cohorts. Predictions,
+  abstention decisions, configuration, mapping resources, calibration bundle, contract,
+  retrieval manifest, and code were checksum-frozen before the labels were revealed.
+  Dual Recall@10 was 0.6004 versus 0.5578 for sequence-only (difference 0.0426; 95%
+  bootstrap CI 0.0257-0.0619), so this cohort supports a ranking benefit. The sample gate
+  passed with 314 accepted cases from 239 proteins and 80.5% coverage, but calibrated
+  Brier 0.2392 and log-loss 0.6698 exceeded their frozen maxima; ECE 0.0807 passed.
+  Only one HIGH and zero LOW examples were produced, so confidence-group requirements
+  also failed. Status remains `FAIL_SCIENTIFIC_CALIBRATION_GATE`; the validation result
+  must not be used for another confirmatory retune, and sealed test gold remains
+  prohibited.
 - 2026-11-07: added a dependency-free persistent Phase 4 SQLite index. It stores
   validated literature chunks and deterministic character-trigram vectors, refuses
   overwrite without `--replace`, and reuses the existing BM25/vector/biological
@@ -496,3 +521,10 @@ When a durable decision changes, append a short entry below rather than silently
   repetitive claims and truncated at 4,096 tokens. Added contextual JSON-schema bounds
   of eight claims and smaller auxiliary lists; the repeated live run completed one
   report with `PASS_WITH_WARNINGS` and preserved the experimental Phase 4 override.
+- 2026-11-08: revised the top-level `dualrag analyze` summary to present sequence and
+  structure support as separate per-query topics and label candidate scores as
+  provisional ranking features rather than probabilities. The summary and `status.json`
+  now expose `FAIL_SCIENTIFIC_CALIBRATION_GATE`, `NOT_CALIBRATED`, and
+  `HYPOTHESIS_GENERATION_ONLY`. The Phase 6 cohort calibrator is intentionally not
+  applied to ordinary eggNOG/Foldseek single-protein runs because their feature contract
+  differs from the benchmark pipeline.

@@ -371,20 +371,21 @@ def _domain_metrics(
     gold: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
     for row in gold_rows:
         gold[row["accession"]][row["namespace"]].add(row["identifier"])
-    predicted: dict[str, dict[str, dict[str, list[tuple[float, str]]]]] = defaultdict(
-        lambda: defaultdict(lambda: defaultdict(list))
+    predicted: dict[str, dict[str, dict[str, dict[str, float]]]] = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(dict))
     )
     for row in candidate_rows:
-        if row["ablation"] != "ALL_MAPPINGS" or row["candidate_kind"] not in {
-            "INTERPRO",
-            "PFAM",
-        }:
+        if row["ablation"] != "ALL_MAPPINGS":
             continue
         accession = _accession(row["query_id"])
-        identifier = row["candidate_id"].split(":", 1)[1]
-        predicted[row["baseline"]][accession][row["candidate_kind"]].append(
-            (float(row["rerank_score"]), identifier)
-        )
+        score = float(row["rerank_score"])
+        candidate_ids = {row["candidate_id"], *row.get("candidate_aliases", "").split(";")}
+        for candidate_id in candidate_ids:
+            namespace, separator, identifier = candidate_id.partition(":")
+            if not separator or namespace not in {"INTERPRO", "PFAM"}:
+                continue
+            current = predicted[row["baseline"]][accession][namespace]
+            current[identifier] = max(current.get(identifier, 0.0), score)
     rows: list[dict[str, object]] = []
     for baseline in sorted(predicted):
         for namespace in ("INTERPRO", "PFAM"):
@@ -397,9 +398,9 @@ def _domain_metrics(
                     continue
                 ordered = [
                     identifier
-                    for _score, identifier in sorted(
-                        predicted[baseline][accession][namespace],
-                        key=lambda item: (-item[0], item[1]),
+                    for identifier, _score in sorted(
+                        predicted[baseline][accession][namespace].items(),
+                        key=lambda item: (-item[1], item[0]),
                     )[:10]
                 ]
                 values.append(len(set(ordered) & truth) / len(truth))

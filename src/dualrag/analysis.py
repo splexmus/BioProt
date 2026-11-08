@@ -25,6 +25,7 @@ from dualrag.rag.pipeline import run_generation_pipeline
 from dualrag.structure.alphafold import resolve_accession
 
 UNIPROT_FASTA_URL = "https://rest.uniprot.org/uniprotkb/{accession}.fasta"
+PHASE6_CALIBRATION_STATUS = "FAIL_SCIENTIFIC_CALIBRATION_GATE"
 
 
 class AnalysisError(RuntimeError):
@@ -210,6 +211,9 @@ def run_analysis(
             "run_id": metadata["run_id"],
             "query_count": metadata["query_count"],
             "scientific_status": "PUTATIVE_HYPOTHESES_NOT_CALIBRATED",
+            "confidence_status": "NOT_CALIBRATED",
+            "calibration_gate_status": PHASE6_CALIBRATION_STATUS,
+            "decision_use": "HYPOTHESIS_GENERATION_ONLY",
             "stages": stages,
             "biological_output": str(biological_dir),
             "summary": str(output_dir / "summary.md"),
@@ -280,11 +284,14 @@ def _build_summary(
     generation_manifest: dict[str, Any] | None = None,
 ) -> str:
     summaries = read_tsv(biological_dir / "fusion_summary.tsv")
+    sequence_hits = _hits_by_query(read_tsv(biological_dir / "sequence_results.tsv"))
+    structure_hits = _hits_by_query(read_tsv(biological_dir / "structure_results.tsv"))
     lines = [
         "# BioProt analysis summary",
         "",
         f"Run ID: `{metadata['run_id']}`  ",
-        "Scientific status: **putative hypotheses; confidence NOT_CALIBRATED**",
+        "Scientific status: **putative hypotheses; confidence NOT_CALIBRATED**  ",
+        f"Phase 6 calibration gate: **{PHASE6_CALIBRATION_STATUS}**",
         "",
         "## Input",
         "",
@@ -302,20 +309,71 @@ def _build_summary(
         "",
     ]
     for row in summaries:
+        query_id = row["query_id"]
         candidate = row.get("top_candidate_labels") or row.get("top_candidate_id") or "none"
+        sequence = sequence_hits.get(query_id, [])
+        structure = structure_hits.get(query_id, [])
+        top_sequence = _top_hit(sequence)
+        top_structure = _top_hit(structure)
         lines.extend(
             [
-                f"### {row['query_id']}",
+                f"### {query_id}",
                 "",
                 f"- Cross-modal state: `{row['cross_modal_status']}`",
                 f"- Top candidate: {candidate}",
-                f"- Ranking score: {row.get('top_candidate_score') or 'N/A'}",
+                f"- Provisional ranking score: {row.get('top_candidate_score') or 'N/A'} "
+                "(not a probability)",
                 f"- Interpretation: {row['classification_reason']}",
+                "",
+                "#### Sequence support",
+                "",
+                f"- Retrieved hits: {len(sequence)}",
+                *(
+                    [
+                        f"- Top hit: `{top_sequence.get('target_id') or 'unknown'}` — "
+                        f"{top_sequence.get('protein_name') or 'unlabelled protein'}",
+                        "- Identity / coverage / E-value: "
+                        f"{top_sequence.get('sequence_identity') or 'N/A'} / "
+                        f"{top_sequence.get('alignment_coverage') or 'N/A'} / "
+                        f"{top_sequence.get('evalue') or 'N/A'}",
+                    ]
+                    if top_sequence is not None
+                    else ["- No sequence support was retrieved."]
+                ),
+                "",
+                "#### Structure support",
+                "",
+                f"- Retrieved hits: {len(structure)}",
+                *(
+                    [
+                        f"- Top hit: `{top_structure.get('target_structure_id') or 'unknown'}`"
+                        f" — {top_structure.get('protein_name') or 'unlabelled protein'}",
+                        "- TM-score / query coverage / target coverage: "
+                        f"{top_structure.get('tm_score') or 'N/A'} / "
+                        f"{top_structure.get('query_coverage') or 'N/A'} / "
+                        f"{top_structure.get('target_coverage') or 'N/A'}",
+                        "- Structure source: "
+                        f"`{top_structure.get('structure_source') or 'unknown'}`; "
+                        "experimental: "
+                        f"`{top_structure.get('experimental_structure') or 'unknown'}`",
+                    ]
+                    if top_structure is not None
+                    else ["- No structure support was retrieved."]
+                ),
                 "",
             ]
         )
     lines.extend(
         [
+            "## Confidence and scientific boundary",
+            "",
+            "- Decision use: `HYPOTHESIS_GENERATION_ONLY`",
+            "- Confidence status: `NOT_CALIBRATED`",
+            f"- Phase 6 gate: `{PHASE6_CALIBRATION_STATUS}`",
+            "- Calibrated probability: not emitted. The cohort calibrator is not valid for "
+            "ordinary single-protein `analyze` output.",
+            "- Ranking scores order candidates; they do not measure experimental truth.",
+            "",
             "## Literature and report",
             "",
             (
@@ -341,6 +399,19 @@ def _build_summary(
         ]
     )
     return "\n".join(lines)
+
+
+def _hits_by_query(rows: list[dict[str, str]]) -> dict[str, list[dict[str, str]]]:
+    grouped: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        grouped.setdefault(row["query_id"], []).append(row)
+    return grouped
+
+
+def _top_hit(rows: list[dict[str, str]]) -> dict[str, str] | None:
+    if not rows:
+        return None
+    return max(rows, key=lambda row: float(row.get("normalized_score") or "-inf"))
 
 
 def _manifest_count(manifest: dict[str, Any], key: str) -> object:
