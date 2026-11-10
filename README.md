@@ -93,6 +93,18 @@ Accepted structure accessions are explicit UniProt-style FASTA identifiers such 
 `P69905` or `sp|P69905|HBA_HUMAN`. Other headers are recorded as unresolved and retain
 the sequence channel without making an AlphaFold request.
 
+## Web demo
+
+A browser demo runs without any biological databases:
+
+```bash
+pixi run demo
+```
+
+It lets you run the pipeline on built-in synthetic cases, explore real predictions for 47
+benchmark proteins against curated labels, and see the scientific status with confidence
+intervals. To publish it as a free public link, see `docs/DEMO.md`.
+
 ## Scientific boundaries
 
 - Fixture annotations are synthetic test data, never biological evidence.

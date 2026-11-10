@@ -1,0 +1,4 @@
+# Settings for the BioProt web demo (demo/streamlit_app.py), locally and when hosted.
+[browser]
+# Do not send Streamlit usage statistics from visitors' browsers.
+gatherUsageStats = false

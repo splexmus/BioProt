@@ -39,6 +39,16 @@ phase6-calibration-help = "bash scripts/run_phase6_calibration.sh --help"
 test-all-processes = "bash scripts/test_all_processes.sh"
 validate = { depends-on = ["test", "lint", "cli", "check-tools"] }
 
+[feature.demo.dependencies]
+streamlit = ">=1.50"
+
+[feature.demo.tasks]
+# Local web demo; see docs/DEMO.md. Opens http://localhost:8501.
+demo = "streamlit run demo/streamlit_app.py"
+
+[environments]
+demo = ["demo"]
+
 [target.win-64.tasks]
 # Same offline checks as scripts/test_all_processes.sh, without requiring bash.
 test-all-processes = "python scripts/test_all_processes.py"
