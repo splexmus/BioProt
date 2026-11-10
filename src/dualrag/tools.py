@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
 import tempfile
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -63,3 +65,24 @@ def check_tools() -> list[ToolStatus]:
 
 def tool_status_dicts() -> list[dict[str, object]]:
     return [asdict(status) for status in check_tools()]
+
+
+def posix_bash() -> str | None:
+    """Return a bash that accepts this OS's paths, or None.
+
+    On Windows, ``bash`` on PATH is often the WSL launcher in System32, which runs
+    inside Linux and cannot open Windows drive paths. Prefer Git for Windows' bash.
+    """
+    candidate = shutil.which("bash")
+    if os.name != "nt":
+        return candidate
+    if candidate and Path(candidate).parent.name.lower() not in {"system32", "windowsapps"}:
+        return candidate
+    git = shutil.which("git")
+    if git:
+        # <Git>\cmd\git.exe or <Git>\mingw64\bin\git.exe -> <Git>\bin\bash.exe
+        for root in Path(git).resolve().parents:
+            bundled = root / "bin" / "bash.exe"
+            if bundled.is_file():
+                return str(bundled)
+    return None

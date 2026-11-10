@@ -62,5 +62,8 @@ def test_panel_dataset_and_run_checksum_inventories_are_current() -> None:
     for base in (DATASET, RUN):
         for line in (base / "CHECKSUMS.sha256").read_text(encoding="utf-8").splitlines():
             expected, relative = line.split("  ", maxsplit=1)
+            # Gitignored AlphaFold query models (*.cif) are verified only when present.
+            if relative.endswith(".cif") and not (base / relative).exists():
+                continue
             observed = hashlib.sha256((base / relative).read_bytes()).hexdigest()
             assert observed == expected
