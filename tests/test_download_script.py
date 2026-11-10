@@ -13,10 +13,10 @@ SCRIPT = ROOT / "scripts" / "download_phase1_full_data.sh"
 @pytest.mark.skipif(
     shutil.which("wget") is None, reason="the downloader requires wget, even for a dry run"
 )
-def test_full_data_downloader_dry_run_has_no_network_transfer(tmp_path: Path) -> None:
+def test_full_data_downloader_dry_run_has_no_network_transfer(tmp_path: Path, bash: str) -> None:
     completed = subprocess.run(
         [
-            "bash",
+            bash,
             str(SCRIPT),
             "--data-root",
             str(tmp_path),
@@ -40,10 +40,10 @@ def test_full_data_downloader_dry_run_has_no_network_transfer(tmp_path: Path) ->
     assert not list(tmp_path.rglob("*.part"))
 
 
-def test_full_data_downloader_requires_confirmation(tmp_path: Path) -> None:
+def test_full_data_downloader_requires_confirmation(tmp_path: Path, bash: str) -> None:
     completed = subprocess.run(
         [
-            "bash",
+            bash,
             str(SCRIPT),
             "--data-root",
             str(tmp_path),

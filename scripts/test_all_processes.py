@@ -8,12 +8,13 @@ POSIX bash is available, so on Windows they are reported as skipped.
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+from dualrag.tools import posix_bash
 
 ROOT = Path(__file__).resolve().parents[1]
 STEPS = 7
@@ -25,16 +26,6 @@ def step(number: int, title: str) -> None:
 
 def run(*args: str | Path) -> None:
     subprocess.run([sys.executable, *map(str, args)], cwd=ROOT, check=True)
-
-
-def posix_bash() -> str | None:
-    """Return a bash that understands POSIX paths; ignore the WSL launcher on Windows."""
-    bash = shutil.which("bash")
-    if bash is None:
-        return None
-    if os.name == "nt" and Path(bash).parent.name.lower() == "system32":
-        return None
-    return bash
 
 
 def main() -> int:
