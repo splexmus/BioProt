@@ -21,6 +21,9 @@ pixi install --locked
 pixi run smoke-fixture
 ```
 
+This works on Linux and natively on Windows. Windows gets the pure-Python core;
+real sequence and structure searches need Linux or WSL2. See `ENVIRONMENT.md#windows`.
+
 The output directory contains raw channel outputs, `sequence_results.tsv`,
 `structure_results.tsv`, the Phase 1 `merged_results.tsv`, Phase 2
 `function_candidates.tsv`, `fusion_summary.tsv`, `conflicts.tsv`, `alternatives.tsv`,

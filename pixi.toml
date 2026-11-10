@@ -3,19 +3,25 @@ name = "dualrag"
 version = "0.2.0"
 description = "Dual-retrieval protein function research pipeline"
 channels = ["conda-forge", "bioconda"]
-platforms = ["linux-64"]
+# linux-64 is the full research platform. win-64 runs the pure-Python core (fixture
+# backend, fusion, literature index/search, reports, tests); the bioinformatics
+# executables below have no Windows builds, so real Phase 1 runs need Linux or WSL2.
+platforms = ["linux-64", "win-64"]
 channel-priority = "strict"
 
 [dependencies]
 python = "3.11.*"
+numpy = ">=2"
+pytest = ">=8"
+ruff = ">=0.8"
+
+[target.linux-64.dependencies]
 mmseqs2 = "16.747c6.*"
 foldseek = "9.427df8a.*"
 hmmer = "3.4.*"
 blast = ">=2.16,<2.18"
 diamond = "2.0.*"
 eggnog-mapper = "2.1.15.*"
-pytest = ">=8"
-ruff = ">=0.8"
 
 [pypi-dependencies]
 dualrag = { path = ".", editable = true }
@@ -32,3 +38,7 @@ phase5-ollama-help = "bash scripts/run_phase5_ollama.sh --help"
 phase6-calibration-help = "bash scripts/run_phase6_calibration.sh --help"
 test-all-processes = "bash scripts/test_all_processes.sh"
 validate = { depends-on = ["test", "lint", "cli", "check-tools"] }
+
+[target.win-64.tasks]
+# Same offline checks as scripts/test_all_processes.sh, without requiring bash.
+test-all-processes = "python scripts/test_all_processes.py"

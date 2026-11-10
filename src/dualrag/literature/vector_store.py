@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 from collections import Counter
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -27,7 +28,9 @@ def build_literature_index(
     if temporary.exists():
         temporary.unlink()
     try:
-        with sqlite3.connect(temporary) as connection:
+        # sqlite3's own context manager only commits; closing() releases the file
+        # handle so the atomic rename below also works on Windows.
+        with closing(sqlite3.connect(temporary)) as connection, connection:
             connection.executescript(
                 """
                 PRAGMA journal_mode = DELETE;
@@ -91,7 +94,8 @@ def read_literature_index(
     """Read validated chunks and their stored vectors from a local index."""
     if not index_path.is_file():
         raise FileNotFoundError(index_path)
-    with sqlite3.connect(f"file:{index_path}?mode=ro", uri=True) as connection:
+    read_only_uri = f"{index_path.resolve().as_uri()}?mode=ro"
+    with closing(sqlite3.connect(read_only_uri, uri=True)) as connection:
         metadata = dict(connection.execute("SELECT key, value FROM metadata"))
         if metadata.get("index_version") != INDEX_VERSION:
             raise ValueError(

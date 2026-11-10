@@ -1,0 +1,14 @@
+# Keep LF line endings on every platform, including Windows checkouts with
+# core.autocrlf=true. Bash scripts break with CRLF, and benchmark artifacts are
+# verified byte-for-byte against CHECKSUMS.sha256 files produced on Linux.
+* text=auto eol=lf
+
+# Checksummed scientific artifacts: never convert, store and check out exact bytes.
+benchmark/** -text
+
+# Binary formats.
+*.sqlite3 binary
+*.gz binary
+*.zip binary
+*.png binary
+*.pdf binary
