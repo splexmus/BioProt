@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "download_phase1_full_data.sh"
 
 
-def test_full_data_downloader_dry_run_has_no_network_transfer(tmp_path: Path) -> None:
+@pytest.mark.skipif(
+    shutil.which("wget") is None, reason="the downloader requires wget, even for a dry run"
+)
+def test_full_data_downloader_dry_run_has_no_network_transfer(tmp_path: Path, bash: str) -> None:
     completed = subprocess.run(
         [
-            "bash",
+            bash,
             str(SCRIPT),
             "--data-root",
             str(tmp_path),
@@ -34,10 +40,10 @@ def test_full_data_downloader_dry_run_has_no_network_transfer(tmp_path: Path) ->
     assert not list(tmp_path.rglob("*.part"))
 
 
-def test_full_data_downloader_requires_confirmation(tmp_path: Path) -> None:
+def test_full_data_downloader_requires_confirmation(tmp_path: Path, bash: str) -> None:
     completed = subprocess.run(
         [
-            "bash",
+            bash,
             str(SCRIPT),
             "--data-root",
             str(tmp_path),

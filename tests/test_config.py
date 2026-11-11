@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pytest
@@ -6,6 +7,12 @@ from pydantic import ValidationError
 from dualrag.config import FusionConfig, load_config
 
 ROOT = Path(__file__).parents[1]
+
+# The HDD profiles hard-code a Linux mount point. On Windows "/media/..." has no drive
+# letter, so it is not absolute and resolves against the config directory instead.
+posix_profile = pytest.mark.skipif(
+    sys.platform == "win32", reason="Linux HDD profile uses POSIX absolute paths"
+)
 
 
 def test_production_example_uses_hybrid_storage_boundary() -> None:
@@ -24,6 +31,7 @@ def test_alphafold_api_url_environment_override(monkeypatch) -> None:
     assert config.structure.alphafold_api.base_url == "https://afdb.example.test/api"
 
 
+@posix_profile
 def test_legacy_profile_was_retargeted_to_ext4_mount() -> None:
     config = load_config(ROOT / "config" / "my-passport.yaml")
     assert config.paths.data_root == Path("/media/splexmus/4TB_HDD1/dualrag")
@@ -33,6 +41,7 @@ def test_legacy_profile_was_retargeted_to_ext4_mount() -> None:
     )
 
 
+@posix_profile
 def test_4tb_hdd_profile_uses_ext4_mount() -> None:
     config = load_config(ROOT / "config" / "4tb-hdd.yaml")
     assert config.paths.data_root == Path("/media/splexmus/4TB_HDD1/dualrag")

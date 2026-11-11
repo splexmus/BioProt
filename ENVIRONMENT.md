@@ -2,7 +2,8 @@
 
 ## Supported platform
 
-- Linux x86-64 workstation, WSL2, or HPC Linux
+- Linux x86-64 workstation, WSL2, or HPC Linux: full research platform
+- Windows 10/11 x86-64 (native): pure-Python core only, see below
 - Pixi 0.81 or newer
 - Python 3.11
 - conda-forge + bioconda with strict channel priority
@@ -50,6 +51,43 @@ pixi run python -m dualrag run \
 Use `--locked` in CI and published reproductions so a stale manifest/lock pair fails
 instead of silently re-solving. Use `pixi update --dry-run` before intentional upgrades,
 then rerun the complete validation and commit both manifest and lock changes.
+
+## Windows
+
+`pixi.toml` locks two platforms. On `win-64` the environment contains Python, NumPy,
+pytest, ruff, and the `dualrag` package, but not MMseqs2, Foldseek, HMMER, BLAST,
+DIAMOND, or eggNOG-mapper: bioconda publishes no Windows builds of them.
+
+Native Windows supports the fixture backend, fusion, reproducibility comparison,
+literature query building, the local literature index and search, report handling, and
+the full unit-test suite. From PowerShell in the repository root:
+
+```powershell
+pixi install --locked
+pixi run test-all-processes
+```
+
+On Windows `test-all-processes` runs `scripts/test_all_processes.py`, a cross-platform
+version of the Bash script. The Phase 4-6 Bash runner checks run only if Git Bash is on
+`PATH`; otherwise they are reported as skipped.
+
+`.gitattributes` keeps LF line endings on checkout, which Bash scripts and the
+byte-level `CHECKSUMS.sha256` tests require. A clone made before `.gitattributes` existed
+keeps its CRLF files until you check them out again: commit or stash your work first, then
+run `git rm --cached -r -q . && git reset --hard`.
+
+Real Phase 1 retrieval (eggNOG-mapper, MMseqs2, Foldseek) needs Linux. On Windows,
+use WSL2. Clone inside the Linux filesystem, not under `/mnt/c` or `/mnt/d`, for speed and
+correct file permissions:
+
+```bash
+git clone <repository-url> ~/BioProt && cd ~/BioProt
+pixi install --locked
+pixi run test-all-processes
+```
+
+The HDD profiles (`config/4tb-hdd.yaml` and related) hard-code Linux mount points, so
+their path tests are skipped on Windows.
 
 ## Dependency policy
 

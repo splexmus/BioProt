@@ -9,8 +9,9 @@ pixi install --locked
 pixi run test-all-processes
 ```
 
-This is the routine test to run after changing code. It uses temporary files under
-`/tmp`, removes them when finished, does not use the network, does not write to the HDD,
+This is the routine test to run after changing code. The same command works on Windows
+(PowerShell), where it runs `scripts/test_all_processes.py` instead of the Bash script.
+It uses temporary files in the system temp directory, removes them when finished, does not use the network, does not write to the HDD,
 and never reads sealed scientific test labels.
 
 ## What the command tests

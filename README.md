@@ -21,6 +21,9 @@ pixi install --locked
 pixi run smoke-fixture
 ```
 
+This works on Linux and natively on Windows. Windows gets the pure-Python core;
+real sequence and structure searches need Linux or WSL2. See `ENVIRONMENT.md#windows`.
+
 The output directory contains raw channel outputs, `sequence_results.tsv`,
 `structure_results.tsv`, the Phase 1 `merged_results.tsv`, Phase 2
 `function_candidates.tsv`, `fusion_summary.tsv`, `conflicts.tsv`, `alternatives.tsv`,
@@ -89,6 +92,18 @@ upgrade policy, and project-specific advantages and limitations.
 Accepted structure accessions are explicit UniProt-style FASTA identifiers such as
 `P69905` or `sp|P69905|HBA_HUMAN`. Other headers are recorded as unresolved and retain
 the sequence channel without making an AlphaFold request.
+
+## Web demo
+
+A browser demo runs without any biological databases:
+
+```bash
+pixi run demo
+```
+
+It lets you run the pipeline on built-in synthetic cases, explore real predictions for 47
+benchmark proteins against curated labels, and see the scientific status with confidence
+intervals. To publish it as a free public link, see `docs/DEMO.md`.
 
 ## Scientific boundaries
 

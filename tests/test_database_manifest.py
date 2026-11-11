@@ -1,5 +1,7 @@
+import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 from dualrag.config import load_config
@@ -7,6 +9,9 @@ from dualrag.config import load_config
 ROOT = Path(__file__).parents[1]
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Linux HDD profile uses POSIX absolute paths"
+)
 def test_finalized_database_manifest_matches_production_config() -> None:
     manifest = yaml.safe_load(
         (ROOT / "config/databases.4tb-hdd.yaml").read_text(encoding="utf-8")

@@ -51,4 +51,7 @@ def test_v2_candidates_expose_raw_and_quality_adjusted_evidence() -> None:
 def test_v2_checksum_inventory_is_current() -> None:
     for line in (RUN / "CHECKSUMS.sha256").read_text(encoding="utf-8").splitlines():
         expected, relative = line.split("  ", maxsplit=1)
+        # Gitignored AlphaFold query models (*.cif) are verified only when present.
+        if relative.endswith(".cif") and not (RUN / relative).exists():
+            continue
         assert hashlib.sha256((RUN / relative).read_bytes()).hexdigest() == expected
