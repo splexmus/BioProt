@@ -91,6 +91,10 @@ def test_analyze_fasta_runs_existing_pipeline_and_writes_summary(tmp_path: Path)
     assert status["confidence_status"] == "NOT_CALIBRATED"
     assert status["calibration_gate_status"] == "FAIL_SCIENTIFIC_CALIBRATION_GATE"
     assert status["decision_use"] == "HYPOTHESIS_GENERATION_ONLY"
+    assessment = json.loads((output / "calibration/calibration_report.json").read_text())
+    assert assessment["gold_labels_used"] is False
+    assert all(q["calibrated_probability"] is None for q in assessment["queries"])
+    assert (output / "calibration/candidate_assessments.tsv").is_file()
     manifest = json.loads((output / "input/input_manifest.json").read_text())
     assert manifest["source_type"] == "FASTA_FILE"
 
@@ -175,13 +179,64 @@ def test_analyze_local_literature_and_ollama_report(tmp_path: Path) -> None:
         "biological": "COMPLETE",
         "literature": "COMPLETE",
         "report": "COMPLETE",
+        "calibration": "ASSESSMENT_COMPLETE",
     }
-    packets = read_jsonl(
-        output / "literature/evidence_packets.biological-v1.jsonl", EvidencePacket
-    )
+    packets = read_jsonl(output / "literature/evidence_packets.biological-v1.jsonl", EvidencePacket)
     assert len(packets) == 5
     assert any(packet.biological_evidence for packet in packets)
     assert (output / "report/generation_manifest.json").is_file()
     summary = (output / "summary.md").read_text(encoding="utf-8")
     assert "Literature retrieval: complete" in summary
     assert "Ollama report: complete" in summary
+    assert (output / "literature/top_literature.md").is_file()
+    assert "UNASSESSED" in (output / "literature/top_literature.md").read_text()
+    assert "Synthetic protein experiment" in (output / "literature/top_literature.md").read_text()
+    contexts = list((output / "report/contexts").glob("*.json"))
+    assert len(contexts) == 5
+    for path in contexts:
+        context = json.loads(path.read_text())
+        assert any(e["evidence_id"] == "phase6:assessment" for e in context["evidence"])
+    rendered = next((output / "report/reports").glob("*.md")).read_text()
+    assert "Phase 6 confidence assessment" in rendered
+    assert "Top retrieved literature" in rendered
+
+
+def test_analyze_benchmark_model_is_reported_without_probability(tmp_path: Path) -> None:
+    model = tmp_path / "model.json"
+    model.write_text(
+        json.dumps(
+            {
+                "status": "DEVELOPMENT_ONLY_NOT_VALIDATED",
+                "method": "logistic:0.01:1",
+                "parameters": {},
+            }
+        )
+    )
+    output = tmp_path / "analysis"
+    result = run_analysis(
+        config=load_config(ROOT / "config/config.yaml"),
+        output_dir=output,
+        fasta_path=ROOT / "tests/fixtures/queries.fasta",
+        calibration_model=model,
+    )
+    assert result["stages"]["calibration"] == "ASSESSMENT_COMPLETE"
+    assessment = json.loads((output / "calibration/calibration_report.json").read_text())
+    assert assessment["model"]["status"] == "DEVELOPMENT_ONLY_NOT_VALIDATED"
+    assert len(assessment["model"]["sha256"]) == 64
+    assert all(
+        q["calibration_applicability"] == "INCOMPATIBLE_FEATURE_CONTRACT"
+        for q in assessment["queries"]
+    )
+    assert all(q["calibrated_probability"] is None for q in assessment["queries"])
+
+
+def test_analyze_rejects_missing_model_before_retrieval(tmp_path: Path) -> None:
+    output = tmp_path / "analysis"
+    with pytest.raises(AnalysisError, match="model file"):
+        run_analysis(
+            config=load_config(ROOT / "config/config.yaml"),
+            output_dir=output,
+            fasta_path=ROOT / "tests/fixtures/queries.fasta",
+            calibration_model=tmp_path / "missing.json",
+        )
+    assert not output.exists()

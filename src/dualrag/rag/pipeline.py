@@ -15,10 +15,15 @@ from dualrag.literature.schemas import EvidencePacket
 from dualrag.rag.context import build_generation_context
 from dualrag.rag.ollama import OllamaClient, OllamaResponseError
 from dualrag.rag.render import render_markdown
-from dualrag.rag.schemas import GenerationRecord, GroundedProteinReport, ReportVerification
+from dualrag.rag.schemas import (
+    ContextEvidence,
+    GenerationRecord,
+    GroundedProteinReport,
+    ReportVerification,
+)
 from dualrag.rag.verifier import verify_report
 
-GENERATION_PIPELINE_VERSION = "phase5-ollama-generation-v5"
+GENERATION_PIPELINE_VERSION = "phase5-ollama-generation-v6"
 PROMPT_VERSION = "phase5-grounded-report-v3"
 
 
@@ -32,6 +37,7 @@ def run_generation_pipeline(
     allow_unvalidated_phase4: bool = False,
     query_ids: set[str] | None = None,
     limit: int | None = None,
+    calibration_assessments: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     packets = read_jsonl(packets_path, EvidencePacket)
     if query_ids is not None:
@@ -45,9 +51,7 @@ def run_generation_pipeline(
         raise ValueError("no evidence packets selected for generation")
 
     phase4_status = _phase4_exit_status(packets_path.parent)
-    phase4_development_transition = _phase4_development_transition_status(
-        packets_path.parent
-    )
+    phase4_development_transition = _phase4_development_transition_status(packets_path.parent)
     if phase4_status != "PASS" and not allow_unvalidated_phase4:
         raise ValueError(
             f"Phase 4 exit status is {phase4_status!r}; pass "
@@ -81,6 +85,23 @@ def run_generation_pipeline(
             phase4_exit_status=phase4_status,
             phase4_exit_override=phase4_status != "PASS",
         )
+        if calibration_assessments is not None:
+            if query_id not in calibration_assessments:
+                raise ValueError(f"missing Phase 6 assessment for {query_id}")
+            context.evidence.append(
+                ContextEvidence(
+                    evidence_id="phase6:assessment",
+                    evidence_type="CALIBRATION_ASSESSMENT",
+                    label="External Phase 6 applicability assessment",
+                    details=calibration_assessments[query_id],
+                    assessed_role="SYSTEM_DIAGNOSTIC",
+                )
+            )
+            context.claim_boundaries.append(
+                "Use the external Phase 6 assessment for confidence limitations. "
+                "Its ranking diagnostics are not calibrated probabilities. Do not infer "
+                "LLM, citation, literature, or experimental correctness from them."
+            )
         context_path = contexts_dir / f"{query_id}.json"
         write_json(context_path, context.model_dump(mode="json"))
         raw_path = raw_dir / f"{query_id}.json"
@@ -98,9 +119,7 @@ def run_generation_pipeline(
         report_path = reports_dir / f"{query_id}.json"
         markdown_path = reports_dir / f"{query_id}.md"
         write_json(report_path, report.model_dump(mode="json"))
-        markdown_path.write_text(
-            render_markdown(report, verification, context), encoding="utf-8"
-        )
+        markdown_path.write_text(render_markdown(report, verification, context), encoding="utf-8")
         reports.append(report)
         verifications.append(verification)
         records.append(
@@ -151,6 +170,11 @@ def run_generation_pipeline(
             "packets": file_sha256(packets_path),
             "system_prompt": file_sha256(system_prompt_path),
             "report_prompt": file_sha256(report_prompt_path),
+            "calibration_assessments": (
+                stable_hash(calibration_assessments)
+                if calibration_assessments is not None
+                else None
+            ),
         },
         "outputs": {
             name: file_sha256(output_dir / name)

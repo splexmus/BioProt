@@ -10,6 +10,7 @@ from typing import Any
 
 from dualrag.io import file_sha256, write_json
 from dualrag.literature.io import read_jsonl, write_jsonl
+from dualrag.literature.report import write_top_literature_report
 from dualrag.literature.schemas import (
     EntityMatch,
     LiteratureCandidate,
@@ -182,6 +183,11 @@ def retrieve_and_rerank(
             "Scores rank passages; they are not calibrated confidence or evidence roles."
         ),
     }
+    manifest["top_literature_report"] = write_top_literature_report(
+        queries_path=queries_path,
+        hits_path=output_dir / "literature_hits.jsonl",
+        output_dir=output_dir,
+    )
     write_json(output_dir / "retrieval_manifest.json", manifest)
     return manifest
 
@@ -227,9 +233,7 @@ def _score_query(
             EntityMatch.UNRESOLVED: 0.1,
         }[entity]
         organism_prior = (
-            1.0
-            if organism in {OrganismMatch.EXACT_TAXON, OrganismMatch.SAME_SPECIES}
-            else 0.4
+            1.0 if organism in {OrganismMatch.EXACT_TAXON, OrganismMatch.SAME_SPECIES} else 0.4
         )
         reranker = (
             0.65 * hybrid
@@ -306,9 +310,7 @@ def _bm25(query: list[str], document: list[str], df: Counter[str], n: int, avgdl
         if not frequency:
             continue
         inverse = math.log(1 + (n - df[term] + 0.5) / (df[term] + 0.5))
-        denominator = frequency + 1.2 * (
-            0.25 + 0.75 * len(document) / max(avgdl, 1)
-        )
+        denominator = frequency + 1.2 * (0.25 + 0.75 * len(document) / max(avgdl, 1))
         score += inverse * frequency * 2.2 / denominator
     return score
 

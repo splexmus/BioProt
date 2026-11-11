@@ -498,3 +498,24 @@ closed until verified database manifests and real adapters are available. See
 
 The next structure adapter follows a hybrid boundary: AlphaFold DB REST for query-model
 acquisition, followed by local Foldseek execution against a versioned local database.
+
+## 18. Analysis reporting contracts
+
+`dualrag analyze` always runs a Phase 6 applicability/evidence assessment after native
+fusion. `calibration/calibration_report.json` records per-query decisions, model status
+and checksum if supplied, feature incompatibility, and nullable probability. Its TSV
+preserves native candidate ranks and independent modality scores. `REVIEW_REQUIRED`
+means an informative candidate exists; `ABSTAIN` means none exists. Neither decision
+is a fitted sufficiency prediction. Current benchmark calibrators cannot transfer to
+eggNOG-based analysis, so the trained sufficiency model is not applied and probabilities
+remain null. Training/evaluation and gold-label handling remain cohort-level workflows.
+
+The optional `calibration_assessments` input to grounded generation adds bounded
+per-query `CALIBRATION_ASSESSMENT` diagnostic evidence and a hashed manifest input.
+The verifier permits that evidence only in background limitation claims. The renderer
+includes the external assessment regardless of whether the LLM discusses it. Generated
+report confidence remains `NOT_CALIBRATED`; it does not estimate LLM/citation truth.
+
+Shared literature retrieval renders `top_literature.md` and TSV from ranked hit records
+for both standalone Phase 4 and native analysis. These preserve citation IDs, URLs,
+passages, evidence roles and entity/organism matching. Empty retrieval is explicit.

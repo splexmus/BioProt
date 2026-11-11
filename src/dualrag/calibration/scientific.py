@@ -69,8 +69,7 @@ def run_scientific_calibration(
         gold=gold,
         splits=splits,
         difficulties={
-            row["accession"]: row["difficulty_stratum"]
-            for row in read_tsv(difficulty_path)
+            row["accession"]: row["difficulty_stratum"] for row in read_tsv(difficulty_path)
         },
         predictions=_principal_b4(read_tsv(predictions_path)),
         candidates=_candidate_index(read_tsv(candidates_path)),
@@ -86,9 +85,7 @@ def run_scientific_calibration(
     predictors: dict[str, Callable[[dict[str, Any]], float]] = {
         "clipped_raw_ranking_score": lambda row: min(max(float(row["top1_score"]), 0.0), 1.0),
         "platt_logistic": lambda row: _predict(platt, float(row["top1_score"])),
-        "isotonic_regression": lambda row: _predict_isotonic(
-            isotonic, float(row["top1_score"])
-        ),
+        "isotonic_regression": lambda row: _predict_isotonic(isotonic, float(row["top1_score"])),
         "multifeature_l2_logistic": lambda row: _predict_multifeature(multifeature, row),
     }
     method_metrics: dict[str, dict[str, Any]] = {}
@@ -100,8 +97,12 @@ def run_scientific_calibration(
         method_metrics[method]["bootstrap_95_ci"] = _bootstrap_intervals(
             evaluated,
             probability_key="probability",
-            replicates=int(contract["uncertainty"]["aggregate_metric_confidence_interval"]["replicates"]),
-            seed=int(contract["uncertainty"]["aggregate_metric_confidence_interval"]["random_seed"]),
+            replicates=int(
+                contract["uncertainty"]["aggregate_metric_confidence_interval"]["replicates"]
+            ),
+            seed=int(
+                contract["uncertainty"]["aggregate_metric_confidence_interval"]["random_seed"]
+            ),
         )
         for row in evaluated:
             probability_rows.append(
@@ -249,9 +250,7 @@ def _fit_isotonic(rows: list[dict[str, Any]]) -> dict[str, Any]:
             )
     return {
         "feature": "top1_score",
-        "blocks": [
-            {**block, "probability": _block_mean(block)} for block in blocks
-        ],
+        "blocks": [{**block, "probability": _block_mean(block)} for block in blocks],
         "fit_example_count": len(rows),
     }
 
@@ -268,8 +267,13 @@ def _predict_isotonic(model: dict[str, Any], score: float) -> float:
     return float(blocks[-1]["probability"])
 
 
-def _fit_multifeature_logistic(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    matrix = np.asarray([[_feature_value(row, name) for name in FEATURES] for row in rows])
+def _fit_multifeature_logistic(
+    rows: list[dict[str, Any]], *, l2_penalty: float = 1.0, namespace_aware: bool = False
+) -> dict[str, Any]:
+    if not rows or not math.isfinite(l2_penalty) or l2_penalty <= 0:
+        raise ValueError("nonempty training rows and a positive finite L2 penalty are required")
+    features = (*FEATURES, "namespace_is_ec") if namespace_aware else FEATURES
+    matrix = np.asarray([[_feature_value(row, name) for name in features] for row in rows])
     weights = np.asarray([float(row["sample_weight"]) for row in rows])
     labels = np.asarray([1.0 if row["correct"] else 0.0 for row in rows])
     means = np.average(matrix, axis=0, weights=weights)
@@ -277,10 +281,10 @@ def _fit_multifeature_logistic(rows: list[dict[str, Any]]) -> dict[str, Any]:
     scales = np.sqrt(variances)
     scales[scales == 0] = 1.0
     standardized = (matrix - means) / scales
-    coefficients = np.zeros(len(FEATURES))
+    coefficients = np.zeros(len(features))
     prevalence = float(np.average(labels, weights=weights))
     intercept = math.log((prevalence + 1e-6) / (1 - prevalence + 1e-6))
-    l2, learning_rate = 1.0, 0.05
+    l2, learning_rate = l2_penalty, 0.05
     iteration = 0
     for _iteration in range(1, 2001):
         iteration = _iteration
@@ -294,7 +298,7 @@ def _fit_multifeature_logistic(rows: list[dict[str, Any]]) -> dict[str, Any]:
         if max(abs(grad_intercept), float(np.max(np.abs(grad_coefficients)))) < 1e-8:
             break
     return {
-        "features": list(FEATURES),
+        "features": list(features),
         "feature_means": means.tolist(),
         "feature_scales": scales.tolist(),
         "intercept": intercept,
@@ -315,6 +319,8 @@ def _predict_multifeature(model: dict[str, Any], row: dict[str, Any]) -> float:
 
 
 def _feature_value(row: dict[str, Any], name: str) -> float:
+    if name == "namespace_is_ec":
+        return float(row["namespace"] == "EC")
     value = row.get(name)
     return float(value) if value not in (None, "") else 0.0
 
@@ -326,9 +332,8 @@ def _method_gate(
     thresholds = contract["acceptance_policy"]["overall_metrics"]
     for metric, threshold in thresholds.items():
         checks[f"{metric}_maximum"] = metrics[metric] <= float(threshold["maximum"])
-        checks[f"{metric}_improvement"] = (
-            raw[metric] - metrics[metric]
-            >= float(threshold["minimum_improvement_over_raw"])
+        checks[f"{metric}_improvement"] = raw[metric] - metrics[metric] >= float(
+            threshold["minimum_improvement_over_raw"]
         )
     groups = metrics["accuracy_by_confidence_label"]
     group_contract = contract["acceptance_policy"]["confidence_groups"]
@@ -367,9 +372,7 @@ def _wilson_lower(successes: float, count: int, z: float = 1.959963984540054) ->
 def _group_wilson(rows: list[dict[str, Any]]) -> dict[str, dict[str, float | int]]:
     result: dict[str, dict[str, float | int]] = {}
     for label in ("LOW", "MODERATE", "HIGH"):
-        selected = [
-            row for row in rows if _confidence_label(float(row["probability"])) == label
-        ]
+        selected = [row for row in rows if _confidence_label(float(row["probability"])) == label]
         successes = sum(1 for row in selected if row["correct"])
         result[label] = {
             "example_count": len(selected),

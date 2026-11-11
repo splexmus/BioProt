@@ -131,6 +131,56 @@ def test_context_records_phase4_override_and_not_calibrated() -> None:
     assert any(item.evidence_id == "candidate:1" for item in context.evidence)
 
 
+def test_calibration_assessment_cannot_support_a_function_claim() -> None:
+    context = build_generation_context(
+        _packet(), phase4_exit_status="NOT_EVALUATED", phase4_exit_override=True
+    )
+    context.evidence.append(
+        ContextEvidence(
+            evidence_id="phase6:assessment",
+            evidence_type="CALIBRATION_ASSESSMENT",
+            label="Calibration diagnostic",
+            assessed_role="SYSTEM_DIAGNOSTIC",
+        )
+    )
+    report = _report()
+    report.claims.append(
+        ReportClaim(
+            claim_id="bad-calibration",
+            claim_type=ClaimType.FUNCTION,
+            text="Function inferred from calibration.",
+            inference_level=InferenceLevel.COMPUTATIONAL_PREDICTION,
+            evidence_ids=["phase6:assessment"],
+        )
+    )
+    verification = verify_report(report, context)
+    assert any(
+        f.code == "CALIBRATION_DIAGNOSTIC_AS_BIOLOGICAL_EVIDENCE" for f in verification.findings
+    )
+
+
+def test_top_literature_report_handles_empty_and_caps_ranked_passages(tmp_path: Path) -> None:
+    from dualrag.literature.report import write_top_literature_report
+
+    packet = _packet()
+    queries = tmp_path / "queries.jsonl"
+    hits = tmp_path / "hits.jsonl"
+    write_jsonl(queries, [packet.query])
+    write_jsonl(hits, [])
+    write_top_literature_report(queries_path=queries, hits_path=hits, output_dir=tmp_path)
+    assert "No literature hits" in (tmp_path / "top_literature.md").read_text()
+    original = packet.literature_hits[0]
+    write_jsonl(
+        hits,
+        [original.model_copy(update={"rank": i, "hit_id": f"hit-{i}"}) for i in range(12, 0, -1)],
+    )
+    result = write_top_literature_report(queries_path=queries, hits_path=hits, output_dir=tmp_path)
+    assert result["passage_count"] == 10
+    text = (tmp_path / "top_literature.md").read_text()
+    assert text.index("### 1.") < text.index("### 2.")
+    assert "### 11." not in text
+
+
 def test_verifier_rejects_unassessed_literature_as_direct_support() -> None:
     context = build_generation_context(
         _packet(), phase4_exit_status="NOT_EVALUATED", phase4_exit_override=True
@@ -165,8 +215,7 @@ def test_verifier_warns_when_available_modality_is_not_discussed() -> None:
     context = type(context).model_validate(context.model_dump())
     verification = verify_report(_report(), context)
     assert any(
-        finding.code == "SEQUENCE_SUPPORT_NOT_DISCUSSED"
-        for finding in verification.findings
+        finding.code == "SEQUENCE_SUPPORT_NOT_DISCUSSED" for finding in verification.findings
     )
 
 
@@ -356,9 +405,7 @@ def test_pipeline_writes_experimental_override_manifest(tmp_path: Path) -> None:
         json.dumps(
             {
                 "evaluation": {"status": "FAIL"},
-                "phase5_development_transition": {
-                    "status": "PASS_FOR_PHASE5_DEVELOPMENT"
-                },
+                "phase5_development_transition": {"status": "PASS_FOR_PHASE5_DEVELOPMENT"},
             }
         ),
         encoding="utf-8",
@@ -375,10 +422,7 @@ def test_pipeline_writes_experimental_override_manifest(tmp_path: Path) -> None:
 
     assert manifest["report_count"] == 1
     assert manifest["phase4_exit_override"] is True
-    assert (
-        manifest["phase4_development_transition_status"]
-        == "PASS_FOR_PHASE5_DEVELOPMENT"
-    )
+    assert manifest["phase4_development_transition_status"] == "PASS_FOR_PHASE5_DEVELOPMENT"
     assert manifest["scientific_status"] == "EXPERIMENTAL_UNVALIDATED_PHASE4_OVERRIDE"
     assert manifest["verification_status_counts"] == {"PASS_WITH_WARNINGS": 1}
     assert manifest["num_predict"] == 8192

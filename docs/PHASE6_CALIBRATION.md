@@ -54,3 +54,42 @@ Phase 6 can reach scientific completion only after a larger newly locked validat
 cohort demonstrates useful calibration on unseen characterized proteins.
 
 The completed development result is summarized in `docs/PHASE6_REPORT.md`.
+
+## Integrated analysis, literature and LLM reports
+
+`dualrag analyze` now writes a Phase 6 assessment automatically. For example:
+
+```bash
+pixi run python -m dualrag analyze \
+  --fasta tests/fixtures/queries.fasta --config config/config.yaml \
+  --calibration-model results/phase6-recovery-20261111/selected_calibrator.json \
+  --output results/analysis-with-phase6
+```
+
+This fixture example verifies reporting using synthetic retrieval. On real inputs, use
+the verified external-data config. Add `--literature local --literature-index PATH` for
+indexed search, or `--literature online --email ADDRESS` for PubMed/PMC acquisition.
+Add `--report ollama --allow-unvalidated-phase4` for experimental LLM synthesis.
+
+Outputs:
+
+- `calibration/calibration_report.json`: model provenance and per-query applicability.
+- `calibration/calibration_report.md`: readable assessment and explicit limitations.
+- `calibration/candidate_assessments.tsv`: native ranks, modality scores and null probabilities.
+- `literature/top_literature.md` and TSV: top ten ranked passages per query when enabled.
+- `report/reports/*.md`: LLM reports with deterministic Phase 6 and literature sections.
+
+The saved cohort model is accepted for applicability reporting, not inference on native
+analysis features. Currently every supplied model is report-only: there is no registered
+native-analysis inference contract. The benchmark model uses leakage-filtered MMseqs
+and function projections absent from ordinary eggNOG analysis, and native GO candidates
+are not restricted to GO-MF. A feature-schema adapter alone cannot establish transfer
+calibration. Training, frozen cohort evaluation, and production probabilities remain
+separate until a matching feature pipeline is validated. No gold labels are read and no
+model is fitted by `analyze`.
+
+The external assessment describes review/abstention and applicability. It does not
+calibrate the LLM, literature scores, citations or biological truth. No usable function
+candidate yields `ABSTAIN`; an informative candidate yields `REVIEW_REQUIRED`. The
+trained Phase 6 sufficiency model remains unapplied for the same contract mismatch.
+Literature role labels remain unchanged; retrieved UNASSESSED passages are background.

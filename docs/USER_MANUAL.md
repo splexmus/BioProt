@@ -107,6 +107,15 @@ candidate score is explicitly a provisional ranking feature, not a probability.
 `decision_use: HYPOTHESIS_GENERATION_ONLY`; the ordinary single-protein interface does
 not apply the incompatible cohort benchmark calibrator.
 
+It now also writes `calibration/calibration_report.md`, JSON and
+`candidate_assessments.tsv` on every run. Optional `--calibration-model PATH` includes
+the cohort model's status/checksum and explains its applicability. This option is
+report-only for current benchmark models. With literature enabled, open
+`literature/top_literature.md` for the top ten passages per query and citation/matching
+details; the same report is produced by standalone Phase 4 retrieval. Ollama reports
+include deterministic Phase 6 and top-literature sections. See
+`docs/PHASE6_CALIBRATION.md` for the integrated command and remaining inference limits.
+
 Phase 1 outputs:
 
 | File | Meaning |

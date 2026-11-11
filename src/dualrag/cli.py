@@ -37,9 +37,9 @@ def analyze_command(
     output: Annotated[Path, typer.Option("--output", "-o")],
     fasta: Annotated[Path | None, typer.Option("--fasta", exists=True, dir_okay=False)] = None,
     uniprot: Annotated[str | None, typer.Option("--uniprot")] = None,
-    config: Annotated[
-        Path, typer.Option("--config", "-c", exists=True, dir_okay=False)
-    ] = Path("config/4tb-hdd.yaml"),
+    config: Annotated[Path, typer.Option("--config", "-c", exists=True, dir_okay=False)] = Path(
+        "config/4tb-hdd.yaml"
+    ),
     literature: Annotated[Literal["none", "local", "online"], typer.Option("--literature")] = (
         "none"
     ),
@@ -53,21 +53,27 @@ def analyze_command(
     api_key_env: Annotated[str, typer.Option("--api-key-env")] = "NCBI_API_KEY",
     report: Annotated[Literal["none", "ollama"], typer.Option("--report")] = "none",
     model: Annotated[str, typer.Option("--model")] = DEFAULT_OLLAMA_MODEL,
-    ollama_base_url: Annotated[str, typer.Option("--ollama-base-url")] = (
-        "http://127.0.0.1:11434"
-    ),
+    ollama_base_url: Annotated[str, typer.Option("--ollama-base-url")] = ("http://127.0.0.1:11434"),
     ollama_timeout: Annotated[float, typer.Option("--ollama-timeout", min=1)] = 1800.0,
     max_output_tokens: Annotated[int, typer.Option("--max-output-tokens", min=1)] = 8192,
-    allow_unvalidated_phase4: Annotated[
-        bool, typer.Option("--allow-unvalidated-phase4")
-    ] = False,
+    allow_unvalidated_phase4: Annotated[bool, typer.Option("--allow-unvalidated-phase4")] = False,
+    calibration_model: Annotated[
+        Path | None,
+        typer.Option(
+            "--calibration-model",
+            exists=True,
+            dir_okay=False,
+            help="Saved cohort model for Phase 6 applicability reporting.",
+        ),
+    ] = None,
 ) -> None:
     """Analyze FASTA or UniProt with optional literature and Ollama reporting."""
     source = f"UniProt {uniprot}" if uniprot else str(fasta)
-    typer.echo(f"[1/4] Validating input: {source}")
-    typer.echo("[2/4] Running sequence, structure, mapping, and fusion")
-    typer.echo(f"[3/4] Literature: {literature}")
-    typer.echo(f"[4/4] Report: {report}")
+    typer.echo(f"[1/5] Validating input: {source}")
+    typer.echo("[2/5] Running sequence, structure, mapping, and fusion")
+    typer.echo("[3/5] Phase 6 applicability and evidence assessment")
+    typer.echo(f"[4/5] Literature: {literature}")
+    typer.echo(f"[5/5] Report: {report}")
     try:
         result = run_analysis(
             config=load_config(config),
@@ -85,13 +91,16 @@ def analyze_command(
             ollama_base_url=ollama_base_url,
             ollama_timeout=ollama_timeout,
             max_output_tokens=max_output_tokens,
+            calibration_model=calibration_model,
         )
     except AnalysisError as exc:
         typer.echo(f"Analysis failed: {exc}", err=True)
         raise typer.Exit(code=1) from exc
     typer.echo(
         f"Analysis complete: {result['query_count']} query(s) -> {output}\n"
-        f"Summary: {result['summary']}"
+        f"Summary: {result['summary']}\n"
+        f"Phase 6 report: {result['calibration_report']}\n"
+        f"Top literature: {result['top_literature_report'] or 'skipped'}"
     )
 
 
@@ -211,9 +220,7 @@ def build_literature_index_command(
 ) -> None:
     """Build a persistent local Phase 4 chunk/vector index."""
     try:
-        manifest = build_literature_index(
-            chunks_path=chunks, index_path=index, replace=replace
-        )
+        manifest = build_literature_index(chunks_path=chunks, index_path=index, replace=replace)
     except FileExistsError as exc:
         raise typer.BadParameter(str(exc), param_hint="--index") from exc
     typer.echo(f"indexed {manifest['chunk_count']} literature chunks -> {index}")

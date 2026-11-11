@@ -104,6 +104,20 @@ def verify_report(report: GroundedProteinReport, context: GenerationContext) -> 
                         message="Claim evidence is missing from the report reference list.",
                     )
                 )
+            if item.evidence_type == "CALIBRATION_ASSESSMENT" and (
+                claim.claim_type.value != "LIMITATION"
+                or claim.inference_level is not InferenceLevel.BACKGROUND_CONTEXT
+            ):
+                unsupported = True
+                findings.append(
+                    VerificationFinding(
+                        code="CALIBRATION_DIAGNOSTIC_AS_BIOLOGICAL_EVIDENCE",
+                        severity=VerificationSeverity.ERROR,
+                        claim_id=claim.claim_id,
+                        evidence_id=evidence_id,
+                        message="Phase 6 diagnostics may explain limitations, not support biology.",
+                    )
+                )
             if (
                 item.evidence_type == "LITERATURE"
                 and item.assessed_role == "UNASSESSED"
@@ -222,9 +236,7 @@ def _check_modality_discussion(
     findings: list[VerificationFinding],
 ) -> None:
     modality_ids = {
-        evidence_id
-        for evidence_id, item in evidence.items()
-        if item.evidence_type == evidence_type
+        evidence_id for evidence_id, item in evidence.items() if item.evidence_type == evidence_type
     }
     if not modality_ids:
         return

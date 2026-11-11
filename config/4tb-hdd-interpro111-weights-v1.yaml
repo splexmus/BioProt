@@ -51,13 +51,13 @@ fusion:
   enabled: true
   version: quality-gated-v3-interpro111-weights552025
   sequence_weight: 0.55
-  structure_weight: 0.25
-  agreement_weight: 0.2
+  structure_weight: 0.3
+  agreement_weight: 0.15
   mapping_path: /media/splexmus/4TB_HDD1/dualrag/databases/metadata/interpro111-pfam39-mapping-v1/mappings.tsv
   synonym_path: ../benchmark/phase3-mappings-v2/synonyms.tsv
   rerank_version: support-aggregated-v3-quality7525
-  base_score_weight: 0.8
-  quality_weight: 0.2
+  base_score_weight: 0.85
+  quality_weight: 0.15
   conflict_report_top_k: 5
   alternatives_top_k: 5
   ambiguity_margin: 0.05

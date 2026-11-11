@@ -61,6 +61,14 @@ provisional ranking scores labelled as non-probabilities, and the failed Phase 6
 calibration status exposed explicitly. Graphical-interface work is tracked in
 `docs/USER_INTERFACE_PLAN.md`.
 
+Every `analyze` run also writes `calibration/calibration_report.md`, JSON and candidate
+diagnostics. Supply `--calibration-model PATH` to include a saved cohort model's status
+and checksum in the applicability report. The current benchmark model is incompatible
+with native eggNOG/Foldseek analysis features, so its probabilities are not applied.
+When literature is enabled, `literature/top_literature.md` and TSV list the top ten
+retrieved passages per query. Ollama reports include both the external Phase 6
+assessment and retrieved literature references. See `docs/PHASE6_CALIBRATION.md`.
+
 ```bash
 pixi run python -m dualrag analyze \
   --uniprot P69905 \

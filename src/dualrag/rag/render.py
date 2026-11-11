@@ -8,7 +8,7 @@ from dualrag.rag.schemas import (
     ReportVerification,
 )
 
-RENDERER_VERSION = "phase5-markdown-v2"
+RENDERER_VERSION = "phase5-markdown-v3"
 
 
 def render_markdown(
@@ -32,6 +32,32 @@ def render_markdown(
     ]
     remaining_claims = list(report.claims)
     if context is not None:
+        phase6 = [e for e in context.evidence if e.evidence_type == "CALIBRATION_ASSESSMENT"]
+        if phase6:
+            assessment = phase6[0].details
+            lines.extend(
+                [
+                    "## Phase 6 confidence assessment",
+                    "",
+                    f"- Decision: `{assessment.get('decision')}`",
+                    f"- Applicability: `{assessment.get('calibration_applicability')}`",
+                    f"- Reason: {assessment.get('calibration_reason')}",
+                    "- Calibrated probability: unavailable",
+                    "",
+                ]
+            )
+        literature = [e for e in context.evidence if e.evidence_type == "LITERATURE"]
+        lines.extend(["## Top retrieved literature", ""])
+        for item in literature[:10]:
+            lines.extend(
+                [
+                    f"- [{item.label}]({item.source_url}) — `{item.evidence_id}`; "
+                    f"role: `{item.assessed_role}`"
+                ]
+            )
+        if not literature:
+            lines.append("No literature passages were retrieved.")
+        lines.extend(["", "Retrieved passages require assessment before use as support.", ""])
         sequence = [
             item for item in context.evidence if item.evidence_type == "SEQUENCE_RETRIEVAL_HIT"
         ]
@@ -49,12 +75,10 @@ def render_markdown(
         cross_modal_claims = [
             claim
             for claim in remaining_claims
-            if set(claim.evidence_ids) & sequence_ids
-            and set(claim.evidence_ids) & structure_ids
+            if set(claim.evidence_ids) & sequence_ids and set(claim.evidence_ids) & structure_ids
         ]
         assigned = {
-            id(claim)
-            for claim in [*sequence_claims, *structure_claims, *cross_modal_claims]
+            id(claim) for claim in [*sequence_claims, *structure_claims, *cross_modal_claims]
         }
         remaining_claims = [claim for claim in remaining_claims if id(claim) not in assigned]
         _retrieval_section(lines, "Sequence retrieval support", sequence, sequence_claims)
@@ -141,9 +165,7 @@ def _retrieval_section(
         )
         metrics = details.get("raw_metrics", {})
         if isinstance(metrics, dict) and metrics:
-            rendered = "; ".join(
-                f"{key}={_format_value(value)}" for key, value in metrics.items()
-            )
+            rendered = "; ".join(f"{key}={_format_value(value)}" for key, value in metrics.items())
             lines.append(f"- Raw metrics: {rendered}")
         annotations = details.get("annotations", {})
         if isinstance(annotations, dict) and annotations:

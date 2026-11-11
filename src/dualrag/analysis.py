@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 import requests
 
+from dualrag.calibration.analysis import build_analysis_calibration_report
 from dualrag.config import AppConfig
 from dualrag.fasta import read_fasta
 from dualrag.io import file_sha256, read_tsv, write_json
@@ -52,10 +53,13 @@ def run_analysis(
     ollama_timeout: float = 1800.0,
     max_output_tokens: int = 8192,
     ollama_client: OllamaClient | None = None,
+    calibration_model: Path | None = None,
 ) -> dict[str, Any]:
     """Run biological retrieval with optional literature and grounded reporting."""
     if (fasta_path is None) == (uniprot_accession is None):
         raise AnalysisError("provide exactly one of --fasta or --uniprot")
+    if calibration_model is not None and not calibration_model.is_file():
+        raise AnalysisError("calibration model file does not exist")
     if literature == "local" and (literature_index is None or not literature_index.is_file()):
         raise AnalysisError("--literature local requires an existing --literature-index")
     if literature == "online" and not email:
@@ -129,9 +133,15 @@ def run_analysis(
 
     try:
         metadata = run_pipeline(config, canonical_fasta, biological_dir)
+        calibration_manifest = build_analysis_calibration_report(
+            biological_dir=biological_dir,
+            output_dir=output_dir / "calibration",
+            model_path=calibration_model,
+        )
         summary = _build_summary(manifest, metadata, biological_dir)
         (output_dir / "summary.md").write_text(summary, encoding="utf-8")
         stages = {"biological": "COMPLETE", "literature": "SKIPPED", "report": "SKIPPED"}
+        stages["calibration"] = "ASSESSMENT_COMPLETE"
         literature_manifest: dict[str, Any] | None = None
         generation_manifest: dict[str, Any] | None = None
         packets_path: Path | None = None
@@ -194,6 +204,9 @@ def run_analysis(
                 system_prompt_path=Path("prompts/phase5-system-v3.txt"),
                 report_prompt_path=Path("prompts/phase5-report-v3.txt"),
                 allow_unvalidated_phase4=allow_unvalidated_phase4,
+                calibration_assessments={
+                    row["query_id"]: row for row in calibration_manifest["queries"]
+                },
             )
             stages["report"] = "COMPLETE"
         summary = _build_summary(
@@ -207,7 +220,7 @@ def run_analysis(
         status = {
             "schema_version": 1,
             "status": "COMPLETE",
-            "message": "Phase 1-2 analysis complete",
+            "message": "Analysis and Phase 6 applicability assessment complete",
             "run_id": metadata["run_id"],
             "query_count": metadata["query_count"],
             "scientific_status": "PUTATIVE_HYPOTHESES_NOT_CALIBRATED",
@@ -217,6 +230,10 @@ def run_analysis(
             "stages": stages,
             "biological_output": str(biological_dir),
             "summary": str(output_dir / "summary.md"),
+            "calibration_report": str(output_dir / "calibration/calibration_report.md"),
+            "top_literature_report": (
+                str(output_dir / "literature/top_literature.md") if literature != "none" else None
+            ),
         }
         write_json(output_dir / "status.json", status)
         return status
@@ -372,6 +389,7 @@ def _build_summary(
             f"- Phase 6 gate: `{PHASE6_CALIBRATION_STATUS}`",
             "- Calibrated probability: not emitted. The cohort calibrator is not valid for "
             "ordinary single-protein `analyze` output.",
+            "- [Phase 6 assessment and model applicability](calibration/calibration_report.md)",
             "- Ranking scores order candidates; they do not measure experimental truth.",
             "",
             "## Literature and report",
@@ -388,6 +406,11 @@ def _build_summary(
                 else "- Ollama report: skipped"
             ),
             "- Literature passages remain UNASSESSED unless manually labelled.",
+            *(
+                ["- [Top ranked literature passages](literature/top_literature.md)"]
+                if literature_manifest is not None
+                else []
+            ),
             "",
             "## Next steps",
             "",
