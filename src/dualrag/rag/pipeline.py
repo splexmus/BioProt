@@ -187,7 +187,8 @@ def run_generation_pipeline(
         "limitations": [
             "Deterministic verification checks evidence links and claim boundaries; it does "
             "not establish semantic truth.",
-            "Confidence is NOT_CALIBRATED until Phase 6.",
+            "Report confidence remains NOT_CALIBRATED without a compatible "
+            "validated feature pipeline.",
             "Generated reports are putative hypotheses, not experimental confirmation.",
         ],
         "parameters_hash": stable_hash(

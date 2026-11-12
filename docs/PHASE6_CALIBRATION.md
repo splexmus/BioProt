@@ -57,6 +57,15 @@ The completed development result is summarized in `docs/PHASE6_REPORT.md`.
 
 ## Integrated analysis, literature and LLM reports
 
+The current benchmark validation decision is registered in
+`config/phase6-validation-status.json`, including model/evaluation checksums and
+cohort quality measures. Analysis summaries, calibration reports, status JSON and LLM
+Markdown report that benchmark gate as passed and explain Brier/log loss/ECE/coverage.
+They continue to label the native query NOT_CALIBRATED and emit null probability when
+features are incompatible. The registered metrics must not be substituted for a query's
+probability. Missing registry data is reported as NOT_EVALUATED rather than a hard-coded
+failure or assumed pass. Existing historical outputs are not overwritten automatically.
+
 `dualrag analyze` now writes a Phase 6 assessment automatically. For example:
 
 ```bash

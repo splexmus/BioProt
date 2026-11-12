@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dualrag.calibration.analysis import validation_explanation
 from dualrag.rag.schemas import (
     ContextEvidence,
     GenerationContext,
@@ -35,10 +36,12 @@ def render_markdown(
         phase6 = [e for e in context.evidence if e.evidence_type == "CALIBRATION_ASSESSMENT"]
         if phase6:
             assessment = phase6[0].details
+            validation = assessment.get("benchmark_validation")
             lines.extend(
                 [
                     "## Phase 6 confidence assessment",
                     "",
+                    *(validation_explanation(validation) if isinstance(validation, dict) else []),
                     f"- Decision: `{assessment.get('decision')}`",
                     f"- Applicability: `{assessment.get('calibration_applicability')}`",
                     f"- Reason: {assessment.get('calibration_reason')}",

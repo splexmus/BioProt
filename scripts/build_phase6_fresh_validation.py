@@ -19,6 +19,7 @@ def main() -> None:
     parser.add_argument("--dataset-id", default="phase6-fresh-validation-v1")
     parser.add_argument("--size", type=int, default=150)
     parser.add_argument("--pool-size", type=int, default=600)
+    parser.add_argument("--exclude-exposed-queries", action="store_true")
     args = parser.parse_args()
     manifest = build_fresh_validation_dataset(
         swissprot_dat=args.swissprot_dat,
@@ -31,6 +32,7 @@ def main() -> None:
         dataset_id=args.dataset_id,
         size=args.size,
         pool_size=args.pool_size,
+        exclude_exposed_queries=args.exclude_exposed_queries,
     )
     print(json.dumps(manifest, indent=2, sort_keys=True))
 

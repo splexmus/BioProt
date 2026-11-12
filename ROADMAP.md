@@ -201,8 +201,16 @@ Exit criteria:
 
 ## Phase 6 — Confidence calibration
 
-Status: **retrieval ranking has prospective validation support, but calibrated
-confidence failed the frozen scientific gate. Test labels remain sealed.**
+Status: **recovery benchmark calibration passed frozen validation on 2026-11-12;
+test evaluation remains pending and test labels remain sealed.**
+
+The saved namespace-aware L2 0.01 calibrator passed on a new 300-protein cohort
+excluding 1,639 exposed identities: 370 cases/273 proteins, 91.58% coverage,
+Brier 0.194431, log loss 0.563131 and ECE 0.079762. All required metric/group checks
+passed. Dual Recall@10 gain was 0.074333 (95% CI 0.047278-0.103140). See
+`results/phase6-validation-20261112/REPORT.md`. Native analysis feature transfer and
+production/test acceptance are still pending. The earlier dated failures below remain
+historical results; do not replace or reinterpret them using this new cohort.
 
 Ranking/sufficiency update (2026-11-07): sequence-anchored ranking v3 prevents weak
 dual candidates from displacing a sequence-supported top-1 while preserving structure

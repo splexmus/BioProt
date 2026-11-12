@@ -23,6 +23,36 @@ def test_independent_candidates_exclude_old_clusters_and_deduplicate_new_cluster
     assert _independent_candidate_accessions(clusters) == ["NEW2", "NEW4"]
 
 
+def test_exposed_query_exclusion_requires_resolvable_sequences(tmp_path, monkeypatch):
+    from dualrag.benchmark import fresh_validation
+
+    source = tmp_path / "old"
+    source.mkdir()
+    (source / "queries.tsv").write_text("accession\tsequence_sha256\nOLD\tchecksum\n")
+    (source / "exposed_queries.tsv").write_text(
+        "accession\tpresent_in_frozen_release\tsequence_sha256\nEXPOSED\ttrue\thash\n"
+    )
+    contract = tmp_path / "contract.yaml"
+    contract.write_text(
+        "gold_standard:\n  inclusion:\n    minimum_length: 1\n"
+        "    maximum_length: 100\nrandom_seed: 42\n"
+    )
+    monkeypatch.setattr(fresh_validation, "_sha256_file", lambda path: "checksum")
+    monkeypatch.setattr(fresh_validation, "parse_swissprot", lambda path: iter([]))
+    with pytest.raises(ValueError, match="exposed query sequences"):
+        build_fresh_validation_dataset(
+            swissprot_dat=tmp_path / "source",
+            swissprot_fasta=tmp_path / "fasta",
+            exclude_datasets=[source],
+            contract_path=contract,
+            output_dir=tmp_path / "out",
+            source_release="test",
+            source_sha256="checksum",
+            exclude_exposed_queries=True,
+        )
+    assert not (tmp_path / "out").exists()
+
+
 def test_seal_fresh_validation_removes_pipeline_gold(tmp_path: Path) -> None:
     source = tmp_path / "source"
     source.mkdir()

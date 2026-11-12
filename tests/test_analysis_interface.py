@@ -81,7 +81,9 @@ def test_analyze_fasta_runs_existing_pipeline_and_writes_summary(tmp_path: Path)
     assert (output / "biological/function_candidates.tsv").is_file()
     summary = (output / "summary.md").read_text()
     assert "confidence NOT_CALIBRATED" in summary
-    assert "Phase 6 calibration gate: **FAIL_SCIENTIFIC_CALIBRATION_GATE**" in summary
+    assert "Phase 6 benchmark calibration gate: **PASS_SCIENTIFIC_CALIBRATION_GATE**" in summary
+    assert "0.1944" in summary
+    assert "not this query's probability" in summary
     assert "#### Sequence support" in summary
     assert "`TEST_SEQ_001`" in summary
     assert "#### Structure support" in summary
@@ -89,7 +91,8 @@ def test_analyze_fasta_runs_existing_pipeline_and_writes_summary(tmp_path: Path)
     assert "Provisional ranking score" in summary
     status = json.loads((output / "status.json").read_text())
     assert status["confidence_status"] == "NOT_CALIBRATED"
-    assert status["calibration_gate_status"] == "FAIL_SCIENTIFIC_CALIBRATION_GATE"
+    assert status["calibration_gate_status"] == "PASS_SCIENTIFIC_CALIBRATION_GATE"
+    assert status["benchmark_validation"]["native_analysis_applicable"] is False
     assert status["decision_use"] == "HYPOTHESIS_GENERATION_ONLY"
     assessment = json.loads((output / "calibration/calibration_report.json").read_text())
     assert assessment["gold_labels_used"] is False
@@ -198,6 +201,9 @@ def test_analyze_local_literature_and_ollama_report(tmp_path: Path) -> None:
         assert any(e["evidence_id"] == "phase6:assessment" for e in context["evidence"])
     rendered = next((output / "report/reports").glob("*.md")).read_text()
     assert "Phase 6 confidence assessment" in rendered
+    assert "PASS_SCIENTIFIC_CALIBRATION_GATE" in rendered
+    assert "0.1944" in rendered
+    assert "Mean squared probability error" in rendered
     assert "Top retrieved literature" in rendered
 
 

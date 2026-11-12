@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "status": "PASS_SCIENTIFIC_CALIBRATION_GATE",
+  "assessment_date": "2026-11-12",
+  "scope": "V4 benchmark MMseqs/Foldseek exact top-1 EC/GO-MF correctness",
+  "native_analysis_applicable": false,
+  "cohort_protein_count": 300,
+  "evaluated_case_count": 370,
+  "evaluated_protein_count": 273,
+  "coverage": 0.9158415841584159,
+  "brier_score": 0.19443108358500333,
+  "log_loss": 0.5631307888104451,
+  "expected_calibration_error": 0.07976215581603557,
+  "high_accuracy": 0.9057971014492754,
+  "high_wilson_95_lower": 0.8436629055250897,
+  "low_case_count": 158,
+  "moderate_case_count": 108,
+  "high_case_count": 104,
+  "ece_bootstrap_95_ci": [0.05372746800969045, 0.13381188097660976],
+  "validated_model_sha256": [
+    "d3da7ad725816fa0c4a61ae5a66b7f275aec4e522d096a9bf2da311cd11c2ff9",
+    "c9f6ba6a5fa76075e95c1efec93fd065e3df4e801e2c889834888907e0724974"
+  ],
+  "evaluation_path": "results/phase6-validation-20261112/frozen-final/evaluation/frozen_validation_evaluation.json",
+  "evaluation_sha256": "5d3056a232c18ac76bd548747426c54ed910139553f0458f08d5a0fbe14a7ed4",
+  "test_gold_accessed": false
+}

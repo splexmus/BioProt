@@ -57,8 +57,9 @@ and exploratory Phase 8 testing steps and their scientific interpretation bounda
 For a phase-by-phase operator walkthrough, use `docs/USER_MANUAL.md`. The implemented
 `dualrag analyze` command accepts FASTA or one UniProt accession, runs Phase 1-2, and
 writes a deterministic summary/status with sequence and structure support separated,
-provisional ranking scores labelled as non-probabilities, and the failed Phase 6
-calibration status exposed explicitly. Graphical-interface work is tracked in
+provisional ranking scores labelled as non-probabilities, and the passed benchmark
+Phase 6 validation metrics distinguished from unavailable native-query probabilities.
+Graphical-interface work is tracked in
 `docs/USER_INTERFACE_PLAN.md`.
 
 Every `analyze` run also writes `calibration/calibration_report.md`, JSON and candidate

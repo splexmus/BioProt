@@ -169,6 +169,20 @@ sequence-only query; unconfigured namespace gaps are not biological conclusions.
 When a durable decision changes, append a short entry below rather than silently rewriting history.
 
 ### Decision log
+- 2026-11-12: completed prospective recovery-calibrator validation on a new 300-protein
+  cohort excluding 1,639 exposed identities, including older pilot/panel queries and
+  nomination ledgers. The historical missing third cohort was reconstructed and its
+  gold checksum matched the logged original. An initial proposed cohort overlapped
+  four older queries and was rejected before calibration evaluation. The final cohort
+  produced 370 evaluable cases from 273 proteins (91.58% coverage). Saved namespace-aware
+  logistic L2 0.01 passed the unchanged Phase 6 gate: Brier 0.194431, log loss 0.563131,
+  ECE 0.079762; LOW/MODERATE/HIGH counts 158/108/104; HIGH weighted accuracy 0.9058,
+  Wilson lower bound 0.8437. All probability/input hashes matched the pre-reveal freeze.
+  Ranking Recall@10 gain was 0.074333 (95% CI 0.047278-0.103140). No model refit or test
+  gold access occurred. Artifacts: results/phase6-validation-20261112/REPORT.md.
+  This pass applies to benchmark features only; native analysis, LLM/citation truth and
+  production/test acceptance remain separate. Preserve the ECE interval extending above
+  0.10 and procedural label-custody limitation. Next: separate one-time frozen test.
 - 2026-11-08: added a full release-pinned InterPro/Pfam mapping builder. The verified
   temporary bundle used InterPro 111.0 and Pfam 39.0 and emitted 94,286 exact
   accession/name mappings for 47,143 integrated Pfam signatures. A development-only

@@ -9,7 +9,11 @@ from typing import Any, Literal
 
 import requests
 
-from dualrag.calibration.analysis import build_analysis_calibration_report
+from dualrag.calibration.analysis import (
+    build_analysis_calibration_report,
+    load_validation_status,
+    validation_explanation,
+)
 from dualrag.config import AppConfig
 from dualrag.fasta import read_fasta
 from dualrag.io import file_sha256, read_tsv, write_json
@@ -26,7 +30,6 @@ from dualrag.rag.pipeline import run_generation_pipeline
 from dualrag.structure.alphafold import resolve_accession
 
 UNIPROT_FASTA_URL = "https://rest.uniprot.org/uniprotkb/{accession}.fasta"
-PHASE6_CALIBRATION_STATUS = "FAIL_SCIENTIFIC_CALIBRATION_GATE"
 
 
 class AnalysisError(RuntimeError):
@@ -138,7 +141,9 @@ def run_analysis(
             output_dir=output_dir / "calibration",
             model_path=calibration_model,
         )
-        summary = _build_summary(manifest, metadata, biological_dir)
+        summary = _build_summary(
+            manifest, metadata, biological_dir, calibration_manifest=calibration_manifest
+        )
         (output_dir / "summary.md").write_text(summary, encoding="utf-8")
         stages = {"biological": "COMPLETE", "literature": "SKIPPED", "report": "SKIPPED"}
         stages["calibration"] = "ASSESSMENT_COMPLETE"
@@ -215,6 +220,7 @@ def run_analysis(
             biological_dir,
             literature_manifest=literature_manifest,
             generation_manifest=generation_manifest,
+            calibration_manifest=calibration_manifest,
         )
         (output_dir / "summary.md").write_text(summary, encoding="utf-8")
         status = {
@@ -225,7 +231,8 @@ def run_analysis(
             "query_count": metadata["query_count"],
             "scientific_status": "PUTATIVE_HYPOTHESES_NOT_CALIBRATED",
             "confidence_status": "NOT_CALIBRATED",
-            "calibration_gate_status": PHASE6_CALIBRATION_STATUS,
+            "calibration_gate_status": calibration_manifest["calibration_gate_status"],
+            "benchmark_validation": calibration_manifest["benchmark_validation"],
             "decision_use": "HYPOTHESIS_GENERATION_ONLY",
             "stages": stages,
             "biological_output": str(biological_dir),
@@ -299,7 +306,13 @@ def _build_summary(
     *,
     literature_manifest: dict[str, Any] | None = None,
     generation_manifest: dict[str, Any] | None = None,
+    calibration_manifest: dict[str, Any] | None = None,
 ) -> str:
+    validation = (
+        calibration_manifest["benchmark_validation"]
+        if calibration_manifest
+        else load_validation_status()
+    )
     summaries = read_tsv(biological_dir / "fusion_summary.tsv")
     sequence_hits = _hits_by_query(read_tsv(biological_dir / "sequence_results.tsv"))
     structure_hits = _hits_by_query(read_tsv(biological_dir / "structure_results.tsv"))
@@ -308,7 +321,7 @@ def _build_summary(
         "",
         f"Run ID: `{metadata['run_id']}`  ",
         "Scientific status: **putative hypotheses; confidence NOT_CALIBRATED**  ",
-        f"Phase 6 calibration gate: **{PHASE6_CALIBRATION_STATUS}**",
+        f"Phase 6 benchmark calibration gate: **{validation['status']}**",
         "",
         "## Input",
         "",
@@ -386,7 +399,7 @@ def _build_summary(
             "",
             "- Decision use: `HYPOTHESIS_GENERATION_ONLY`",
             "- Confidence status: `NOT_CALIBRATED`",
-            f"- Phase 6 gate: `{PHASE6_CALIBRATION_STATUS}`",
+            *validation_explanation(validation),
             "- Calibrated probability: not emitted. The cohort calibrator is not valid for "
             "ordinary single-protein `analyze` output.",
             "- [Phase 6 assessment and model applicability](calibration/calibration_report.md)",

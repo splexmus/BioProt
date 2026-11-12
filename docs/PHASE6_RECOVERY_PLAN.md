@@ -1,8 +1,22 @@
 # Phase 6 recovery experiment plan
 
 Prepared 2026-11-11. Execution: development model search and cohort sizing completed.
-New cohort construction awaits the missing third-cohort exposure list. See
+The missing cohort was reconstructed; new frozen validation passed on 2026-11-12. See
 `../results/phase6-recovery-20261111/REPORT.md` for measured results and limitations.
+
+2026-11-12 execution update: the third cohort was reconstructed from its historical
+build command and verified against gold-label checksum
+`76484e86bb380b11f1b1c2b4935bf7bfb94811d4a168cade1abc30712b547ce6`.
+New cohort construction additionally excludes the older pilot, external panel and
+historical exposure ledgers using `build_phase6_fresh_validation.py
+--exclude-exposed-queries`. The final 300-protein cohort excludes 1,639 identities;
+its protocol and artifacts are under `results/phase6-validation-20261112/`.
+Use the final validation report there for the scientific decision once evaluation completes.
+
+Final decision: `PASS_SCIENTIFIC_CALIBRATION_GATE`; 300 proteins, 370 evaluable cases
+from 273 proteins, 91.58% coverage, Brier 0.194431, log loss 0.563131, ECE 0.079762.
+The final exposure audit excludes 1,639 identities, including pilot/panel/nomination
+ledgers. Sealed test gold remains unopened. Native analysis calibration remains unavailable.
 
 ## Objective and baseline
 

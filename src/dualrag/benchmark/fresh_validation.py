@@ -42,6 +42,7 @@ def build_fresh_validation_dataset(
     size: int = 150,
     pool_size: int = 600,
     mmseqs_executable: str = "mmseqs",
+    exclude_exposed_queries: bool = False,
 ) -> dict[str, object]:
     if output_dir.exists():
         raise FileExistsError(f"refusing to overwrite validation dataset: {output_dir}")
@@ -54,12 +55,22 @@ def build_fresh_validation_dataset(
         raise ValueError("Swiss-Prot checksum does not match the declared release")
     contract = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
     excluded_rows = [
-        row
-        for dataset in exclusion_sources
-        for row in read_tsv(dataset / "queries.tsv")
+        row for dataset in exclusion_sources for row in read_tsv(dataset / "queries.tsv")
     ]
     excluded_accessions = {row["accession"] for row in excluded_rows}
     excluded_checksums = {row["sequence_sha256"] for row in excluded_rows}
+    exposed_rows = [
+        row
+        for dataset in exclusion_sources
+        if exclude_exposed_queries and (dataset / "exposed_queries.tsv").is_file()
+        for row in read_tsv(dataset / "exposed_queries.tsv")
+    ]
+    extra_accessions = {row["accession"] for row in exposed_rows} - excluded_accessions
+    excluded_accessions.update(extra_accessions)
+    excluded_checksums.update(
+        row["sequence_sha256"] for row in exposed_rows if row.get("sequence_sha256")
+    )
+    resolved_extra = set()
     minimum_length = int(contract["gold_standard"]["inclusion"]["minimum_length"])
     maximum_length = int(contract["gold_standard"]["inclusion"]["maximum_length"])
     seed = int(contract["random_seed"]) + 1000
@@ -67,12 +78,26 @@ def build_fresh_validation_dataset(
     target_checksums: dict[str, str] = {}
     for entry in parse_swissprot(swissprot_dat):
         target_checksums[entry.accession] = entry.sequence_sha256
+        if entry.accession in extra_accessions:
+            excluded_rows.append(
+                {
+                    "accession": entry.accession,
+                    "canonical_sequence": entry.sequence,
+                    "sequence_sha256": entry.sequence_sha256,
+                }
+            )
+            resolved_extra.add(entry.accession)
         if (
             entry.accession not in excluded_accessions
             and entry.sequence_sha256 not in excluded_checksums
             and is_eligible(entry, minimum_length, maximum_length)
         ):
             candidates.append(entry)
+    expected_extra = {
+        row["accession"] for row in exposed_rows if row.get("present_in_frozen_release") == "true"
+    } & extra_accessions
+    if expected_extra - resolved_extra:
+        raise ValueError("previously exposed query sequences could not be resolved")
     pool = select_balanced_entries(candidates, pool_size, seed)
     output_dir.mkdir(parents=True)
     combined = output_dir / "cluster-screen.fasta"
@@ -98,9 +123,7 @@ def build_fresh_validation_dataset(
     independent = [by_accession[item] for item in independent_accessions if item in by_accession]
     selected = select_balanced_entries(independent, size, seed)
     if len(selected) != size:
-        raise ValueError(
-            f"requested {size} independent proteins but only {len(selected)} remained"
-        )
+        raise ValueError(f"requested {size} independent proteins but only {len(selected)} remained")
 
     queries_fasta = output_dir / "queries.fasta"
     _write_queries_fasta(queries_fasta, selected)
@@ -136,9 +159,7 @@ def build_fresh_validation_dataset(
     nominations_by_accession = defaultdict(list)
     for nomination in nominations:
         nominations_by_accession[nomination.accession].append(nomination)
-    split_by_accession = {
-        entry.accession: ("validation", entry.accession) for entry in selected
-    }
+    split_by_accession = {entry.accession: ("validation", entry.accession) for entry in selected}
     membership_rows = [
         {
             "cluster_representative": entry.accession,
@@ -178,18 +199,13 @@ def build_fresh_validation_dataset(
         "dataset_id": dataset_id,
         "query_count": len(selected),
         "query_namespace_example_count": sum(
-            len(
-                {
-                    label.namespace
-                    for label in entry.labels
-                    if label.admissible_for_primary
-                }
-            )
+            len({label.namespace for label in entry.labels if label.admissible_for_primary})
             for entry in selected
         ),
         "label_counts": dict(sorted(namespace_counts.items())),
         "excluded_datasets": [str(path) for path in exclusion_sources],
         "excluded_accession_count": len(excluded_accessions),
+        "excluded_exposed_query_count": len(extra_accessions),
         "cluster_screen_pool_count": len(pool),
         "independent_pool_count": len(independent),
         "source_release": source_release,
@@ -269,10 +285,7 @@ def freeze_fresh_validation_inputs(
     if missing:
         raise FileNotFoundError(f"freeze inputs are missing: {', '.join(missing)}")
     code_files = sorted(
-        path
-        for root in code_roots
-        for path in root.rglob("*.py")
-        if path.is_file()
+        path for root in code_roots for path in root.rglob("*.py") if path.is_file()
     )
     code_hashes = {str(path): file_sha256(path) for path in code_files}
     manifest: dict[str, object] = {

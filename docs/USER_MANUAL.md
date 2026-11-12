@@ -103,9 +103,15 @@ manifest. Detailed Phase 1-2 files are under `biological/`.
 The summary reports sequence and structure support separately for each query. Its
 candidate score is explicitly a provisional ranking feature, not a probability.
 `status.json` records `confidence_status: NOT_CALIBRATED`,
-`calibration_gate_status: FAIL_SCIENTIFIC_CALIBRATION_GATE`, and
+`calibration_gate_status: PASS_SCIENTIFIC_CALIBRATION_GATE` for the registered benchmark
+validation, and
 `decision_use: HYPOTHESIS_GENERATION_ONLY`; the ordinary single-protein interface does
 not apply the incompatible cohort benchmark calibrator.
+
+The report includes the registered 2026-11-12 cohort metrics: Brier 0.1944, log loss
+0.5631, ECE 0.0798 and coverage 91.6%, with explanations and an evaluation checksum.
+These describe calibration across that cohort. A native query's calibrated probability
+remains unavailable because its retrieval/features differ from the validated pipeline.
 
 It now also writes `calibration/calibration_report.md`, JSON and
 `candidate_assessments.tsv` on every run. Optional `--calibration-model PATH` includes

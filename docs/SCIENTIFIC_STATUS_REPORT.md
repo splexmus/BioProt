@@ -1,7 +1,29 @@
 # Overall scientific status
 
-Assessment date: 2026-11-07  
-Overall status: **engineering research platform works; scientific validation has not passed**
+Assessment date: 2026-11-12
+Overall status: **benchmark Phase 6 validation passed; sealed test evaluation pending**
+
+## Current Phase 6 decision — 2026-11-12
+
+The saved namespace-aware recovery calibrator (L2 0.01) passed the unchanged scientific
+calibration gate on a new 300-protein cohort excluding 1,639 exposed identities.
+370 cases from 273 proteins were evaluable (91.58% coverage). Brier was 0.194431,
+log loss 0.563131, ECE 0.079762; all absolute and raw-improvement limits passed.
+LOW/MODERATE/HIGH groups contained 158/108/104 cases, with monotonic weighted
+accuracies 0.2992/0.4756/0.9058; HIGH Wilson lower bound was 0.8437.
+Dual-minus-sequence Recall@10 was +0.074333 (95% CI 0.047278-0.103140).
+
+Model, ranking and probabilities were frozen before validation gold reveal; no test
+gold was accessed. Label custody is procedural separation, not third-party blinding.
+The point-estimate gate passed; ECE's 95% interval still extends above 0.10.
+This result applies to the benchmark MMseqs/Foldseek feature pipeline. Native eggNOG
+analysis remains NOT_CALIBRATED, Phase 4 remains failed, and production/test acceptance
+is pending. Full artifacts: `results/phase6-validation-20261112/REPORT.md`.
+
+## Historical assessment — 2026-11-07
+
+The following sections preserve the earlier cohort outcomes and have been superseded
+for the current recovery calibrator by the dated validation result above.
 
 ## Bottom line
 
